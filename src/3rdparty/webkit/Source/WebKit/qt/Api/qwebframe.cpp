@@ -1949,4 +1949,17 @@ QWebFrame *QWebHitTestResult::frame() const
     return d->frame;
 }
 
+namespace WebCore {
+	QList<QRect> getRunRects(RenderObject*);
+}
+
+QList<QRect> QWebFrame::renderTreeRunRects()
+{
+	if (d->frame->view() && d->frame->view()->layoutPending())
+		d->frame->view()->layout();
+
+	RenderObject* o = d->frame->contentRenderer();
+	return WebCore::getRunRects(o);
+}
+
 #include "moc_qwebframe.cpp"

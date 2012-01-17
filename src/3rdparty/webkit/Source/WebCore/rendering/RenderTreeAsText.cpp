@@ -825,4 +825,81 @@ String markerTextForListItem(Element* element)
     return toRenderListItem(renderer)->markerText();
 }
 
+static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, int indent*/)
+{
+    /* Figure out what the runs' positions are relative to. */
+    QPoint origin;
+    if (RenderBlock* block = o.containingBlock()) {
+        FloatPoint absPos = block->localToAbsolute(FloatPoint());
+        origin.setX(absPos.x());
+        origin.setY(absPos.y());
+    }
+
+    if (o.isText() && !o.isBR()) {
+        const RenderText& text = *toRenderText(&o);
+        for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox())
+        {
+            InlineTextBox& run = *box;
+
+            int dy = 0;
+            if (o.containingBlock()->isTableCell())
+                dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
+            QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.m_logicalWidth, run.height());
+            out.append(r);
+        }
+    }
+
+    for (RenderObject* child = o.firstChild(); child; child = child->nextSibling()) {
+        if (child->hasLayer())
+            continue;
+        getRunRectsRecursively(out, *child);
+    }
+}
+
+static void getRunRectsForAllLayers(
+    QList<QRect>& out,
+    RenderLayer* l)
+{
+    /* heavily based on writeLayers, mostly without any understanding of what "layers" even are. */
+
+    // Ensure our lists are up-to-date.
+    l->updateZOrderLists();
+    l->updateNormalFlowList();
+
+    Vector<RenderLayer*>* negList = l->negZOrderList();
+    if (negList) {
+        for (unsigned i = 0; i != negList->size(); ++i)
+            getRunRectsForAllLayers(out, negList->at(i));
+    }
+
+    getRunRectsRecursively(out, *l->renderer());
+
+    Vector<RenderLayer*>* normalFlowList = l->normalFlowList();
+    if (normalFlowList) {
+        for (unsigned i = 0; i != normalFlowList->size(); ++i)
+            getRunRectsForAllLayers(out, normalFlowList->at(i));
+    }
+
+    Vector<RenderLayer*>* posList = l->posZOrderList();
+    if (posList) {
+        for (unsigned i = 0; i != posList->size(); ++i)
+            getRunRectsForAllLayers(out, posList->at(i));
+    }
+}
+
+
+QList<QRect> getRunRects(RenderObject* o)
+{
+    if (o->view()->frameView())
+        o->view()->frameView()->layout();
+
+    QList<QRect> ret;
+    if (o->hasLayer()) {
+        RenderLayer* l = toRenderBox(o)->layer();
+        getRunRectsForAllLayers(ret, l);
+    }
+
+    return ret;
+}
+
 } // namespace WebCore
