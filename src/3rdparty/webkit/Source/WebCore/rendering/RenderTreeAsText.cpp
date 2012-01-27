@@ -68,6 +68,7 @@
 
 #if PLATFORM(QT)
 #include <QWidget>
+#include <QDebug>
 #endif
 
 namespace WebCore {
@@ -825,6 +826,7 @@ String markerTextForListItem(Element* element)
     return toRenderListItem(renderer)->markerText();
 }
 
+
 static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, int indent*/)
 {
     /* Figure out what the runs' positions are relative to. */
@@ -844,7 +846,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, i
             int dy = 0;
             if (o.containingBlock()->isTableCell())
                 dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
-            QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.m_logicalWidth, run.height());
+            QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.width(), run.height());
             out.append(r);
         }
     }
