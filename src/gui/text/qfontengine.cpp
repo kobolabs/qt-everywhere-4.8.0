@@ -103,9 +103,16 @@ static void hb_getAdvances(HB_Font font, const HB_Glyph *glyphs, hb_uint32 numGl
         qglyphs.glyphs[i] = glyphs[i];
 
     fe->recalcAdvances(&qglyphs, flags & HB_ShaperFlag_UseDesignMetrics ? QFlags<QTextEngine::ShaperFlag>(QTextEngine::DesignMetrics) : QFlags<QTextEngine::ShaperFlag>(0));
+    int shaperFlags = 0;
+    bool vertical = flags & HB_ShaperFlag_VerticalWriting;
+    if (flags & HB_ShaperFlag_UseDesignMetrics)
+        shaperFlags |= QTextEngine::DesignMetrics;
+    if (vertical)
+        shaperFlags |= QTextEngine::TopToBottom;
+    fe->recalcAdvances(&qglyphs, QFlags<QTextEngine::ShaperFlag>(shaperFlags));
 
     for (hb_uint32 i = 0; i < numGlyphs; ++i)
-        advances[i] = qglyphs.advances_x[i].value();
+        advances[i] = vertical ? qglyphs.advances_y[i].value() : qglyphs.advances_x[i].value();
 }
 
 static HB_Bool hb_canRender(HB_Font font, const HB_UChar16 *string, hb_uint32 length)
@@ -236,6 +243,21 @@ glyph_metrics_t QFontEngine::boundingBox(glyph_t glyph, const QTransform &matrix
     }
     return metrics;
 }
+
+glyph_metrics_t QFontEngine::boundingBox(const QGlyphLayout &glyphs, Qt::Orientation orientation)
+{
+    // default implementation simply ignores orientation
+    Q_UNUSED(orientation);
+    return boundingBox(glyphs);
+}
+
+glyph_metrics_t QFontEngine::boundingBox(glyph_t glyph, Qt::Orientation orientation)
+{
+    // default implementation simply ignores orientation
+    Q_UNUSED(orientation);
+    return boundingBox(glyph);
+}
+
 
 QFixed QFontEngine::xHeight() const
 {
@@ -1377,7 +1399,40 @@ bool QFontEngineMulti::stringToCMap(const QChar *str, int len,
     return true;
 }
 
-glyph_metrics_t QFontEngineMulti::boundingBox(const QGlyphLayout &glyphs)
+void QFontEngineMulti::processBoundingBoxForRange(const QGlyphLayout &glyphs,
+                                                  Qt::Orientation orientation,
+                                                  int start, int end, int which,
+                                                  glyph_metrics_t& overall)
+{
+    int i;
+    // set the high byte to zero
+    for (i = start; i < end; ++i)
+        glyphs.glyphs[i] = stripped(glyphs.glyphs[i]);
+
+    // merge the bounding box for this run
+    const glyph_metrics_t gm = engine(which)->boundingBox(glyphs.mid(start, end - start), orientation);
+
+    overall.x = qMin(overall.x, gm.x);
+    overall.y = qMin(overall.y, gm.y);
+    if (orientation == Qt::Vertical) {
+        overall.width = qMax(overall.width + overall.x, gm.width + gm.x) -
+                        qMin(overall.x, gm.x);
+        overall.height = overall.yoff + gm.height;
+    } else {
+        overall.width = overall.xoff + gm.width;
+        overall.height = qMax(overall.height + overall.y, gm.height + gm.y) -
+                         qMin(overall.y, gm.y);
+    }
+    overall.xoff += gm.xoff;
+    overall.yoff += gm.yoff;
+
+    // reset the high byte for all glyphs
+    const int hi = which << 24;
+    for (i = start; i < end; ++i)
+        glyphs.glyphs[i] = hi | glyphs.glyphs[i];
+}
+
+glyph_metrics_t QFontEngineMulti::boundingBox(const QGlyphLayout &glyphs, Qt::Orientation orientation)
 {
     if (glyphs.numGlyphs <= 0)
         return glyph_metrics_t();
@@ -1386,59 +1441,25 @@ glyph_metrics_t QFontEngineMulti::boundingBox(const QGlyphLayout &glyphs)
 
     int which = highByte(glyphs.glyphs[0]);
     int start = 0;
-    int end, i;
+    int end;
     for (end = 0; end < glyphs.numGlyphs; ++end) {
         const int e = highByte(glyphs.glyphs[end]);
         if (e == which)
             continue;
-
-        // set the high byte to zero
-        for (i = start; i < end; ++i)
-            glyphs.glyphs[i] = stripped(glyphs.glyphs[i]);
-
-        // merge the bounding box for this run
-        const glyph_metrics_t gm = engine(which)->boundingBox(glyphs.mid(start, end - start));
-
-        overall.x = qMin(overall.x, gm.x);
-        overall.y = qMin(overall.y, gm.y);
-        overall.width = overall.xoff + gm.width;
-        overall.height = qMax(overall.height + overall.y, gm.height + gm.y) -
-                         qMin(overall.y, gm.y);
-        overall.xoff += gm.xoff;
-        overall.yoff += gm.yoff;
-
-        // reset the high byte for all glyphs
-        const int hi = which << 24;
-        for (i = start; i < end; ++i)
-            glyphs.glyphs[i] = hi | glyphs.glyphs[i];
-
+        processBoundingBoxForRange(glyphs, orientation, start, end, which, overall);
         // change engine
         start = end;
         which = e;
     }
-
-    // set the high byte to zero
-    for (i = start; i < end; ++i)
-        glyphs.glyphs[i] = stripped(glyphs.glyphs[i]);
-
-    // merge the bounding box for this run
-    const glyph_metrics_t gm = engine(which)->boundingBox(glyphs.mid(start, end - start));
-
-    overall.x = qMin(overall.x, gm.x);
-    overall.y = qMin(overall.y, gm.y);
-    overall.width = overall.xoff + gm.width;
-    overall.height = qMax(overall.height + overall.y, gm.height + gm.y) -
-                     qMin(overall.y, gm.y);
-    overall.xoff += gm.xoff;
-    overall.yoff += gm.yoff;
-
-    // reset the high byte for all glyphs
-    const int hi = which << 24;
-    for (i = start; i < end; ++i)
-        glyphs.glyphs[i] = hi | glyphs.glyphs[i];
-
+    processBoundingBoxForRange(glyphs, orientation, start, end, which, overall);
     return overall;
 }
+
+glyph_metrics_t QFontEngineMulti::boundingBox(const QGlyphLayout &glyphs)
+{
+    return boundingBox(glyphs, Qt::Horizontal);
+}
+
 
 void QFontEngineMulti::getGlyphBearings(glyph_t glyph, qreal *leftBearing, qreal *rightBearing)
 {
@@ -1601,9 +1622,14 @@ void QFontEngineMulti::doKerning(QGlyphLayout *glyphs, QTextEngine::ShaperFlags 
 
 glyph_metrics_t QFontEngineMulti::boundingBox(glyph_t glyph)
 {
+    return boundingBox(glyph, Qt::Horizontal);
+}
+
+glyph_metrics_t QFontEngineMulti::boundingBox(glyph_t glyph, Qt::Orientation orientation)
+{
     const int which = highByte(glyph);
     Q_ASSERT(which < engines.size());
-    return engine(which)->boundingBox(stripped(glyph));
+    return engine(which)->boundingBox(stripped(glyph), orientation);
 }
 
 QFixed QFontEngineMulti::ascent() const

@@ -218,6 +218,8 @@ struct QGlyphLayout
 
     inline QFixed effectiveAdvance(int item) const
     { return (advances_x[item] + QFixed::fromFixed(justifications[item].space_18d6)) * !attributes[item].dontPrint; }
+    inline QFixed effectiveVerticalAdvance(int item) const
+    { return (advances_y[item]) * !attributes[item].dontPrint; }
 
     inline QGlyphLayoutInstance instance(int position) const {
         QGlyphLayoutInstance g;
@@ -323,6 +325,7 @@ public:
     QFixed descent;
     QFixed ascent;
     QFixed width;
+    QFixed height;
 
     RenderFlags flags;
     bool justified;
@@ -378,7 +381,7 @@ struct Q_AUTOTEST_EXPORT QScriptLine
     QScriptLine()
         : from(0), trailingSpaces(0), length(0),
         justified(0), gridfitted(0),
-        hasTrailingSpaces(0), leadingIncluded(0) {}
+        hasTrailingSpaces(0), leadingIncluded(0), vertical(0) {}
     QFixed descent;
     QFixed ascent;
     QFixed leading;
@@ -394,6 +397,7 @@ struct Q_AUTOTEST_EXPORT QScriptLine
     mutable uint gridfitted : 1;
     uint hasTrailingSpaces : 1;
     uint leadingIncluded : 1;
+    uint vertical : 1;
     QFixed height() const { return (ascent + descent).ceil() + 1
                             + (leadingIncluded?  qMax(QFixed(),leading) : QFixed()); }
     QFixed base() const { return ascent
@@ -457,7 +461,8 @@ public:
     enum ShaperFlag {
         RightToLeft = 0x0001,
         DesignMetrics = 0x0002,
-        GlyphIndicesOnly = 0x0004
+        GlyphIndicesOnly = 0x0004,
+        TopToBottom = 0x0008,
     };
     Q_DECLARE_FLAGS(ShaperFlags, ShaperFlag)
 
@@ -676,6 +681,7 @@ struct QTextLineItemIterator
     QTextEngine *eng;
 
     QFixed x;
+    QFixed y;
     QFixed pos_x;
     const QScriptLine &line;
     QScriptItem *si;
@@ -695,6 +701,7 @@ struct QTextLineItemIterator
     int itemEnd;
 
     QFixed itemWidth;
+    QFixed itemHeight;
 
     QVarLengthArray<int> visualOrder;
     QVarLengthArray<uchar> levels;

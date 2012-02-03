@@ -826,6 +826,7 @@ QTextLine QTextLayout::createLine()
     line.length = -1;
     line.justified = false;
     line.gridfitted = false;
+    line.vertical = d->option.textOrientation() == Qt::Vertical;
 
     d->lines.append(line);
     return QTextLine(l, d);
@@ -1598,6 +1599,7 @@ namespace {
         bool whiteSpaceOrObject;
 
         bool checkFullOtherwiseExtend(QScriptLine &line);
+        void addNextCluster(int end, QScriptLine &line, const QScriptItem &current);
 
         QFixed calculateNewWidth(const QScriptLine &line) const {
             return line.textWidth + tmpData.textWidth + spaceData.textWidth + softHyphenWidth
@@ -1679,21 +1681,27 @@ inline bool LineBreakHelper::checkFullOtherwiseExtend(QScriptLine &line)
     return false;
 }
 
-} // anonymous namespace
-
-
-static inline void addNextCluster(int &pos, int end, QScriptLine &line, int &glyphCount,
-                                  const QScriptItem &current, const unsigned short *logClusters,
-                                  const QGlyphLayout &glyphs)
+inline void LineBreakHelper::addNextCluster(int end, QScriptLine &line, const QScriptItem &current)
 {
+    int &pos = currentPosition;
     int glyphPosition = logClusters[pos];
     do { // got to the first next cluster
         ++pos;
         ++line.length;
     } while (pos < end && logClusters[pos] == glyphPosition);
     do { // calculate the textWidth for the rest of the current cluster.
-        if (!glyphs.attributes[glyphPosition].dontPrint)
-            line.textWidth += glyphs.advances_x[glyphPosition];
+        if (!glyphs.attributes[glyphPosition].dontPrint) {
+            line.textWidth += (line.vertical ? glyphs.advances_y[glyphPosition]
+                                             : glyphs.advances_x[glyphPosition]);
+            if (line.vertical) {
+                glyph_metrics_t bb = fontEngine->boundingBox(glyphs.glyphs[glyphPosition], Qt::Vertical);
+                if (bb.width > 0) {
+                    line.descent = qAbs(qMin(-line.descent, bb.x));
+                    line.ascent = qMax(line.ascent, bb.x + bb.width);
+                    LB_DEBUG() << "gp =" << glyphPosition << "x" << bb.x << "w" << bb.width;
+                }
+            }
+        }
         ++glyphPosition;
     } while (glyphPosition < current.num_glyphs && !glyphs.attributes[glyphPosition].clusterStart);
 
@@ -1702,6 +1710,7 @@ static inline void addNextCluster(int &pos, int end, QScriptLine &line, int &gly
     ++glyphCount;
 }
 
+} // anonymous namespace
 
 // fill QScriptLine
 void QTextLine::layout_helper(int maxGlyphs)
@@ -1742,6 +1751,7 @@ void QTextLine::layout_helper(int maxGlyphs)
     lbh.logClusters = eng->layoutData->logClustersPtr;
     lbh.resetPreviousGlyph();
 
+    bool vertical = eng->option.textOrientation() == Qt::Vertical;
     while (newItem < eng->layoutData->items.size()) {
         lbh.resetRightBearing();
         lbh.softHyphenWidth = 0;
@@ -1772,6 +1782,7 @@ void QTextLine::layout_helper(int maxGlyphs)
                                                                             current.ascent);
         lbh.tmpData.ascent = qMax(lbh.tmpData.ascent, current.ascent);
         lbh.tmpData.descent = qMax(lbh.tmpData.descent, current.descent);
+        lbh.tmpData.vertical = vertical;
 
         if (current.analysis.flags == QScriptAnalysis::Tab && (alignment & (Qt::AlignLeft | Qt::AlignRight | Qt::AlignCenter | Qt::AlignJustify))) {
             lbh.whiteSpaceOrObject = true;
@@ -1797,8 +1808,7 @@ void QTextLine::layout_helper(int maxGlyphs)
             if (!line.length && !lbh.tmpData.length)
                 line.setDefaultHeight(eng);
             if (eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators) {
-                addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
-                               current, lbh.logClusters, lbh.glyphs);
+                lbh.addNextCluster(end, lbh.tmpData, current);
             } else {
                 lbh.tmpData.length++;
                 lbh.adjustPreviousRightBearing();
@@ -1821,9 +1831,9 @@ void QTextLine::layout_helper(int maxGlyphs)
                 goto found;
         } else if (attributes[lbh.currentPosition].whiteSpace) {
             lbh.whiteSpaceOrObject = true;
+            lbh.spaceData.vertical = vertical;
             while (lbh.currentPosition < end && attributes[lbh.currentPosition].whiteSpace)
-                addNextCluster(lbh.currentPosition, end, lbh.spaceData, lbh.glyphCount,
-                               current, lbh.logClusters, lbh.glyphs);
+                lbh.addNextCluster(end, lbh.spaceData, current);
 
             if (!lbh.manualWrap && lbh.spaceData.textWidth > line.width) {
                 lbh.spaceData.textWidth = line.width; // ignore spaces that fall out of the line.
@@ -1834,8 +1844,7 @@ void QTextLine::layout_helper(int maxGlyphs)
             bool sb_or_ws = false;
             lbh.saveCurrentGlyph();
             do {
-                addNextCluster(lbh.currentPosition, end, lbh.tmpData, lbh.glyphCount,
-                               current, lbh.logClusters, lbh.glyphs);
+                lbh.addNextCluster(end, lbh.tmpData, current);
 
                 if (attributes[lbh.currentPosition].whiteSpace || attributes[lbh.currentPosition-1].lineBreakType != HB_NoBreak) {
                     sb_or_ws = true;
@@ -2318,7 +2327,7 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
             && !(eng->option.flags() & QTextOption::ShowLineAndParagraphSeparators))
             continue;
 
-        QFixed itemBaseLine = y;
+        QFixed itemBaseLine = iterator.y + line.y + lineBase;
         QFont f = eng->font(si);
         QTextCharFormat format;
 
@@ -2407,6 +2416,8 @@ void QTextLine::draw(QPainter *p, const QPointF &pos, const QTextLayout::FormatR
         gf.logClusters = logClusters + iterator.itemStart - si.position;
         gf.width = iterator.itemWidth;
         gf.justified = line.justified;
+        if (eng->option.textOrientation() == Qt::Vertical)
+            gf.flags |= QTextItem::TopToBottom;
         gf.initWithScriptItem(si);
 
         Q_ASSERT(gf.fontEngine);

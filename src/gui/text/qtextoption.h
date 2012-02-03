@@ -99,6 +99,15 @@ public:
     inline void setTextDirection(Qt::LayoutDirection aDirection) { this->direction = aDirection; }
     inline Qt::LayoutDirection textDirection() const { return Qt::LayoutDirection(direction); }
 
+    inline void setTextOrientation(Qt::Orientation aOrientation)
+    {
+        orientation = (aOrientation == Qt::Horizontal ? 0 : 1);
+    }
+    inline Qt::Orientation textOrientation() const
+    {
+        return orientation == 0 ? Qt::Horizontal : Qt::Vertical;
+    }
+
     enum WrapMode {
         NoWrap,
         WordWrap,
@@ -137,7 +146,8 @@ private:
     uint wordWrap : 4;
     uint design : 1;
     uint direction : 2;
-    uint unused : 18;
+    uint orientation : 1;
+    uint unused : 17;
     uint f;
     qreal tab;
     QTextOptionPrivate *d;

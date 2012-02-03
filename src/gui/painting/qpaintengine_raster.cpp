@@ -2776,7 +2776,8 @@ void QRasterPaintEngine::alphaPenBlt(const void* src, int bpl, int depth, int rx
 }
 
 bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
-                                          const QFixedPoint *positions, QFontEngine *fontEngine)
+                                          const QFixedPoint *positions, QFontEngine *fontEngine,
+                                          bool vertical)
 {
     Q_D(QRasterPaintEngine);
     QRasterPaintEngineState *s = state();
@@ -2808,7 +2809,7 @@ bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
         }
 
         if (!gset || gset->outline_drawing
-            || !fe->loadGlyphs(gset, glyphs, numGlyphs, positions, neededFormat))
+            || !fe->loadGlyphs(gset, glyphs, numGlyphs, positions, neededFormat, vertical))
             return false;
 
         FT_Face lockedFace = 0;
@@ -3109,7 +3110,8 @@ void QRasterPaintEngine::drawTextItem(const QPointF &p, const QTextItem &textIte
 
         ti.fontEngine->getGlyphPositions(ti.glyphs, matrix, ti.flags, glyphs, positions);
 
-        drawCachedGlyphs(glyphs.size(), glyphs.constData(), positions.constData(), ti.fontEngine);
+        drawCachedGlyphs(glyphs.size(), glyphs.constData(), positions.constData(), ti.fontEngine,
+                         (ti.flags & QTextItem::TopToBottom) ? true : false);
         return;
     }
 
@@ -3194,7 +3196,8 @@ void QRasterPaintEngine::drawTextItem(const QPointF &p, const QTextItem &textIte
     if (glyphs.size() == 0)
         return;
 
-    if (!drawCachedGlyphs(glyphs.size(), glyphs.constData(), positions.constData(), fontEngine))
+    if (!drawCachedGlyphs(glyphs.size(), glyphs.constData(), positions.constData(), fontEngine,
+                          (ti.flags & QTextItem::TopToBottom) ? true : false))
         QPaintEngine::drawTextItem(p, ti);
 
     return;

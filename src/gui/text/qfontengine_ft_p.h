@@ -146,6 +146,7 @@ public:
         signed char advance;
         signed char format;
         uchar *data;
+        unsigned int vertical : 1;
         unsigned int uploadedToServer : 1;
     };
 
@@ -277,9 +278,9 @@ private:
     inline bool invalid() const { return xsize == 0 && ysize == 0; }
     inline bool isBitmapFont() const { return defaultFormat == Format_Mono; }
 
-    inline Glyph *loadGlyph(uint glyph, QFixed subPixelPosition, GlyphFormat format = Format_None, bool fetchMetricsOnly = false) const
-    { return loadGlyph(&defaultGlyphSet, glyph, subPixelPosition, format, fetchMetricsOnly); }
-    Glyph *loadGlyph(QGlyphSet *set, uint glyph, QFixed subPixelPosition, GlyphFormat = Format_None, bool fetchMetricsOnly = false) const;
+    inline Glyph *loadGlyph(uint glyph, QFixed subPixelPosition, GlyphFormat format = Format_None, bool fetchMetricsOnly = false, bool vertical = false) const
+    { return loadGlyph(&defaultGlyphSet, glyph, subPixelPosition, format, fetchMetricsOnly, vertical); }
+    Glyph *loadGlyph(QGlyphSet *set, uint glyph, QFixed subPixelPosition, GlyphFormat = Format_None, bool fetchMetricsOnly = false, bool vertical = false) const;
 
     QGlyphSet *defaultGlyphs() { return &defaultGlyphSet; }
     GlyphFormat defaultGlyphFormat() const { return defaultFormat; }
@@ -290,7 +291,8 @@ private:
     QFixed subPixelPositionForX(QFixed x);
     bool loadGlyphs(QGlyphSet *gs, const glyph_t *glyphs, int num_glyphs,
                     const QFixedPoint *positions,
-                    GlyphFormat format = Format_Render);
+                    GlyphFormat format = Format_Render,
+                    bool vertical = false);
 
 #if defined(Q_WS_QWS) || defined(Q_OS_SYMBIAN)
     virtual void draw(QPaintEngine * /*p*/, qreal /*x*/, qreal /*y*/, const QTextItemInt & /*si*/) {}

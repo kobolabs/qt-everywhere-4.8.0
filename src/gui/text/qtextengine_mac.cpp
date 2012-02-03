@@ -575,7 +575,9 @@ void QTextEngine::shapeTextMac(int item) const
     if (si.analysis.bidiLevel % 2)
         flags |= RightToLeft;
     if (option.useDesignMetrics())
-	flags |= DesignMetrics;
+        flags |= DesignMetrics;
+    if (option.textOrientation() == Qt::Vertical)
+        flags |= TopToBottom;
 
     attributes(); // pre-initialize char attributes
 

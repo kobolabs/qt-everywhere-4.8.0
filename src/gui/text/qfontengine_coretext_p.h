@@ -70,6 +70,8 @@ public:
 
     virtual glyph_metrics_t boundingBox(const QGlyphLayout &glyphs);
     virtual glyph_metrics_t boundingBox(glyph_t glyph);
+    virtual glyph_metrics_t boundingBox(const QGlyphLayout &glyphs, Qt::Orientation orientation);
+    virtual glyph_metrics_t boundingBox(glyph_t glyph, Qt::Orientation orientation);
 
     virtual QFixed ascent() const;
     virtual QFixed descent() const;

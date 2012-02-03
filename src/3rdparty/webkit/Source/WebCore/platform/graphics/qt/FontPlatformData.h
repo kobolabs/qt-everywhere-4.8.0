@@ -43,15 +43,17 @@ public:
         : size(font.pixelSize())
         , bold(font.bold())
         , oblique(false)
+        , orientation(Horizontal)
         , isDeletedValue(false)
     { }
-    FontPlatformDataPrivate(const float size, const bool bold, const bool oblique)
+    FontPlatformDataPrivate(const float size, const bool bold, const bool oblique, FontOrientation orientation)
         : size(size)
         , bold(bold)
         , oblique(oblique)
+        , orientation(orientation)
         , isDeletedValue(false)
     { }
-    FontPlatformDataPrivate(const QFont& font)
+    FontPlatformDataPrivate(const QFont& font, FontOrientation orientation)
         : font(font)
 #if HAVE(QRAWFONT)
         , rawFont(QRawFont::fromFont(font, QFontDatabase::Any))
@@ -59,6 +61,7 @@ public:
         , size(font.pixelSize())
         , bold(font.bold())
         , oblique(false)
+        , orientation(orientation)
         , isDeletedValue(false)
     { }
 #if HAVE(QRAWFONT)
@@ -82,16 +85,17 @@ public:
     float size;
     bool bold : 1;
     bool oblique : 1;
+    FontOrientation orientation;
     bool isDeletedValue : 1;
 };
 
 class FontPlatformData {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    FontPlatformData(float size, bool bold, bool oblique);
+    FontPlatformData(float size, bool bold, bool oblique, FontOrientation = Horizontal);
     FontPlatformData(const FontDescription&, const AtomicString& familyName, int wordSpacing = 0, int letterSpacing = 0);
-    FontPlatformData(const QFont& font)
-        : m_data(adoptRef(new FontPlatformDataPrivate(font)))
+    FontPlatformData(const QFont& font, FontOrientation orientation)
+        : m_data(adoptRef(new FontPlatformDataPrivate(font, orientation)))
     { }
 #if HAVE(QRAWFONT)
     FontPlatformData(const FontPlatformData&, float size);
@@ -163,8 +167,13 @@ public:
             return false;
         return m_data->font.capitalization() == QFont::SmallCaps;
     }
-    
-    FontOrientation orientation() const { return Horizontal; } // FIXME: Implement.
+    FontOrientation orientation() const 
+    { 
+        Q_ASSERT(m_data != reinterpret_cast<FontPlatformDataPrivate*>(-1));
+        if (m_data)
+            return m_data->orientation;
+        return Horizontal;
+    }
     void setOrientation(FontOrientation) { } // FIXME: Implement.
 
     unsigned hash() const;

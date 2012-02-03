@@ -261,7 +261,7 @@ private:
     void drawBitmap(const QPointF &pos, const QImage &image, QSpanData *fill);
 
     bool drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs, const QFixedPoint *positions,
-                          QFontEngine *fontEngine);
+                          QFontEngine *fontEngine, bool vertical = false);
 
 #if defined(Q_OS_SYMBIAN) && defined(QT_NO_FREETYPE)
     void drawGlyphsS60(const QPointF &p, const QTextItemInt &ti);

@@ -209,8 +209,10 @@ public:
     virtual void removeGlyphFromCache(glyph_t);
 
     virtual glyph_metrics_t boundingBox(const QGlyphLayout &glyphs) = 0;
+    virtual glyph_metrics_t boundingBox(const QGlyphLayout &glyphs, Qt::Orientation orientation);
     virtual glyph_metrics_t boundingBox(glyph_t glyph) = 0;
     virtual glyph_metrics_t boundingBox(glyph_t glyph, const QTransform &matrix);
+    virtual glyph_metrics_t boundingBox(glyph_t glyph, Qt::Orientation orientation);
     glyph_metrics_t tightBoundingBox(const QGlyphLayout &glyphs);
 
     virtual QFixed ascent() const = 0;
@@ -397,6 +399,8 @@ public:
 
     virtual glyph_metrics_t boundingBox(const QGlyphLayout &glyphs);
     virtual glyph_metrics_t boundingBox(glyph_t glyph);
+    glyph_metrics_t boundingBox(glyph_t glyph, Qt::Orientation orientation);
+    virtual glyph_metrics_t boundingBox(const QGlyphLayout &glyphs, Qt::Orientation orientation);
 
     virtual void recalcAdvances(QGlyphLayout *, QTextEngine::ShaperFlags) const;
     virtual void doKerning(QGlyphLayout *, QTextEngine::ShaperFlags) const;
@@ -426,6 +430,11 @@ public:
     QFontEngine *engine(int at) const
     {Q_ASSERT(at < engines.size()); return engines.at(at); }
 
+private:
+    void processBoundingBoxForRange(const QGlyphLayout &glyphs,
+                                    Qt::Orientation orientation,
+                                    int start, int end, int which,
+                                    glyph_metrics_t& overall);
 
 protected:
     friend class QPSPrintEnginePrivate;

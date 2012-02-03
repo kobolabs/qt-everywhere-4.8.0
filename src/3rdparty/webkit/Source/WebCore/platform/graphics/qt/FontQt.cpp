@@ -109,7 +109,32 @@ static QPen strokePenForContext(GraphicsContext* ctx)
     return QPen(QColor(ctx->strokeColor()), ctx->strokeThickness());
 }
 
-static void drawTextCommon(GraphicsContext* ctx, const TextRun& run, const FloatPoint& point, int from, int to, const QFont& font, bool isComplexText)
+#include <QDebug>
+
+
+static void drawVertical(QPainter* p, QPointF& pt, QString& string)
+{
+	p->save();
+    p->translate(pt);
+    p->rotate(-90);
+    int offset = 0;
+    for (int i = 0; i < string.length(); i++) { 
+        // Only rotate CJKIdeographs and related symbols
+        if (Font::isCJKIdeographOrSymbol(string.at(i).unicode())) {
+            offset = QFontMetrics(p->font()).width(string.left(i + 1));
+            p->drawText(0, offset, string.mid(i, 1));
+        } else {
+            p->save();
+            p->rotate(90);
+            offset = QFontMetrics(p->font()).width(string.left(i));
+            p->drawText(offset, 0, string.mid(i, 1));
+            p->restore();
+        }
+    }
+    p->restore();
+}
+
+static void drawTextCommon(GraphicsContext* ctx, const TextRun& run, const FloatPoint& point, int from, int to, const QFont& font, bool isComplexText, const FontDescription& fontDescription)
 {
     if (to < 0)
         to = run.length();
@@ -200,6 +225,8 @@ static void drawTextCommon(GraphicsContext* ctx, const TextRun& run, const Float
     QPainterPath textStrokePath;
     if (ctx->textDrawingMode() & TextModeStroke)
         textStrokePath.addText(pt, font, string);
+    
+    bool isVertical = fontDescription.orientation() == Vertical;
 
     ContextShadow* ctxShadow = ctx->contextShadow();
     if (ctxShadow->m_type != ContextShadow::NoShadow) {
@@ -208,7 +235,13 @@ static void drawTextCommon(GraphicsContext* ctx, const TextRun& run, const Float
                 p->save();
                 p->setPen(ctxShadow->m_color);
                 p->translate(ctxShadow->offset());
-                p->drawText(pt, string, flags, run.expansion());
+                // p->drawText(pt, string, flags, run.padding());
+                if (isVertical) {
+                    drawVertical(p, pt, string);
+                    // p->drawText(pt, string, flags, run.padding());
+                } else {
+                    p->drawText(pt, string, flags, run.expansion());
+				}
                 p->restore();
             } else {
                 QFontMetrics fm(font);
@@ -247,14 +280,19 @@ static void drawTextCommon(GraphicsContext* ctx, const TextRun& run, const Float
     if (ctx->textDrawingMode() & TextModeFill) {
         QPen previousPen = p->pen();
         p->setPen(textFillPen);
-        p->drawText(pt, string, flags, run.expansion());
+        // p->drawText(pt, string, flags, run.padding());
+        if (isVertical) {
+            drawVertical(p, pt, string);
+        } else {
+            p->drawText(pt, string, flags, run.expansion());
+		}
         p->setPen(previousPen);
     }
 }
 
 void Font::drawComplexText(GraphicsContext* ctx, const TextRun& run, const FloatPoint& point, int from, int to) const
 {
-    drawTextCommon(ctx, run, point, from, to, font(), /* isComplexText = */true);
+    drawTextCommon(ctx, run, point, from, to, font(), /* isComplexText = */true, m_fontDescription);
 }
 
 float Font::floatWidthForComplexText(const TextRun& run, HashSet<const SimpleFontData*>*, GlyphOverflow*) const
@@ -373,7 +411,8 @@ bool Font::canExpandAroundIdeographsInComplexText()
 
 void Font::drawSimpleText(GraphicsContext* ctx, const TextRun& run, const FloatPoint& point, int from, int to) const
 {
-    drawTextCommon(ctx, run, point, from, to, font(), /* isComplexText = */false);
+    //drawTextCommon(ctx, run, point, from, to, font(), /* isComplexText = */false);
+    drawTextCommon(ctx, run, point, from, to, font(), /* isComplexText = */false, m_fontDescription);
 }
 
 int Font::offsetForPositionForSimpleText(const TextRun& run, float position, bool includePartialGlyphs) const

@@ -72,7 +72,7 @@ public:
         Overline = 0x10,
         Underline = 0x20,
         StrikeOut = 0x40,
-
+        TopToBottom = 0x80,
         Dummy = 0xffffffff
     };
     Q_DECLARE_FLAGS(RenderFlags, RenderFlag)

@@ -837,6 +837,8 @@ static bool stringToGlyphs(HB_ShaperItem *item, QGlyphLayout *glyphs, QFontEngin
     QTextEngine::ShaperFlags shaperFlags(QTextEngine::GlyphIndicesOnly);
     if (item->item.bidiLevel % 2)
         shaperFlags |= QTextEngine::RightToLeft;
+    if (item->shaperFlags & HB_ShaperFlag_VerticalWriting)
+        shaperFlags |= QTextEngine::TopToBottom;
 
     bool result = fontEngine->stringToCMap(reinterpret_cast<const QChar *>(item->string + item->item.pos), item->item.length, glyphs, &nGlyphs, shaperFlags);
     item->num_glyphs = nGlyphs;
@@ -1213,6 +1215,9 @@ void QTextEngine::shapeTextWithHarfbuzz(int item) const
         entire_shaper_item.shaperFlags |= HB_ShaperFlag_NoKerning;
     if (option.useDesignMetrics())
         entire_shaper_item.shaperFlags |= HB_ShaperFlag_UseDesignMetrics;
+    bool vertical = option.textOrientation() == Qt::Vertical;
+    if (vertical)
+        entire_shaper_item.shaperFlags |= HB_ShaperFlag_VerticalWriting;
 
     entire_shaper_item.num_glyphs = qMax(layoutData->glyphLayout.numGlyphs - layoutData->used, int(entire_shaper_item.item.length));
     if (! ensureSpace(entire_shaper_item.num_glyphs)) {
@@ -1315,7 +1320,7 @@ void QTextEngine::shapeTextWithHarfbuzz(int item) const
 
             shaper_item.glyphs = g.glyphs;
             shaper_item.attributes = g.attributes;
-            shaper_item.advances = reinterpret_cast<HB_Fixed *>(g.advances_x);
+            shaper_item.advances = reinterpret_cast<HB_Fixed *>(vertical ? g.advances_y : g.advances_x);
             shaper_item.offsets = reinterpret_cast<HB_FixedPoint *>(g.offsets);
 
             if (shaper_item.glyphIndicesPresent) {
@@ -3174,6 +3179,7 @@ QTextLineItemIterator::QTextLineItemIterator(QTextEngine *_eng, int _lineNum, co
       selection(_selection)
 {
     pos_x = x = QFixed::fromReal(pos.x());
+    y = QFixed::fromReal(pos.y());
 
     x += line.x;
 
@@ -3189,6 +3195,7 @@ QTextLineItemIterator::QTextLineItemIterator(QTextEngine *_eng, int _lineNum, co
 QScriptItem &QTextLineItemIterator::next()
 {
     x += itemWidth;
+    y += itemHeight;
 
     ++logicalItem;
     item = visualOrder[logicalItem] + firstItem;
@@ -3198,7 +3205,10 @@ QScriptItem &QTextLineItemIterator::next()
         eng->shape(item);
 
     if (si->analysis.flags >= QScriptAnalysis::TabOrObject) {
-        itemWidth = si->width;
+        if (eng->option.textOrientation() == Qt::Vertical)
+            itemHeight = si->width;
+        else
+            itemWidth = si->width;
         return *si;
     }
 
@@ -3220,8 +3230,11 @@ QScriptItem &QTextLineItemIterator::next()
         glyphs.attributes[glyphsEnd - 1].dontPrint = false;
 
     itemWidth = 0;
-    for (int g = glyphsStart; g < glyphsEnd; ++g)
+    itemWidth = itemHeight = 0;
+    for (int g = glyphsStart; g < glyphsEnd; ++g) {
         itemWidth += glyphs.effectiveAdvance(g);
+        itemHeight += glyphs.effectiveVerticalAdvance(g);
+    }
 
     return *si;
 }

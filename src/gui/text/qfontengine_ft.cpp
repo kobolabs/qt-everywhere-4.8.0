@@ -783,6 +783,8 @@ int QFontEngineFT::loadFlags(QGlyphSet *set, GlyphFormat format, int flags,
     int load_target = default_hint_style == HintLight
                       ? FT_LOAD_TARGET_LIGHT
                       : FT_LOAD_TARGET_NORMAL;
+    if (flags & HB_ShaperFlag_VerticalWriting)
+        load_flags |= FT_LOAD_VERTICAL_LAYOUT;
 
     if (format == Format_Mono) {
         load_target = FT_LOAD_TARGET_MONO;
@@ -812,7 +814,8 @@ int QFontEngineFT::loadFlags(QGlyphSet *set, GlyphFormat format, int flags,
 QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
                                                QFixed subPixelPosition,
                                                GlyphFormat format,
-                                               bool fetchMetricsOnly) const
+                                               bool fetchMetricsOnly,
+                                               bool vertical) const
 {
 //     Q_ASSERT(freetype->lock == 1);
 
@@ -828,7 +831,7 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     }
 
     Glyph *g = set->getGlyph(glyph, subPixelPosition);
-    if (g && g->format == format) {
+    if (g && g->format == format && g->vertical == vertical) {
         if (uploadToServer && !g->uploadedToServer) {
             set->setGlyph(glyph, subPixelPosition, 0);
             delete g;
@@ -843,7 +846,9 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     Q_ASSERT(format != Format_None);
     bool hsubpixel = false;
     int vfactor = 1;
-    int load_flags = loadFlags(set, format, 0, hsubpixel, vfactor);
+    int load_flags = loadFlags(set, format,
+                               vertical ? HB_ShaperFlag_VerticalWriting : 0,
+                               hsubpixel, vfactor);
 
 #ifndef Q_WS_QWS
     if (format != Format_Mono && !embeddedbitmap)
@@ -887,7 +892,7 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     FT_Library library = qt_getFreetype();
 
     info.xOff = TRUNC(ROUND(slot->advance.x));
-    info.yOff = 0;
+    info.yOff = TRUNC(ROUND(slot->advance.y));
 
     uchar *glyph_buffer = 0;
     int glyph_buffer_size = 0;
@@ -1098,15 +1103,16 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
         g->data = 0;
     }
 
-    g->linearAdvance = slot->linearHoriAdvance >> 10;
+    g->linearAdvance = vertical ? (slot->linearVertAdvance >> 10) : (slot->linearHoriAdvance >> 10);
     g->width = info.width;
     g->height = info.height;
     g->x = -info.x;
     g->y = info.y;
-    g->advance = info.xOff;
+    g->advance = vertical ? info.yOff : info.xOff;
     g->format = format;
     delete [] g->data;
     g->data = glyph_buffer;
+    g->vertical = vertical;
 
     if (uploadToServer) {
         uploadGlyphToServer(set, glyph, g, &info, glyph_buffer_size);
@@ -1362,14 +1368,14 @@ QFixed QFontEngineFT::subPixelPositionForX(QFixed x)
 
 bool QFontEngineFT::loadGlyphs(QGlyphSet *gs, const glyph_t *glyphs, int num_glyphs,
                                const QFixedPoint *positions,
-                               GlyphFormat format)
+                               GlyphFormat format, bool vertical)
 {
     FT_Face face = 0;
 
     for (int i = 0; i < num_glyphs; ++i) {
         QFixed spp = subPixelPositionForX(positions[i].x);
         Glyph *glyph = gs->getGlyph(glyphs[i], spp);
-        if (glyph == 0 || glyph->format != format) {
+        if (glyph == 0 || glyph->format != format || glyph->vertical != vertical) {
             if (!face) {
                 face = lockFace();
                 FT_Matrix m = matrix;
@@ -1377,7 +1383,7 @@ bool QFontEngineFT::loadGlyphs(QGlyphSet *gs, const glyph_t *glyphs, int num_gly
                 FT_Set_Transform(face, &m, 0);
                 freetype->matrix = m;
             }
-            if (!loadGlyph(gs, glyphs[i], spp, format)) {
+            if (!loadGlyph(gs, glyphs[i], spp, format, false, vertical)) {
                 unlockFace();
                 return false;
             }
@@ -1601,20 +1607,31 @@ void QFontEngineFT::recalcAdvances(QGlyphLayout *glyphs, QTextEngine::ShaperFlag
     bool design = (default_hint_style == HintNone ||
                    default_hint_style == HintLight ||
                    (flags & HB_ShaperFlag_UseDesignMetrics)) && FT_IS_SCALABLE(freetype->face);
+    bool vertical = flags & QTextEngine::TopToBottom;
+    QFixed advance;
     for (int i = 0; i < glyphs->numGlyphs; i++) {
         Glyph *g = defaultGlyphSet.getGlyph(glyphs->glyphs[i]);
         if (g) {
-            glyphs->advances_x[i] = design ? QFixed::fromFixed(g->linearAdvance) : QFixed(g->advance);
+            advance = design ? QFixed::fromFixed(g->linearAdvance) : QFixed(g->advance);
+            glyphs->advances_x[i] = vertical ? 0 : advance;
+            glyphs->advances_y[i] = vertical ? advance : 0;
         } else {
             if (!face)
                 face = lockFace();
-            g = loadGlyph(glyphs->glyphs[i], 0, Format_None, true);
-            glyphs->advances_x[i] = design ? QFixed::fromFixed(face->glyph->linearHoriAdvance >> 10)
-                                           : QFixed::fromFixed(face->glyph->metrics.horiAdvance).round();
+            g = loadGlyph(glyphs->glyphs[i], 0, Format_None, true, vertical);
+            if (vertical)
+                advance = design ? QFixed::fromFixed(face->glyph->linearHoriAdvance >> 10)
+                                 : QFixed::fromFixed(face->glyph->metrics.horiAdvance).round();
+            else
+                advance = design ? QFixed::fromFixed(face->glyph->linearVertAdvance >> 10)
+                                 : QFixed::fromFixed(face->glyph->metrics.vertAdvance).round();
+            glyphs->advances_x[i] = vertical ? 0 : advance;
+            glyphs->advances_y[i] = vertical ? advance : 0;
         }
-        if (fontDef.styleStrategy & QFont::ForceIntegerMetrics)
+        if (fontDef.styleStrategy & QFont::ForceIntegerMetrics) {
             glyphs->advances_x[i] = glyphs->advances_x[i].round();
-        glyphs->advances_y[i] = 0;
+            glyphs->advances_y[i] = glyphs->advances_y[i].round();
+        }
     }
     if (face)
         unlockFace();

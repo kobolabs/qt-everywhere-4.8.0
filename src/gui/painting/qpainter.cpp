@@ -6669,10 +6669,12 @@ void QPainter::drawTextItem(const QPointF &p, const QTextItem &_ti)
 
             QTextItemInt ti2 = ti.midItem(multi->engine(which), start, end - start);
             ti2.width = 0;
+            ti2.height = 0;
             // set the high byte to zero and calc the width
             for (i = start; i < end; ++i) {
                 glyphs.glyphs[i] = glyphs.glyphs[i] & 0xffffff;
                 ti2.width += ti.glyphs.effectiveAdvance(i);
+                ti2.height += ti.glyphs.effectiveVerticalAdvance(i);
             }
 
             if (rtl)
@@ -6688,7 +6690,10 @@ void QPainter::drawTextItem(const QPointF &p, const QTextItem &_ti)
             for (i = start; i < end; ++i) {
                 glyphs.glyphs[i] = hi | glyphs.glyphs[i];
             }
-
+			// rwatson I have no idea if this is correct.
+			// See https://qt.gitorious.org/~jiang/qt/jiangs-qt/commit/8d66d01da663a42f02b60f572663902a2a029d89
+			// for the original patch, but there are these rtl checks here now that make this pretty different
+            y += ti2.height.toReal();
             // change engine
             start = end;
             which = e;
@@ -6696,10 +6701,12 @@ void QPainter::drawTextItem(const QPointF &p, const QTextItem &_ti)
 
         QTextItemInt ti2 = ti.midItem(multi->engine(which), start, end - start);
         ti2.width = 0;
+        ti2.height = 0;
         // set the high byte to zero and calc the width
         for (i = start; i < end; ++i) {
             glyphs.glyphs[i] = glyphs.glyphs[i] & 0xffffff;
             ti2.width += ti.glyphs.effectiveAdvance(i);
+            ti2.height += ti.glyphs.effectiveVerticalAdvance(i);
         }
 
         if (rtl)
