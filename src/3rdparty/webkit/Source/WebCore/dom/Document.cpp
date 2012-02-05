@@ -425,9 +425,14 @@ Document::Document(Frame* frame, const KURL& url, bool isXHTML, bool isHTML)
     m_document = this;
 
     m_pageGroupUserSheetCacheValid = false;
-
+    
+//#if ENABLE(EPUB)
+ //   m_printing = true;
+  //  m_paginatedForScreen = true;
+//#else
     m_printing = false;
     m_paginatedForScreen = false;
+//#endif
 
     m_ignoreAutofocus = false;
 

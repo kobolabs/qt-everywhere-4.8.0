@@ -513,7 +513,10 @@ namespace WebCore {
         void markDirtyRect(const IntRect&); // Hints that a portion of the backing store is dirty.
 
         static void adjustLineToPixelBoundaries(FloatPoint& p1, FloatPoint& p2, float strokeWidth, StrokeStyle);
-
+        
+#if USE(SKIA)
+        bool isPrinting();
+#endif
     private:
         void platformInit(PlatformGraphicsContext*);
         void platformDestroy();

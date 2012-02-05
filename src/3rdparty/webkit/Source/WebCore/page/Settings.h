@@ -413,6 +413,14 @@ namespace WebCore {
         void setPasswordEchoDurationInSeconds(double durationInSeconds) { m_passwordEchoDurationInSeconds = durationInSeconds; }
         double passwordEchoDurationInSeconds() const { return m_passwordEchoDurationInSeconds; }
 
+#if ENABLE(EPUB)
+        void setPageHeight(int height) { m_pageHeight = height; }
+        int pageHeight() { return m_pageHeight; }
+        void setPageWidth(int width) { m_pageWidth = width; }
+        int pageWidth() { return m_pageWidth; }
+#endif
+
+
     private:
         Page* m_page;
 
@@ -531,6 +539,11 @@ namespace WebCore {
 #endif
 #if PLATFORM(WIN) || (OS(WINDOWS) && PLATFORM(WX))
         static bool gShouldUseHighResolutionTimers;
+#endif
+
+#if ENABLE(EPUB)
+        int m_pageWidth;
+        int m_pageHeight;
 #endif
     };
 

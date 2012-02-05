@@ -419,6 +419,36 @@ Font::CodePath Font::codePath(const TextRun& run) const
     return result;
 }
 
+bool Font::isUnbreakableCharactersPair(UChar32 current, UChar32 next){
+    // LEADERS
+    if ( current == 0x2026 || // HORIZONTAL ELLIPSIS 
+         current == 0x2025 || // TWO DOT LEADER
+         current == 0x22EF || // MIDLINE HORIZONTAL ELLIPSIS
+         current == 0xFE19 || // PRESENTATION FORM FOR VERTICAL HORIZONTAL ELLIPSIS
+         current == 0xFE30 || // PRESENTATION FORM FOR VERTICAL TWO DOT LEADER
+         current == 0x205D || // TORICOLON
+         current == 0x205A )  // TWO DOT PUNCTUATION
+         return current == next;
+
+    // DASHES
+    if( current == 0x2012 ||  // FIGURE DASH
+        current == 0x2013 ||  // EN DASH
+        current == 0x2014 ||  // EM DASH
+        current == 0x2015 ||  // HORIZONTAL BAR
+        current == 0x2053 ||  // SWUNG DASH
+        current == 0x301C ||  // WAVE DASH
+        current == 0x3030)    // WAVY DASH
+        return current == next; 
+
+    // VERTICAL KANA REPEAT MARKS
+    if( current == 0x3033 || // VERTICAL KANA REPEAT MARK UPPER HALF
+        current == 0x3034){  // VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
+        if( next == 0x3035 )    // VERTICAL KANA REPEAT MARK LOWER HALF
+            return true;
+    }
+    return false;
+};
+
 bool Font::isCJKIdeograph(UChar32 c)
 {
     // The basic CJK Unified Ideographs block.
@@ -466,6 +496,15 @@ bool Font::isCJKIdeograph(UChar32 c)
 
 bool Font::isCJKIdeographOrSymbol(UChar32 c)
 {
+#if ENABLE(EPUB)
+    customCJKStatus result = isCustomTreatAsCJKIdeograph(c);
+    if (result == True){
+        return true;
+    } else if(result == False){
+        return false;
+    }
+#endif
+
     // 0x2C7 Caron, Mandarin Chinese 3rd Tone
     // 0x2CA Modifier Letter Acute Accent, Mandarin Chinese 2nd Tone
     // 0x2CB Modifier Letter Grave Access, Mandarin Chinese 4th Tone 
@@ -521,15 +560,108 @@ bool Font::isCJKIdeographOrSymbol(UChar32 c)
     return isCJKIdeograph(c);
 }
 
+#if ENABLE(EPUB)
+
+Font::customCJKStatus Font::isCustomTreatAsCJKIdeograph(UChar32 c){
+    // General Punctuation
+    if (c >= 0x2000 && c <= 0x206F)
+        return True;
+
+    // Number Forms
+    if (c >= 0x2150 && c <= 0x218F)
+        return True;
+
+    // Enclosed Alphanumerics
+    if (c >= 0x2460 && c <= 0x24FF)
+        return True;
+
+    // Geometric Shapes
+    if (c >= 0x25A0 && c <= 0x25FF)
+        return True;
+
+    // Miscellaneous Symbol
+    if (c >= 0x2600 && c <= 0x26FF)
+        return True;
+
+
+    // EPUB custom
+    if( c == 0xFF1A ||    //  FULLWIDTH COLON, Full width ASCII variants
+        c == 0xFF1B ||    //  FULLWIDTH SEMICOLON, Full width ASCII variants
+        c == 0xFF1C ||    //  FULLWIDTH LESS-THAN SIGN, Full width ASCII variants
+        c == 0xFF1E )     //  FULLWIDTH GREATER-THAN SIGN, Full width ASCII variants
+        return False;
+
+    // EPUB custom
+    if( c == 0x00B6 ||    // PILCROW SIGN, Latin-1 punctuation and symbols
+        c == 0x2103 ||    // DEGREE CELSIUS, Letterlike symbols
+        c == 0x212B)      // ANGSTROM SIGN, Letterlike symbols
+        return True;
+ 
+    // Halfwidth and Fullwidth Forms
+    // Usually only used in CJK
+
+    // This is more segmentalized conditions than webkit original source which is in Font.cpp.
+    //
+    //  In the original code, halfwidth katakana (and halfwidth CJK symbols) is treated as a part of CJK Ideographs,
+    // and expected to be written the glyph vertically in the vertical writing-mode.
+    // We agree the first part, but not about second part.
+    // We think the halfwidth katakana should be written same like halfwidth alphabets.
+    //
+    //  This function is only determining whether a character is CJK Ideograph,
+    // but its result is used to determine its glyph writing orientation.
+    // That's why we modify this function to treat halfwidth katakana as not CJK Ideograph, despite the meaning of the function's name.
+    // We think this is a little confused behavior. It may be need a more sophisticated solution.
+    //
+    // References:
+    //  Original commit : treat halfwidth katakana as CJK Ideograph.
+    //  https://bugs.webkit.org/show_bug.cgi?id=51012
+    //
+    //  Character codes for Halfwidth and Fullwidth Forms
+    //  http://unicode.org/charts/PDF/UFF00.pdf
+
+    // Fullwidth ASCII variants
+    if (c >= 0xFF00 && c <= 0xFF5E)
+        return True;
+
+    // Fullwidth brackets
+    if (c >= 0xFF5F && c <= 0xFF60)
+        return True;
+
+    // Halfwidth CJK punctuation
+    if (c >= 0xFF61 && c <= 0xFF64)
+        return False;
+
+    // Halfwidth Katakana variants
+    if (c >= 0xFF65 && c <= 0xFF9F)
+        return False;
+
+    // Halfwidth Hangul variants
+    if (c >= 0xFFA0 && c <= 0xFFDC)
+        return False;
+
+    // Fullwidth symbol variants
+    if (c >= 0xFFE0 && c <= 0xFFE6)
+        return True;
+
+    // Halfwidth symbol variants
+    if (c >= 0xFFE8 && c <= 0xFFEE)
+        return False;
+
+    return NotMatched;
+}
+#endif
+
 unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length, TextDirection direction, bool& isAfterExpansion)
 {
     static bool expandAroundIdeographs = canExpandAroundIdeographsInComplexText();
     unsigned count = 0;
     if (direction == LTR) {
+		UChar32 prev = 0;
         for (size_t i = 0; i < length; ++i) {
             UChar32 character = characters[i];
             if (treatAsSpace(character)) {
                 count++;
+                prev = character;
                 isAfterExpansion = true;
                 continue;
             }
@@ -537,20 +669,35 @@ unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length,
                 character = U16_GET_SUPPLEMENTARY(character, characters[i + 1]);
                 i++;
             }
-            if (expandAroundIdeographs && isCJKIdeographOrSymbol(character)) {
-                if (!isAfterExpansion)
+
+            size_t j = i + 1;
+            UChar32 next = j < length ? characters[j] : 0;
+            if (U16_IS_LEAD(next) && j + 1 < length && U16_IS_TRAIL(characters[j + 1])) {
+                next = U16_GET_SUPPLEMENTARY(next, characters[j + 1]);
+            }
+            if (expandAroundIdeographs && isCJKIdeographOrSymbol(character) ){
+                if (!isAfterExpansion && !isUnbreakableCharactersPair(prev, character))
                     count++;
-                count++;
-                isAfterExpansion = true;
+
+                if(!isUnbreakableCharactersPair(character, next)){
+                    count++;
+                    isAfterExpansion = true;
+                } else {
+                    isAfterExpansion = false;
+                }
+                prev = character;
                 continue;
             }
+            prev = character;
             isAfterExpansion = false;
         }
     } else {
+		UChar32 next = 0;
         for (size_t i = length; i > 0; --i) {
             UChar32 character = characters[i - 1];
             if (treatAsSpace(character)) {
                 count++;
+                next = character;
                 isAfterExpansion = true;
                 continue;
             }
@@ -558,13 +705,25 @@ unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length,
                 character = U16_GET_SUPPLEMENTARY(characters[i - 2], character);
                 i--;
             }
-            if (expandAroundIdeographs && isCJKIdeographOrSymbol(character)) {
-                if (!isAfterExpansion)
+            size_t j = i - 1;
+            UChar32 prev = j > 1 ? characters[j - 1] : 0;
+            if (prev && U16_IS_TRAIL(prev) && U16_IS_LEAD(characters[j - 2])) {
+                prev = U16_GET_SUPPLEMENTARY(characters[j - 2], prev);
+            }
+            if (expandAroundIdeographs && isCJKIdeographOrSymbol(character) ){
+                if (!isAfterExpansion && !isUnbreakableCharactersPair(prev, character))
                     count++;
-                count++;
-                isAfterExpansion = true;
+
+                if(!isUnbreakableCharactersPair(character, next)){
+                    count++;
+                    isAfterExpansion = true;
+                } else {
+                    isAfterExpansion = false;
+                }
+                next = character;
                 continue;
             }
+            next = character;
             isAfterExpansion = false;
         }
     }

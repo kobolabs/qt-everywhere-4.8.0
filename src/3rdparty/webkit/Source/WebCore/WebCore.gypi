@@ -3899,6 +3899,8 @@
             'platform/graphics/SVGGlyph.cpp',
             'platform/graphics/StringTruncator.cpp',
             'platform/graphics/StrokeStyleApplier.h',
+            'platform/graphics/SurrogatePairAwareTextIterator.cpp',
+            'platform/graphics/SurrogatePairAwareTextIterator.h',
             'platform/graphics/Tile.h',
             'platform/graphics/TiledBackingStore.cpp',
             'platform/graphics/TiledBackingStore.h',

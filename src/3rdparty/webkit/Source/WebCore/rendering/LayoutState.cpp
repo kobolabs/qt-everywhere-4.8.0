@@ -162,9 +162,12 @@ void LayoutState::clearPaginationInformation()
     m_columnInfo = m_next->m_columnInfo;
 }
 
-int LayoutState::pageLogicalOffset(int childLogicalOffset) const
+int LayoutState::pageLogicalOffset(int childLogicalOffset, bool horizontalWritingMode) const
 {
-    return m_layoutOffset.height() + childLogicalOffset - m_pageOffset.height();
+    if (horizontalWritingMode)
+        return m_layoutOffset.height() + childLogicalOffset - m_pageOffset.height();
+    else
+        return m_layoutOffset.width() + childLogicalOffset - m_pageOffset.width();
 }
 
 void LayoutState::addForcedColumnBreak(int childLogicalOffset)

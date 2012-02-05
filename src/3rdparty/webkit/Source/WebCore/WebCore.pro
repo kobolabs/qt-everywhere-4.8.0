@@ -3118,10 +3118,12 @@ contains(DEFINES, WTF_USE_QT_BEARER=1) {
     SOURCES += \
         platform/graphics/FontFastPath.cpp \
         platform/graphics/GlyphPageTreeNode.cpp \
-        platform/graphics/WidthIterator.cpp
+        platform/graphics/WidthIterator.cpp \
+        platform/graphics/SurrogatePairAwareTextIterator.cpp
 
     HEADERS += \
-        platform/graphics/WidthIterator.h
+        platform/graphics/WidthIterator.h \
+        platform/graphics/SurrogatePairAwareTextIterator.h
 }
 
 contains(DEFINES, ENABLE_GEOLOCATION=1) {

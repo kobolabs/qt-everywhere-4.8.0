@@ -1298,7 +1298,7 @@ void RenderBlock::layoutBlock(bool relayoutChildren, int pageLogicalHeight)
     statePusher.pop();
 
     if (view()->layoutState()->m_pageLogicalHeight)
-        setPageLogicalOffset(view()->layoutState()->pageLogicalOffset(logicalTop()));
+        setPageLogicalOffset(view()->layoutState()->pageLogicalOffset(logicalTop(), isHorizontalWritingMode()));
 
     updateLayerTransform();
 
@@ -2235,7 +2235,7 @@ void RenderBlock::markForPaginationRelayoutIfNeeded()
     if (needsLayout())
         return;
 
-    if (view()->layoutState()->pageLogicalHeightChanged() || (view()->layoutState()->pageLogicalHeight() && view()->layoutState()->pageLogicalOffset(logicalTop()) != pageLogicalOffset()))
+    if (view()->layoutState()->pageLogicalHeightChanged() || (view()->layoutState()->pageLogicalHeight() && view()->layoutState()->pageLogicalOffset(logicalTop(), isHorizontalWritingMode()) != pageLogicalOffset()))
         setChildNeedsLayout(true, false);
 }
 

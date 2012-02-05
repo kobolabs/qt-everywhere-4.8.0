@@ -34,6 +34,7 @@
 #include "RenderWidget.h"
 #include "RenderWidgetProtector.h"
 #include "TransformState.h"
+#include "Settings.h"
 
 #if USE(ACCELERATED_COMPOSITING)
 #include "RenderLayerCompositor.h"
@@ -65,6 +66,15 @@ RenderView::RenderView(Node* node, FrameView* view)
     m_maxPreferredLogicalWidth = 0;
 
     setPreferredLogicalWidthsDirty(true, false);
+
+#if ENABLE(EPUB)
+    Settings* settings = document()->settings();
+    ASSERT(settings);
+    if (settings) {
+        setPageLogicalHeight(settings->pageHeight());
+        setWidth(settings->pageWidth());
+    }
+#endif
     
     setPositioned(true); // to 0,0 :)
 }

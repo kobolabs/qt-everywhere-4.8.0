@@ -29,6 +29,7 @@
 #include "TextBreakIterator.h"
 #include <wtf/StdLibExtras.h>
 #include <wtf/unicode/CharacterNames.h>
+#include <unicode/uchar.h>
 
 #if PLATFORM(MAC)
 #include <CoreServices/CoreServices.h>
@@ -125,6 +126,18 @@ static inline bool shouldBreakAfter(UChar ch, UChar nextCh)
         // FIXME: cases for ideographicComma and ideographicFullStop are a workaround for an issue in Unicode 5.0
         // which is likely to be resolved in Unicode 5.1 <http://bugs.webkit.org/show_bug.cgi?id=17411>.
         // We may want to remove or conditionalize this workaround at some point.
+
+        switch ((ULineBreak)u_getIntPropertyValue(nextCh, UCHAR_LINE_BREAK)) {
+        case U_LB_CLOSE_PUNCTUATION:
+        case U_LB_EXCLAMATION:
+        case U_LB_BREAK_SYMBOLS:
+        case U_LB_INFIX_NUMERIC:
+        case U_LB_ZWSPACE:
+        case U_LB_WORD_JOINER:
+            return false;
+        default:
+            break;
+        }
         return true;
     default:
         // If both ch and nextCh are ASCII characters, use a lookup table for enhanced speed and for compatibility
@@ -164,7 +177,14 @@ int nextBreakablePosition(LazyLineBreakIterator& lazyBreakIterator, int pos, boo
                 if (breakIterator)
                     nextBreak = textBreakFollowing(breakIterator, i - 1);
             }
-            if (i == nextBreak && !isBreakableSpace(lastCh, treatNoBreakSpaceAsBreak))
+            // These characters are not kinsoku characters according to Unicode 6.0,
+            // However, they are in JLreq (http://www.w3.org/TR/jlreq/). We need
+            // special treatment here.
+            // 3033;ID # VERTICAL KANA REPEAT MARK UPPER HALF
+            // 3034;ID # VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
+            // 3035;ID # VERTICAL KANA REPEAT MARK LOWER HALF
+            if (i == nextBreak && !isBreakableSpace(lastCh, treatNoBreakSpaceAsBreak) &&
+                !((lastCh == 0x3033 || lastCh == 0x3034 || ch == 0x3035)))
                 return i;
         }
 

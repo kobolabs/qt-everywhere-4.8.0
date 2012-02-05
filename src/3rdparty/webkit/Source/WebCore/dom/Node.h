@@ -348,6 +348,10 @@ public:
 
     unsigned nodeIndex() const;
 
+#if ENABLE(EPUB)
+    int nodeConsecutiveIndex() const;
+#endif
+
     // Returns the DOM ownerDocument attribute. This method never returns NULL, except in the case 
     // of (1) a Document node or (2) a DocumentType node that is not used with any Document yet. 
     Document* ownerDocument() const;

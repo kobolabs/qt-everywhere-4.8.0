@@ -122,7 +122,11 @@ FrameView::FrameView(Frame* frame)
     , m_postLayoutTasksTimer(this, &FrameView::postLayoutTimerFired)
     , m_isTransparent(false)
     , m_baseBackgroundColor(Color::white)
+#if ENABLE(EPUB)
     , m_mediaType("screen")
+#else
+    , m_mediaType("print")
+#endif
     , m_actionScheduler(adoptPtr(new FrameActionScheduler))
     , m_overflowStatusDirty(true)
     , m_viewportRenderer(0)

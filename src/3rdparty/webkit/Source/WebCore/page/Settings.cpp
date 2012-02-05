@@ -117,7 +117,11 @@ Settings::Settings(Page* page)
     , m_allowFileAccessFromFileURLs(true)
     , m_javaScriptCanOpenWindowsAutomatically(false)
     , m_javaScriptCanAccessClipboard(false)
+#ifdef ENABLE_EPUB
+    , m_shouldPrintBackgrounds(true)
+#else
     , m_shouldPrintBackgrounds(false)
+#endif
     , m_textAreasAreResizable(false)
 #if ENABLE(DASHBOARD_SUPPORT)
     , m_usesDashboardBackwardCompatibilityMode(false)

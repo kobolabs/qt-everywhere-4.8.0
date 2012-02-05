@@ -2947,6 +2947,27 @@ void Node::defaultEventHandler(Event* event)
     }
 }
 
+#if ENABLE(EPUB)
+int Node::nodeConsecutiveIndex() const
+{
+    const Node* rootNode = document()->documentElement();
+    const Node* node = this;
+    int cnt = -1;
+
+    bool breaked = false;
+    for (node = rootNode; node; node = node->traverseNextNode()) {
+        cnt++;
+        if (node == this) {
+            breaked = true;
+            break;
+        }
+    }
+    if (!breaked)
+        return -1;
+    return cnt;
+}
+#endif
+
 } // namespace WebCore
 
 #ifndef NDEBUG

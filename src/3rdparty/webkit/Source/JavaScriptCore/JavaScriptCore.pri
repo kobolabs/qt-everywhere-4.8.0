@@ -57,7 +57,7 @@ win32-*: DEFINES += _HAS_TR1=0
 
 DEFINES += BUILDING_JavaScriptCore BUILDING_WTF
 
-# CONFIG += text_breaking_with_icu
+CONFIG += text_breaking_with_icu
 
 contains (CONFIG, text_breaking_with_icu) {
     DEFINES += WTF_USE_QT_ICU_TEXT_BREAKING=1

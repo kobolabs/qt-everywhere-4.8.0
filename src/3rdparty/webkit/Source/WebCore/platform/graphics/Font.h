@@ -144,6 +144,16 @@ public:
 
     static bool isCJKIdeograph(UChar32);
     static bool isCJKIdeographOrSymbol(UChar32);
+    static bool isUnbreakableCharactersPair(UChar32, UChar32);
+
+#if ENABLE(EPUB)
+    enum customCJKStatus {
+        True,
+        False,
+        NotMatched
+    };
+    static customCJKStatus isCustomTreatAsCJKIdeograph(UChar32);
+#endif
 
     static unsigned expansionOpportunityCount(const UChar*, size_t length, TextDirection, bool& isAfterExpansion);
 

@@ -254,3 +254,6 @@ typedef float CGFloat;
 #include <bridge/npruntime_internal.h>
 #endif
 
+#ifndef ENABLE_EPUB
+#define ENABLE_EPUB 1
+#endif

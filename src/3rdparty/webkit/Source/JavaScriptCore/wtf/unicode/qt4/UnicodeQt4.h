@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #if USE(QT_ICU_TEXT_BREAKING)
+#include <unicode/uchar.h>
 #include <unicode/ubrk.h>
 #endif
 

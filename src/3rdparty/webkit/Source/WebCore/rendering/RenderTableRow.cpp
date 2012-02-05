@@ -146,6 +146,7 @@ void RenderTableRow::layout()
                 cell->setChildNeedsLayout(true, false);
 
             if (child->needsLayout()) {
+                cell->clearIntrinsicPadding();
                 cell->computeBlockDirectionMargins(table());
                 cell->layout();
             }

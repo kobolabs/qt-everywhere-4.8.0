@@ -69,7 +69,7 @@ public:
     
     // The page logical offset is the object's offset from the top of the page in the page progression
     // direction (so an x-offset in vertical text and a y-offset for horizontal text).
-    int pageLogicalOffset(int childLogicalOffset) const;
+    int pageLogicalOffset(int childLogicalOffset, bool horizontalWritingMode = true) const;
 
     void addForcedColumnBreak(int childLogicalOffset);
     
