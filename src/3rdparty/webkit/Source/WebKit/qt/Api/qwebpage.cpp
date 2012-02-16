@@ -2269,7 +2269,9 @@ QPair<QRect, QRect> QWebPage::selectionEndPoints() {
 	VisibleSelection selection = d->page->focusController()->focusedOrMainFrame()->selection()->selection();
 	PassRefPtr<Range> range = selection.firstRange();
 	Vector<IntRect> rects;
-	range.get()->textRects(rects, true);
+	if (range.get() != NULL) {
+		range.get()->textRects(rects, true);
+	}
 	if (rects.size() == 0) {
 		return QPair<QRect, QRect>();
 	}
