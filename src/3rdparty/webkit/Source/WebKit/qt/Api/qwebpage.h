@@ -264,7 +264,7 @@ public:
 	void expandSelectionDown(QRect bounds);
 	
 	void selectBetweenPoints(QPoint one, QPoint two);
-	QPair<QPoint, QPoint> selectionEndPoints();
+	QPair<QRect, QRect> selectionEndPoints();
 
     void setView(QWidget *view);
     QWidget *view() const;

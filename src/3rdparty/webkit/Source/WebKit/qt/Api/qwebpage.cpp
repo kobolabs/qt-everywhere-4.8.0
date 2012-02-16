@@ -2256,16 +2256,16 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two) {
 	}
 }
 
-QPair<QPoint, QPoint> QWebPage::selectionEndPoints() {
+QPair<QRect, QRect> QWebPage::selectionEndPoints() {
 	d->createMainFrame();
 	VisibleSelection selection = d->page->focusController()->focusedOrMainFrame()->selection()->selection();
 	VisiblePosition start = selection.visibleStart();
 	VisiblePosition end = selection.visibleEnd();
 	IntRect startRect = start.absoluteCaretBounds();
-	IntRect endRect = end.absoluteCaretBounds();	
-	QPoint startPoint(startRect.x(), startRect.y());
-	QPoint endPoint(endRect.x(), endRect.y());
-	return QPair<QPoint, QPoint>(startPoint,endPoint);
+	IntRect endRect = end.absoluteCaretBounds();
+	QRect startQRect(startRect.x(), startRect.y(), startRect.width(), startRect.height());
+	QRect endQRect(endRect.x(), endRect.y(), endRect.width(), endRect.height());
+	return QPair<QRect, QRect>(startQRect,endQRect);
 }
 
 /*!
