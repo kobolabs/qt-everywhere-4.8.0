@@ -254,6 +254,9 @@ public:
 
     QWebHistory *history() const;
     QWebSettings *settings() const;
+    
+    void selectWordAtPoint(QPoint point, QRect bounds);
+    void clearSelection();
 
     void setView(QWidget *view);
     QWidget *view() const;

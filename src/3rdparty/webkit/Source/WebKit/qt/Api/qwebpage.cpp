@@ -72,6 +72,7 @@
 #include "HTMLInputElement.h"
 #include "HTMLNames.h"
 #include "HashMap.h"
+#include "HitTestRequest.h"
 #include "HitTestResult.h"
 #include "Image.h"
 #include "InspectorClientQt.h"
@@ -99,7 +100,9 @@
 #include "ProgressTracker.h"
 #include "QtPlatformPlugin.h"
 #include "RefPtr.h"
+#include "RenderLayer.h"
 #include "RenderTextControl.h"
+#include "RenderView.h"
 #include "SchemeRegistry.h"
 #include "Scrollbar.h"
 #include "SecurityOrigin.h"
@@ -2153,6 +2156,35 @@ bool QWebPage::javaScriptPrompt(QWebFrame *frame, const QString& msg, const QStr
         *result = x;
 #endif
     return ok;
+}
+
+
+void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds) {
+	d->createMainFrame();
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	IntPoint point(docPoint.x(),docPoint.y());
+	HitTestRequest request(HitTestRequest::ReadOnly | HitTestRequest::Active);
+	HitTestResult result(point);
+	frame->document()->renderView()->layer()->hitTest(request, result);
+	Node* innerNode = result.innerNode();
+	if (innerNode && innerNode->renderer()) {
+		VisiblePosition pos(innerNode->renderer()->positionForPoint(result.localPoint()));
+		VisibleSelection newSelection;
+		if (pos.isNotNull()) {
+			newSelection = VisibleSelection(pos);
+			newSelection.expandUsingGranularity(WordGranularity);
+		}
+		if (newSelection.isRange()) {
+			frame->selection()->setSelection(newSelection, WordGranularity);
+		} else {
+			frame->selection()->setSelection(newSelection);
+		}
+	}
+}
+
+void QWebPage::clearSelection() {
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	frame->selection()->clear();
 }
 
 /*!
