@@ -116,6 +116,9 @@ extern int *qt_last_x,*qt_last_y;
 
 QPoint QCursor::pos()
 {
+#if defined (QT_NO_QWS_CURSOR)
+    return QPoint(0, 0);
+#endif
     // This doesn't know about hotspots yet so we disable it
     //qt_accel_update_cursor();
     if (qt_last_x)
