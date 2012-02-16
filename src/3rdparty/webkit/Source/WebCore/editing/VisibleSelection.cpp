@@ -348,9 +348,11 @@ void VisibleSelection::setStartAndEndFromBaseAndExtentRespectingGranularity(Text
             //added this to select only letters for dictionary viewing
             if( m_selectOnlyLetters && m_start.anchorNode()->isTextNode() && m_end.anchorNode()->isTextNode() ) {
 
-                CharacterData* text = static_cast<CharacterData*>(m_start.anchorNode());
-                String s = text->data();                
-                
+                CharacterData* startText = static_cast<CharacterData*>(m_start.anchorNode());
+                String startStr = startText->data();
+                CharacterData* endText = static_cast<CharacterData*>(m_end.anchorNode());
+                String endStr = endText->data();
+
                 int n1 = m_start.offsetInContainerNode();
                 int n2 = m_end.offsetInContainerNode() - 1;
 
@@ -359,16 +361,16 @@ void VisibleSelection::setStartAndEndFromBaseAndExtentRespectingGranularity(Text
                 //of a sentence to be part of the selection. Assigning m_end to m_start and
                 //adjusting the offset does not fix this. 		
 
-                QChar c1 = s[n1];
-                QChar c2 = s[n2];
+                QChar c1 = startStr[n1];
+                QChar c2 = endStr[n2];
 
                 while(!c1.isLetter() && n1 <= n2) {
-                    c1 = s[++n1];
+                    c1 = startStr[++n1];
                     m_start = m_start.next(Character);
                 }
 
                 while(!c2.isLetter() && n2 >= n1) {
-                    c2 = s[--n2];
+                    c2 = endStr[--n2];
                     m_end = m_end.previous(Character);
                 }
             }
