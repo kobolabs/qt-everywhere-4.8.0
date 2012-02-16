@@ -2229,6 +2229,45 @@ void QWebPage::clearSelection() {
 	frame->selection()->clear();
 }
 
+void QWebPage::selectBetweenPoints(QPoint one, QPoint two) {
+	d->createMainFrame();
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+
+	IntPoint onepoint(one.x(),one.y());
+	HitTestRequest onerequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
+	HitTestResult oneResult(onepoint);
+	frame->document()->renderView()->layer()->hitTest(onerequest, oneResult);
+		
+	IntPoint twopoint(two.x(),two.y());
+	HitTestRequest tworequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
+	HitTestResult twoResult(twopoint);
+	frame->document()->renderView()->layer()->hitTest(tworequest, twoResult);
+	
+	Node *oneNode = oneResult.innerNode();
+	Node *twoNode = twoResult.innerNode();
+	if (oneNode && twoNode && oneNode->renderer() && twoNode->renderer()) {
+		VisiblePosition onepos(oneNode->renderer()->positionForPoint(oneResult.localPoint()));
+		VisiblePosition twopos(twoNode->renderer()->positionForPoint(twoResult.localPoint()));
+		VisibleSelection newSelection;
+		if (onepos.isNotNull() && twopos.isNotNull()) {
+			newSelection = VisibleSelection(onepos, twopos);
+		}
+		frame->selection()->setSelection(newSelection);
+	}
+}
+
+QPair<QPoint, QPoint> QWebPage::selectionEndPoints() {
+	d->createMainFrame();
+	VisibleSelection selection = d->page->focusController()->focusedOrMainFrame()->selection()->selection();
+	VisiblePosition start = selection.visibleStart();
+	VisiblePosition end = selection.visibleEnd();
+	IntRect startRect = start.absoluteCaretBounds();
+	IntRect endRect = end.absoluteCaretBounds();	
+	QPoint startPoint(startRect.x(), startRect.y());
+	QPoint endPoint(endRect.x(), endRect.y() + endRect.height());
+	return QPair<QPoint, QPoint>(startPoint,endPoint);
+}
+
 /*!
     \fn bool QWebPage::shouldInterruptJavaScript()
     \since 4.6
