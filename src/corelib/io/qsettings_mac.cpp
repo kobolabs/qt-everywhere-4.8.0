@@ -604,30 +604,15 @@ QSettingsPrivate *QSettingsPrivate::create(QSettings::Format format,
         }
         // Check whether to apply AppStore folder restrictions.
         if (forAppStore) {
-
-            if (!organization.compare(QCoreApplication::organizationDomain())
-                    && !application.compare(QCoreApplication::applicationName())) {
-                // Change the path for the native QSettings file, the Bundle-Identifier
-                // is used to generate this path e.g. ~/Library/Preferences/<bundle-identifier>.plist
-                CFBundleRef mainBundle;
-                mainBundle = CFBundleGetMainBundle();
-                QString identifier = QCFString::toQString(CFBundleGetIdentifier(mainBundle));
-                QStringList parts = identifier.split(QChar('.'));
-                if (parts.count() == 3)
-                    app = parts[2];
+            CFBundleRef mainBundle;
+            mainBundle = CFBundleGetMainBundle();
+            QString identifier = QCFString::toQString(CFBundleGetIdentifier(mainBundle));
+            QStringList parts = identifier.split(QChar('.'));
+            if (parts.count() >= 3) {
+                app = QStringList(parts.mid(2)).join(".");
+                org = parts[1] + QLatin1Char('.') +parts[0];
             }
-            if (!organization.compare(QLatin1String("Trolltech")) && application.isEmpty()) {
-                // Save Qt settings in the navite QSettings file
-                CFBundleRef mainBundle;
-                mainBundle = CFBundleGetMainBundle();
-                QString identifier = QCFString::toQString(CFBundleGetIdentifier(mainBundle));
-                QStringList parts = identifier.split(QChar('.'));
-                if (parts.count() == 3) {
-                    app = parts[2];
-                    org = parts[1] + QLatin1Char('.') +parts[0];
-                }
-            }
-        }
+	}
 #endif
         return new QMacSettingsPrivate(scope, org, app);
     } else {
