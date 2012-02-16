@@ -580,7 +580,50 @@ QSettingsPrivate *QSettingsPrivate::create(QSettings::Format format,
                                            const QString &application)
 {
     if (format == QSettings::NativeFormat) {
-        return new QMacSettingsPrivate(scope, organization, application);
+        static int forAppStore = -1;
+        if (forAppStore == -1) {
+            // Check for a Key called "QtForAppStore" in Info.plist
+            forAppStore = 0;
+            CFBundleRef mainBundle;
+            mainBundle = CFBundleGetMainBundle();
+            CFStringRef key = QCFString::toCFStringRef(QLatin1String("QtForAppStore"));
+            CFTypeRef val = CFBundleGetValueForInfoDictionaryKey(mainBundle, key);
+            if (CFGetTypeID(val) == CFStringGetTypeID()
+                    && !QCFString::toQString((CFStringRef)val).compare(QLatin1String("yes"), Qt::CaseInsensitive)) {
+                // The value for "QtForAppStore"' is "Yes"
+                forAppStore = 1;
+            }
+            //Release the variables
+        }
+        QString org = organization;
+        QString app = application;
+        // Check whether to apply AppStore folder restrictions.
+        if (forAppStore) {
+
+            if (!organization.compare(QCoreApplication::organizationDomain())
+                    && !application.compare(QCoreApplication::applicationName())) {
+                // Change the path for the native QSettings file, the Bundle-Identifier
+                // is used to generate this path e.g. ~/Library/Preferences/<bundle-identifier>.plist
+                CFBundleRef mainBundle;
+                mainBundle = CFBundleGetMainBundle();
+                QString identifier = QCFString::toQString(CFBundleGetIdentifier(mainBundle));
+                QStringList parts = identifier.split(QChar('.'));
+                if (parts.count() == 3)
+                    app = parts[2];
+            }
+            if (!organization.compare(QLatin1String("Trolltech")) && application.isEmpty()) {
+                // Save Qt settings in the navite QSettings file
+                CFBundleRef mainBundle;
+                mainBundle = CFBundleGetMainBundle();
+                QString identifier = QCFString::toQString(CFBundleGetIdentifier(mainBundle));
+                QStringList parts = identifier.split(QChar('.'));
+                if (parts.count() == 3) {
+                    app = parts[2];
+                    org = parts[1] + QLatin1Char('.') +parts[0];
+                }
+            }
+        }
+        return new QMacSettingsPrivate(scope, org, app);
     } else {
         return new QConfFileSettingsPrivate(format, scope, organization, application);
     }
