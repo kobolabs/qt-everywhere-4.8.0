@@ -476,6 +476,9 @@ bool QTimerInfoList::timerWait(timeval &tm)
 
 void QTimerInfoList::registerTimer(int timerId, int interval, QObject *object)
 {
+    updateCurrentTime();
+    repairTimersIfNeeded();
+
     QTimerInfo *t = new QTimerInfo;
     t->id = timerId;
     t->interval.tv_sec  = interval / 1000;
