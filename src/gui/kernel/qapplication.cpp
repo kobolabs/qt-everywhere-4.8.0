@@ -5807,6 +5807,12 @@ void QApplicationPrivate::translateRawTouchEvent(QWidget *window,
             }
 
             if (!widget) {
+                if (!window)
+                    window = QApplication::activeModalWidget();
+                if (!window)
+                    window = QApplication::activePopupWidget();
+                if (!window)
+                    window = QApplication::activeWindow();
                 // determine which widget this event will go to
                 if (!window)
                     window = QApplication::topLevelAt(touchPoint.screenPos().toPoint());
