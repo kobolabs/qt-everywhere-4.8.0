@@ -133,6 +133,7 @@ public:
     void setNumericalPrecisionPolicy(QSql::NumericalPrecisionPolicy precisionPolicy);
     QSql::NumericalPrecisionPolicy numericalPrecisionPolicy() const;
 
+    virtual void sqlite_interrupt() {} /* it seems apps can't include qsql_sqlite.h, so need a virtual here */
 Q_SIGNALS:
     void notification(const QString &name);
 

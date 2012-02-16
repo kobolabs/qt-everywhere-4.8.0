@@ -713,7 +713,7 @@ QString QSQLiteDriver::escapeIdentifier(const QString &identifier, IdentifierTyp
     return _q_escapeIdentifier(identifier);
 }
 
-void QSQLiteDriver::interrupt()
+void QSQLiteDriver::sqlite_interrupt()
 {
     sqlite3_interrupt(d->access);
 }

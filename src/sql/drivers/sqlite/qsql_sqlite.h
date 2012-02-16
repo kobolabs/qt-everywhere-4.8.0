@@ -112,7 +112,7 @@ public:
     QVariant handle() const;
     QString escapeIdentifier(const QString &identifier, IdentifierType) const;
 
-    void interrupt();
+    virtual void sqlite_interrupt();
 
 private:
     QSQLiteDriverPrivate* d;
