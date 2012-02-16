@@ -2264,7 +2264,7 @@ QPair<QPoint, QPoint> QWebPage::selectionEndPoints() {
 	IntRect startRect = start.absoluteCaretBounds();
 	IntRect endRect = end.absoluteCaretBounds();	
 	QPoint startPoint(startRect.x(), startRect.y());
-	QPoint endPoint(endRect.x(), endRect.y() + endRect.height());
+	QPoint endPoint(endRect.x(), endRect.y());
 	return QPair<QPoint, QPoint>(startPoint,endPoint);
 }
 
