@@ -106,6 +106,7 @@
 #include "SchemeRegistry.h"
 #include "Scrollbar.h"
 #include "SecurityOrigin.h"
+#include "SelectionController.h"
 #include "Settings.h"
 #if defined Q_OS_WIN32
 #include "SystemInfo.h"
@@ -2164,22 +2165,22 @@ int QWebPage::selectedWordHeight() const {
 
 void QWebPage::expandSelectionRight() {
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::EXTEND, SelectionController::RIGHT, WordGranularity);
+	frame->selection()->modify(SelectionController::AlterationExtend, DirectionRight, WordGranularity);
 }
 
 void QWebPage::expandSelectionLeft() {
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::EXTEND, SelectionController::LEFT, WordGranularity);
+	frame->selection()->modify(SelectionController::AlterationExtend, DirectionLeft, WordGranularity);
 }
 
 void QWebPage::expandSelectionUp() {
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::EXTEND, SelectionController::BACKWARD, LineGranularity);
+	frame->selection()->modify(SelectionController::AlterationExtend, DirectionBackward, LineGranularity);
 }
 
 void QWebPage::expandSelectionDown() {
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::EXTEND, SelectionController::FORWARD, LineGranularity);
+	frame->selection()->modify(SelectionController::AlterationExtend, DirectionForward, LineGranularity);
 }
 
 //If selectOnlyLetters == true the selection will be modified to discard non letters.
