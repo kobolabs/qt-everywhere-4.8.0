@@ -434,7 +434,10 @@ void GraphicsContext::drawHighlightForText(const Font& font, const TextRun& run,
     if (paintingDisabled())
         return;
 
-    fillRect(font.selectionRectForText(run, point, h, from, to), backgroundColor, colorSpace);
+    IntRect rect(font.selectionRectForText(run, point, h, from, to));
+    rect.setHeight(rect.height() - 1);
+    rect.setWidth(rect.width() - 1);
+    drawRect(rect);
 }
 
 void GraphicsContext::drawImage(Image* image, ColorSpace styleColorSpace, const FloatRect& dest, const FloatRect& src, CompositeOperator op, bool useLowQualityScale)
