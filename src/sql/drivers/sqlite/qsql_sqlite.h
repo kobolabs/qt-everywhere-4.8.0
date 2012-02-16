@@ -112,6 +112,8 @@ public:
     QVariant handle() const;
     QString escapeIdentifier(const QString &identifier, IdentifierType) const;
 
+    void interrupt();
+
 private:
     QSQLiteDriverPrivate* d;
 };
