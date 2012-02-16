@@ -5823,14 +5823,26 @@ void QApplicationPrivate::translateRawTouchEvent(QWidget *window,
                     widget = window;
             }
 
+			/* This little bit doesn't look like it makes sense for our modality scheme, because closestWidget will return
+			 * whatever is below the the touch point.
+			 *
             if (deviceType == QTouchEvent::TouchScreen) {
                 int closestTouchPointId = d->findClosestTouchPointId(touchPoint.screenPos());
                 QWidget *closestWidget = d->widgetForTouchPointId.value(closestTouchPointId).data();
+
+                if (!closestWidget || (closestWidget == QApplication::activeWindow()) || (closestWidget == QApplication::activePopupWidget()))
+                    closestWidget = QApplication::activeModalWidget();
+                if (!closestWidget || (closestWidget == QApplication::activeWindow()))
+                    closestWidget = QApplication::activePopupWidget();
+                if (!closestWidget)
+                    closestWidget = QApplication::activeWindow();
+
                 if (closestWidget
                     && (widget.data()->isAncestorOf(closestWidget) || closestWidget->isAncestorOf(widget.data()))) {
                     widget = closestWidget;
                 }
             }
+            */
 
             d->widgetForTouchPointId[touchPoint.id()] = widget;
             touchPoint.d->startScreenPos = touchPoint.screenPos();
