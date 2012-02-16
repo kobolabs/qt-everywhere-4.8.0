@@ -38,12 +38,24 @@
 #include <wtf/text/CString.h>
 #include <wtf/unicode/CharacterNames.h>
 
+#include <Text.h>
+#include <QChar>
+
 namespace WebCore {
 
 VisibleSelection::VisibleSelection()
     : m_affinity(DOWNSTREAM)
     , m_selectionType(NoSelection)
     , m_baseIsFirst(true)
+    , m_selectOnlyLetters(false)
+{
+}
+ 
+VisibleSelection::VisibleSelection(bool selectOnlyLetters)
+    : m_affinity(DOWNSTREAM)
+    , m_selectionType(NoSelection)
+    , m_baseIsFirst(true)
+    , m_selectOnlyLetters(selectOnlyLetters)
 {
 }
 
@@ -51,6 +63,7 @@ VisibleSelection::VisibleSelection(const Position& pos, EAffinity affinity)
     : m_base(pos)
     , m_extent(pos)
     , m_affinity(affinity)
+    , m_selectOnlyLetters(false)
 {
     validate();
 }
@@ -59,6 +72,7 @@ VisibleSelection::VisibleSelection(const Position& base, const Position& extent,
     : m_base(base)
     , m_extent(extent)
     , m_affinity(affinity)
+    , m_selectOnlyLetters(false)
 {
     validate();
 }
@@ -67,6 +81,7 @@ VisibleSelection::VisibleSelection(const VisiblePosition& pos)
     : m_base(pos.deepEquivalent())
     , m_extent(pos.deepEquivalent())
     , m_affinity(pos.affinity())
+    , m_selectOnlyLetters(false)
 {
     validate();
 }
@@ -75,6 +90,7 @@ VisibleSelection::VisibleSelection(const VisiblePosition& base, const VisiblePos
     : m_base(base.deepEquivalent())
     , m_extent(extent.deepEquivalent())
     , m_affinity(base.affinity())
+    , m_selectOnlyLetters(false)
 {
     validate();
 }
@@ -83,9 +99,20 @@ VisibleSelection::VisibleSelection(const Range* range, EAffinity affinity)
     : m_base(range->startPosition())
     , m_extent(range->endPosition())
     , m_affinity(affinity)
+    , m_selectOnlyLetters(false)
 {
     validate();
 }
+
+VisibleSelection::VisibleSelection(const VisiblePosition& pos, bool selectOnlyLetters)
+    : m_base(pos.deepEquivalent())
+    , m_extent(pos.deepEquivalent())
+    , m_affinity(pos.affinity())
+    , m_selectOnlyLetters(selectOnlyLetters)
+{
+    validate();
+}
+
 
 VisibleSelection VisibleSelection::selectionFromContentsOfNode(Node* node)
 {
@@ -317,6 +344,34 @@ void VisibleSelection::setStartAndEndFromBaseAndExtentRespectingGranularity(Text
             }
                 
             m_end = end.deepEquivalent();
+		
+            //added this to select only letters for dictionary viewing
+            if( m_selectOnlyLetters && m_start.anchorNode()->isTextNode() && m_end.anchorNode()->isTextNode() ) {
+
+                CharacterData* text = static_cast<CharacterData*>(m_start.anchorNode());
+                String s = text->data();                
+                
+                int n1 = m_start.offsetInContainerNode();
+                int n2 = m_end.offsetInContainerNode() - 1;
+
+                //unhandled corner case: at beginning of sentence, m_start may refer
+                //to the Node of the last sentence, this causes the space at the beginning
+                //of a sentence to be part of the selection. Assigning m_end to m_start and
+                //adjusting the offset does not fix this. 		
+
+                QChar c1 = s[n1];
+                QChar c2 = s[n2];
+
+                while(!c1.isLetter() && n1 <= n2) {
+                    c1 = s[++n1];
+                    m_start = m_start.next(Character);
+                }
+
+                while(!c2.isLetter() && n2 >= n1) {
+                    c2 = s[--n2];
+                    m_end = m_end.previous(Character);
+                }
+            }
             break;
         }
         case SentenceGranularity: {

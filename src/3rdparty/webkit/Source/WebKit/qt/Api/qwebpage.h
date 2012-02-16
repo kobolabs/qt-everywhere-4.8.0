@@ -255,7 +255,7 @@ public:
     QWebHistory *history() const;
     QWebSettings *settings() const;
     
-    void selectWordAtPoint(QPoint point, QRect bounds);
+    void selectWordAtPoint(QPoint point, QRect bounds, bool selectLettersOnly);
     void clearSelection();
 
     void setView(QWidget *view);
@@ -277,6 +277,7 @@ public:
 
     bool hasSelection() const;
     QString selectedText() const;
+    int selectedWordHeight() const;
     QString selectedHtml() const;
 
 #ifndef QT_NO_ACTION
