@@ -258,6 +258,12 @@ public:
     void selectWordAtPoint(QPoint point, QRect bounds, bool selectLettersOnly);
     void clearSelection();
 
+	void expandSelectionRight();
+	void expandSelectionLeft();
+	void expandSelectionUp();
+	void expandSelectionDown();
+
+
     void setView(QWidget *view);
     QWidget *view() const;
 

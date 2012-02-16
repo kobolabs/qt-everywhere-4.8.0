@@ -2162,6 +2162,26 @@ int QWebPage::selectedWordHeight() const {
 	return (int)d->page->focusController()->focusedOrMainFrame()->selection()->toNormalizedRange().get()->getBoundingClientRect().get()->height();
 }
 
+void QWebPage::expandSelectionRight() {
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	frame->selection()->modify(SelectionController::EXTEND, SelectionController::RIGHT, WordGranularity);
+}
+
+void QWebPage::expandSelectionLeft() {
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	frame->selection()->modify(SelectionController::EXTEND, SelectionController::LEFT, WordGranularity);
+}
+
+void QWebPage::expandSelectionUp() {
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	frame->selection()->modify(SelectionController::EXTEND, SelectionController::BACKWARD, LineGranularity);
+}
+
+void QWebPage::expandSelectionDown() {
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	frame->selection()->modify(SelectionController::EXTEND, SelectionController::FORWARD, LineGranularity);
+}
+
 //If selectOnlyLetters == true the selection will be modified to discard non letters.
 //This causes a performance hit though, so it should only be used for the final selecting
 void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds, bool selectOnlyLetters) {
