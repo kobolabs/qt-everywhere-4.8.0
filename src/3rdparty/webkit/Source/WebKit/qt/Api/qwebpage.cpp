@@ -2163,24 +2163,40 @@ int QWebPage::selectedWordHeight() const {
 	return (int)d->page->focusController()->focusedOrMainFrame()->selection()->toNormalizedRange().get()->getBoundingClientRect().get()->height();
 }
 
-void QWebPage::expandSelectionRight() {
-	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::AlterationExtend, DirectionRight, WordGranularity);
+static SelectionDirection opposite(SelectionDirection dir) {
+	if (dir == DirectionRight)
+		return DirectionLeft;
+	else if (dir == DirectionLeft)
+		return DirectionRight;
+	else if (dir == DirectionForward)
+		return DirectionBackward;
+	else
+		return DirectionForward;	
 }
 
-void QWebPage::expandSelectionLeft() {
-	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::AlterationExtend, DirectionLeft, WordGranularity);
+static void expandSelection(QWebPagePrivate *d, SelectionDirection dir, TextGranularity granularity, QRect bounds) {
+ 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	bool modified = frame->selection()->modify(SelectionController::AlterationExtend, dir, granularity);
+	IntRect newSelectionRect = frame->document()->renderView()->selectionBounds(false);
+	if (!bounds.contains(newSelectionRect)) {
+		frame->selection()->modify(SelectionController::AlterationExtend, opposite(dir), granularity);		
+	}
 }
 
-void QWebPage::expandSelectionUp() {
-	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::AlterationExtend, DirectionBackward, LineGranularity);
+void QWebPage::expandSelectionRight(QRect bounds) {
+	expandSelection(d, DirectionRight, WordGranularity, bounds);
 }
 
-void QWebPage::expandSelectionDown() {
-	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	frame->selection()->modify(SelectionController::AlterationExtend, DirectionForward, LineGranularity);
+void QWebPage::expandSelectionLeft(QRect bounds) {
+	expandSelection(d, DirectionLeft, WordGranularity, bounds);
+}
+
+void QWebPage::expandSelectionUp(QRect bounds) {
+	expandSelection(d, DirectionForward, LineGranularity, bounds);
+}
+
+void QWebPage::expandSelectionDown(QRect bounds) {
+	expandSelection(d, DirectionBackward, LineGranularity, bounds);
 }
 
 //If selectOnlyLetters == true the selection will be modified to discard non letters.
