@@ -2230,6 +2230,8 @@ void QWebPage::clearSelection() {
 }
 
 void QWebPage::selectBetweenPoints(QPoint one, QPoint two) {
+	if (one.y() > two.y() || (one.y() == two.y() && one.x() >= two.x()))// || (two-one).manhattanLength() < 10)
+		return;
 	d->createMainFrame();
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
 
@@ -2252,20 +2254,47 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two) {
 		if (onepos.isNotNull() && twopos.isNotNull()) {
 			newSelection = VisibleSelection(onepos, twopos);
 		}
+		// don't stomp on a good selection with a bogus one
+		QString oldText = selectedText();
+		VisibleSelection oldSelection = frame->selection()->selection();
 		frame->selection()->setSelection(newSelection);
+		if (selectedText() == "" && oldText != "") {
+			frame->selection()->setSelection(oldSelection);
+		}
 	}
 }
 
 QPair<QRect, QRect> QWebPage::selectionEndPoints() {
 	d->createMainFrame();
 	VisibleSelection selection = d->page->focusController()->focusedOrMainFrame()->selection()->selection();
+	PassRefPtr<Range> range = selection.firstRange();
+	Vector<IntRect> rects;
+	range.get()->textRects(rects, true);
+	if (rects.size() == 0) {
+		return QPair<QRect, QRect>();
+	}
+	IntRect startRect = rects.first();
+	IntRect endRect = rects.last();
+	QRect startQRect(startRect.x(), startRect.y(), 1, startRect.height());
+	QRect endQRect(endRect.x() + endRect.width(), endRect.y(), 1, endRect.height());
+
+	// this is a bit awkward...
+	// The rects returned by the Range are taller than what we want, but the
+	// rects returned by absoluteCaretBounds are sometimes totally wrong
+	// (specifically, on selecting a single word at the end of certain lines,
+	// it gives an end rect that's at the end of the current DOM node).
+	// So we take the height of the caretBounds rects and the position of the
+	// Range rects, and mash them together into something reasonable.
 	VisiblePosition start = selection.visibleStart();
 	VisiblePosition end = selection.visibleEnd();
-	IntRect startRect = start.absoluteCaretBounds();
-	IntRect endRect = end.absoluteCaretBounds();
-	QRect startQRect(startRect.x(), startRect.y(), startRect.width(), startRect.height());
-	QRect endQRect(endRect.x(), endRect.y(), endRect.width(), endRect.height());
-	return QPair<QRect, QRect>(startQRect,endQRect);
+	IntRect startRect2 = start.absoluteCaretBounds();
+	IntRect endRect2 = end.absoluteCaretBounds();
+	QRect startQRect2(startRect2.x(), startRect2.y(), startRect2.width(), startRect2.height());
+	QRect endQRect2(endRect2.x(), endRect2.y(), endRect2.width(), endRect2.height());
+	
+	QRect startQRect3(startQRect.x(), startQRect.y() + (startQRect.height() - startQRect2.height()), 1, startQRect2.height());
+	QRect endQRect3(endQRect.x(), endQRect.y() + (endQRect.height() - endQRect2.height()), 1, endQRect2.height());
+	return QPair<QRect, QRect>(startQRect3,endQRect3);
 }
 
 /*!
