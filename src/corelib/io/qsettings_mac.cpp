@@ -46,6 +46,10 @@
 #include "qvarlengtharray.h"
 #include "private/qcore_mac_p.h"
 
+#ifndef QT_NO_QOBJECT
+#include "qcoreapplication.h"
+#endif
+
 QT_BEGIN_NAMESPACE
 
 static const CFStringRef hostNames[2] = { kCFPreferencesCurrentHost, kCFPreferencesAnyHost };
@@ -580,6 +584,9 @@ QSettingsPrivate *QSettingsPrivate::create(QSettings::Format format,
                                            const QString &application)
 {
     if (format == QSettings::NativeFormat) {
+        QString org = organization;
+        QString app = application;
+#ifndef QT_NO_QOBJECT
         static int forAppStore = -1;
         if (forAppStore == -1) {
             // Check for a Key called "QtForAppStore" in Info.plist
@@ -595,8 +602,6 @@ QSettingsPrivate *QSettingsPrivate::create(QSettings::Format format,
             }
             //Release the variables
         }
-        QString org = organization;
-        QString app = application;
         // Check whether to apply AppStore folder restrictions.
         if (forAppStore) {
 
@@ -623,6 +628,7 @@ QSettingsPrivate *QSettingsPrivate::create(QSettings::Format format,
                 }
             }
         }
+#endif
         return new QMacSettingsPrivate(scope, org, app);
     } else {
         return new QConfFileSettingsPrivate(format, scope, organization, application);
