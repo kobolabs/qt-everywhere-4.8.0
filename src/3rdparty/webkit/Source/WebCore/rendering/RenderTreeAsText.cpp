@@ -830,11 +830,14 @@ String markerTextForListItem(Element* element)
 static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, int indent*/)
 {
     /* Figure out what the runs' positions are relative to. */
-    QPoint origin;
+    FloatPoint origin;
+    bool flippedVertical = false;
     if (RenderBlock* block = o.containingBlock()) {
-        FloatPoint absPos = block->localToAbsolute(FloatPoint());
-        origin.setX(absPos.x());
-        origin.setY(absPos.y());
+        origin = block->localToAbsolute(FloatPoint());
+        flippedVertical = !block->style()->isHorizontalWritingMode() && block->style()->isFlippedBlocksWritingMode();
+        if (flippedVertical) {
+            origin.setX(origin.x() + block->width());
+        }
     }
 
     if (o.isText() && !o.isBR()) {
@@ -847,6 +850,9 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, i
             if (o.containingBlock()->isTableCell())
                 dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
             QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.width(), run.height());
+            if (flippedVertical) {
+                r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width(), run.height());
+            }
             out.append(r);
         }
     }
