@@ -4366,7 +4366,7 @@ int QDateTimeParser::absoluteMax(int s, const QDateTime &cur) const
                                    // 23 for the stepBy case.
     case MinuteSection:
     case SecondSection: return 59;
-	case MSecSection: return 9999999;
+    case MSecSection: return 9999999;
     case YearSection2Digits:
     case YearSection: return 9999; // sectionMaxSize will prevent
                                    // people from typing in a larger
@@ -4592,7 +4592,8 @@ bool QDateTimeParser::parseFormat(const QString &newFormat)
 
             case 'z':
                 if (parserType != QVariant::Date) {
-                    const SectionNode sn = { MSecSection, i - add, countRepeat(newFormat, i, 3) < 3 ? 1 : 3 };
+                    int count = countRepeat(newFormat, i, 7);
+                    const SectionNode sn = { MSecSection, i - add, count < 3 ? 1 : count };
                     newSectionNodes.append(sn);
                     appendSeparator(&newSeparators, newFormat, index, i - index, lastQuote);
                     i += sn.count - 1;
@@ -4765,7 +4766,7 @@ int QDateTimeParser::sectionMaxSize(Section s, int count) const
             return ret;
         }
 #endif
-	case MSecSection: return 7;
+    case MSecSection: return 7;
     case YearSection: return 4;
     case YearSection2Digits: return 2;
 
@@ -4989,7 +4990,10 @@ int QDateTimeParser::parseSection(const QDateTime &currentValue, int sectionInde
                 } else if (num > absMax) {
                     state = Intermediate;
                 } else if (!done && (fi & (FixedWidth|Numeric)) == (FixedWidth|Numeric)) {
-                    if (skipToNextSection(sectionIndex, currentValue, digitsStr)) {
+                    // If we have a field that has to be of a fixed length, 
+                    // and the number of digits already parsed matches the size specified by the format, we're done
+                    bool validTextSize = (sectiontextSize == sn.count);
+                    if (validTextSize || skipToNextSection(sectionIndex, currentValue, digitsStr)) {
                         state = Acceptable;
                         const int missingZeroes = sectionmaxsize - digitsStr.size();
                         text.insert(index, QString().fill(QLatin1Char('0'), missingZeroes));
@@ -5597,7 +5601,7 @@ int QDateTimeParser::maxChange(int index) const
     const SectionNode &sn = sectionNode(index);
     switch (sn.type) {
         // Time. unit is msec
-	case MSecSection: return 9999999;
+    case MSecSection: return 9999999;
     case SecondSection: return 59 * 1000;
     case MinuteSection: return 59 * 60 * 1000;
     case Hour24Section: case Hour12Section: return 59 * 60 * 60 * 1000;
