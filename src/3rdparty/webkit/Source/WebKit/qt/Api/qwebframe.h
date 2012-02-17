@@ -200,7 +200,7 @@ public:
 
     QWebSecurityOrigin securityOrigin() const;
 
-    bool selectionIntersectsElement(const QString &nodeName, const QString &className, QString &id);
+    bool selectionIntersectsElement(const QString &nodeName, const QString &className, const QString &retrievedAttribute, QString &id);
 
 public Q_SLOTS:
     QVariant evaluateJavaScript(const QString& scriptSource);
