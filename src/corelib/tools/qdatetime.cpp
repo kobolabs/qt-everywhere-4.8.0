@@ -1656,10 +1656,16 @@ bool QTime::setHMS(int h, int m, int s, int ms)
 #if defined(Q_OS_WINCE)
     startTick = NullTime;
 #endif
+
+	while (ms>999) {
+		ms = ms/10;
+	}
+
     if (!isValid(h,m,s,ms)) {
         mds = NullTime;                // make this invalid
         return false;
-    }
+	}
+
     mds = (h*SECS_PER_HOUR + m*SECS_PER_MIN + s)*1000 + ms;
     return true;
 }
@@ -1935,7 +1941,7 @@ QTime QTime::fromString(const QString &string, const QString &format)
 
 bool QTime::isValid(int h, int m, int s, int ms)
 {
-    return (uint)h < 24 && (uint)m < 60 && (uint)s < 60 && (uint)ms < 1000;
+	return (uint)h < 24 && (uint)m < 60 && (uint)s < 60 && (uint)ms < 1000;
 }
 
 
@@ -4360,7 +4366,7 @@ int QDateTimeParser::absoluteMax(int s, const QDateTime &cur) const
                                    // 23 for the stepBy case.
     case MinuteSection:
     case SecondSection: return 59;
-    case MSecSection: return 999;
+	case MSecSection: return 9999999;
     case YearSection2Digits:
     case YearSection: return 9999; // sectionMaxSize will prevent
                                    // people from typing in a larger
@@ -4759,7 +4765,7 @@ int QDateTimeParser::sectionMaxSize(Section s, int count) const
             return ret;
         }
 #endif
-    case MSecSection: return 3;
+	case MSecSection: return 7;
     case YearSection: return 4;
     case YearSection2Digits: return 2;
 
@@ -5591,7 +5597,7 @@ int QDateTimeParser::maxChange(int index) const
     const SectionNode &sn = sectionNode(index);
     switch (sn.type) {
         // Time. unit is msec
-    case MSecSection: return 999;
+	case MSecSection: return 9999999;
     case SecondSection: return 59 * 1000;
     case MinuteSection: return 59 * 60 * 1000;
     case Hour24Section: case Hour12Section: return 59 * 60 * 60 * 1000;
