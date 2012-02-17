@@ -109,6 +109,7 @@
 #include <qprinter.h>
 #include <qregion.h>
 #include <qnetworkrequest.h>
+#include "DOMSelection.h"
 
 using namespace WebCore;
 
@@ -1559,6 +1560,35 @@ QWebSecurityOrigin QWebFrame::securityOrigin() const
     QWebFrame* that = const_cast<QWebFrame*>(this);
     QWebSecurityOriginPrivate* priv = new QWebSecurityOriginPrivate(QWebFramePrivate::core(that)->document()->securityOrigin());
     return QWebSecurityOrigin(priv);
+}
+
+bool QWebFrame::selectionIntersectsElement(const QString &nodeName, const QString &className, QString &id)
+{
+	ExceptionCode ec = 0;
+	PassRefPtr<Range> range = QWebFramePrivate::core(this)->domWindow()->getSelection()->getRangeAt(0, ec);
+	Node *node = range->startContainer();
+	bool done = false;
+	while (!done) {
+		Element *element;
+		if (node->nodeType() == Node::ELEMENT_NODE) {
+			element = static_cast<Element*>(node);
+		}
+		else {
+			element = node->parentElement();
+		}
+		if (element && !QString::compare(nodeName, element->nodeName(), Qt::CaseInsensitive) && element->hasAttribute("class") && !QString::compare(className, element->getAttribute("class"))) {
+			Q_ASSERT(element->hasAttribute("id"));
+			id = element->getAttribute("id");
+			return true;
+		}
+		if( node == range->endContainer() ) {
+			done = true;
+		}
+		else {
+			node = node->traverseNextNode();
+		}
+	}
+	return false;
 }
 
 WebCore::Frame* QWebFramePrivate::core(const QWebFrame* webFrame)

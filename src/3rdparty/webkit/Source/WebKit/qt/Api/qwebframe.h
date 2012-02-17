@@ -200,6 +200,8 @@ public:
 
     QWebSecurityOrigin securityOrigin() const;
 
+    bool selectionIntersectsElement(const QString &nodeName, const QString &className, QString &id);
+
 public Q_SLOTS:
     QVariant evaluateJavaScript(const QString& scriptSource);
 #ifndef QT_NO_PRINTER
