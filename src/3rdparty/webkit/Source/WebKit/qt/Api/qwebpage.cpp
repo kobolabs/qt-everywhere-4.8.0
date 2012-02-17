@@ -4028,6 +4028,37 @@ QString QWebPage::userAgentForUrl(const QUrl&) const
         firstPartTemp += QString::fromLatin1("Unknown");
 #endif
 
+#if defined Q_OS_DARWIN
+    QString ver;
+    switch(qMacVersion()) {
+    case QSysInfo::MV_10_0:
+        ver = "10_0";
+        break;
+    case QSysInfo::MV_10_1:
+        ver = "10_1";
+        break;
+    case QSysInfo::MV_10_2:
+        ver = "10_2";
+        break;
+    case QSysInfo::MV_10_3:
+        ver = "10_3";
+        break;
+    case QSysInfo::MV_10_4:
+        ver = "10_4";
+        break;
+    case QSysInfo::MV_10_5:
+        ver = "10_5";
+        break;
+    case QSysInfo::MV_10_6:
+        ver = "10_6";
+        break;
+    default:
+        ver = "Unknown";
+        break;
+    }
+    firstPartTemp += ver;
+#endif
+
 #if USE(QT_MOBILITY_SYSTEMINFO)
         // adding Model Number
         QtMobility::QSystemDeviceInfo systemDeviceInfo;
