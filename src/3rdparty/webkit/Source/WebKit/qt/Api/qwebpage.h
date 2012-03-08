@@ -263,7 +263,7 @@ public:
 	void expandSelectionUp(QRect bounds);
 	void expandSelectionDown(QRect bounds);
 	
-	void selectBetweenPoints(QPoint one, QPoint two);
+	void selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries);
 	QPair<QRect, QRect> selectionEndPoints();
 
     void setView(QWidget *view);

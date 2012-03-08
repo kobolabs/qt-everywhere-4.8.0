@@ -2229,7 +2229,7 @@ void QWebPage::clearSelection() {
 	frame->selection()->clear();
 }
 
-void QWebPage::selectBetweenPoints(QPoint one, QPoint two) {
+void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries) {
 	if (one.y() > two.y() || (one.y() == two.y() && one.x() >= two.x()))// || (two-one).manhattanLength() < 10)
 		return;
 	d->createMainFrame();
@@ -2253,6 +2253,9 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two) {
 		VisibleSelection newSelection;
 		if (onepos.isNotNull() && twopos.isNotNull()) {
 			newSelection = VisibleSelection(onepos, twopos);
+		}
+		if (expandToWordBoundaries) {
+			newSelection.expandUsingGranularity(WordGranularity);
 		}
 		// don't stomp on a good selection with a bogus one
 		QString oldText = selectedText();
@@ -2296,6 +2299,7 @@ QPair<QRect, QRect> QWebPage::selectionEndPoints() {
 	
 	QRect startQRect3(startQRect.x(), startQRect.y() + (startQRect.height() - startQRect2.height()), 1, startQRect2.height());
 	QRect endQRect3(endQRect.x(), endQRect.y() + (endQRect.height() - endQRect2.height()), 1, endQRect2.height());
+	
 	return QPair<QRect, QRect>(startQRect3,endQRect3);
 }
 
