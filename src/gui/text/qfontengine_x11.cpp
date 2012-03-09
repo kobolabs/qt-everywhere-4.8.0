@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -358,7 +358,9 @@ bool QFontEngineXLFD::stringToCMap(const QChar *s, int len, QGlyphLayout *glyphs
     QVarLengthArray<ushort> _s(len);
     QChar *str = (QChar *)_s.data();
     for (int i = 0; i < len; ++i) {
-        if (s[i].isHighSurrogate() && i < len-1 && s[i+1].isLowSurrogate()) {
+        if (i < len - 1
+            && s[i].unicode() >= 0xd800 && s[i].unicode() < 0xdc00
+            && s[i+1].unicode() >= 0xdc00 && s[i].unicode() < 0xe000) {
             *str = QChar();
             ++i;
         } else {
@@ -861,8 +863,11 @@ glyph_t QFontEngineXLFD::glyphIndexToFreetypeGlyphIndex(glyph_t g) const
 // Multi FT engine
 // ------------------------------------------------------------------
 
-static QFontEngine *engineForPattern(FcPattern *match, const QFontDef &request, int screen)
+static QFontEngine *engineForPattern(FcPattern *pattern, const QFontDef &request,
+                                     int screen)
 {
+    FcResult res;
+    FcPattern *match = FcFontMatch(0, pattern, &res);
     QFontEngineX11FT *engine = new QFontEngineX11FT(match, request, screen);
     if (!engine->invalid())
         return engine;
@@ -874,9 +879,9 @@ static QFontEngine *engineForPattern(FcPattern *match, const QFontDef &request, 
 }
 
 QFontEngineMultiFT::QFontEngineMultiFT(QFontEngine *fe, FcPattern *matchedPattern, FcPattern *p, int s, const QFontDef &req)
-    : QFontEngineMulti(2), request(req), pattern(p), fontSet(0), screen(s)
+    : QFontEngineMulti(2), request(req), pattern(p), firstEnginePattern(matchedPattern), fontSet(0), screen(s)
 {
-    firstEnginePattern = FcPatternDuplicate(matchedPattern);
+
     engines[0] = fe;
     engines.at(0)->ref.ref();
     fontDef = engines[0]->fontDef;
@@ -902,6 +907,8 @@ void QFontEngineMultiFT::loadEngine(int at)
     extern QMutex *qt_fontdatabase_mutex();
     QMutexLocker locker(qt_fontdatabase_mutex());
 
+    extern void qt_addPatternProps(FcPattern *pattern, int screen, int script,
+                                   const QFontDef &request);
     extern QFontDef qt_FcPatternToQFontDef(FcPattern *pattern, const QFontDef &);
     extern FcFontSet *qt_fontSetForPattern(FcPattern *pattern, const QFontDef &request);
 
@@ -933,18 +940,22 @@ void QFontEngineMultiFT::loadEngine(int at)
     Q_ASSERT(at < engines.size());
     Q_ASSERT(engines.at(at) == 0);
 
-    FcPattern *match = FcFontRenderPrepare(NULL, pattern, fontSet->fonts[at + firstFontIndex - 1]);
-    QFontDef fontDef = qt_FcPatternToQFontDef(match, this->request);
+    FcPattern *pattern = FcPatternDuplicate(fontSet->fonts[at + firstFontIndex - 1]);
+    qt_addPatternProps(pattern, screen, QUnicodeTables::Common, request);
+
+    QFontDef fontDef = qt_FcPatternToQFontDef(pattern, this->request);
 
     // note: we use -1 for the script to make sure that we keep real
     // FT engines separate from Multi engines in the font cache
     QFontCache::Key key(fontDef, -1, screen);
     QFontEngine *fontEngine = QFontCache::instance()->findEngine(key);
     if (!fontEngine) {
-        fontEngine = engineForPattern(match, request, screen);
+        FcConfigSubstitute(0, pattern, FcMatchPattern);
+        FcDefaultSubstitute(pattern);
+        fontEngine = engineForPattern(pattern, request, screen);
         QFontCache::instance()->insertEngine(key, fontEngine);
     }
-    FcPatternDestroy(match);
+    FcPatternDestroy(pattern);
     fontEngine->ref.ref();
     engines[at] = fontEngine;
 }
@@ -1112,14 +1123,17 @@ QFontEngineX11FT::QFontEngineX11FT(FcPattern *pattern, const QFontDef &fd, int s
     }
 #endif
 
-    if (!init(face_id, antialias, defaultFormat))
+    if (!init(face_id, antialias, defaultFormat)) {
+        FcPatternDestroy(pattern);
         return;
+    }
 
     if (!freetype->charset) {
         FcCharSet *cs;
         FcPatternGetCharSet (pattern, FC_CHARSET, 0, &cs);
         freetype->charset = FcCharSetCopy(cs);
     }
+    FcPatternDestroy(pattern);
 }
 
 QFontEngineX11FT::~QFontEngineX11FT()
@@ -1191,9 +1205,7 @@ QFontEngine *QFontEngineX11FT::cloneWithSize(qreal pixelSize) const
         delete fe;
         return 0;
     } else {
-#ifndef QT_NO_XRENDER
         fe->xglyph_format = xglyph_format;
-#endif
         return fe;
     }
 }

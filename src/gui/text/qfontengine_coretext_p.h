@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -44,17 +44,7 @@
 
 #include <private/qfontengine_p.h>
 
-#ifdef QT_NO_CORESERVICES
-#include <CoreText/CoreText.h>
-#include <CoreGraphics/CoreGraphics.h>
-#include <private/qcore_mac_p.h>
-#endif
-
 #if !defined(Q_WS_MAC) || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
-
-QT_BEGIN_HEADER
-
-QT_BEGIN_NAMESPACE
 
 class QRawFontPrivate;
 class QCoreTextFontEngineMulti;
@@ -115,6 +105,9 @@ private:
     int synthesisFlags;
     CGAffineTransform transform;
     QFixed avgCharWidth;
+    qreal ctMaxCharWidth;
+    qreal ctMinLeftBearing;
+    qreal ctMinRightBearing;
     friend class QCoreTextFontEngineMulti;
 };
 
@@ -122,7 +115,7 @@ class QCoreTextFontEngineMulti : public QFontEngineMulti
 {
 public:
     QCoreTextFontEngineMulti(const QCFString &name, const QFontDef &fontDef, bool kerning);
-    QCoreTextFontEngineMulti(CTFontRef ctFontRef, const QFontDef &fontDef, bool kerning);
+    QCoreTextFontEngineMulti(CGFontRef cgFontRef, const QFontDef &fontDef, bool kerning);
     ~QCoreTextFontEngineMulti();
 
     virtual bool stringToCMap(const QChar *str, int len, QGlyphLayout *glyphs, int *nglyphs,
@@ -133,8 +126,6 @@ public:
                       QScriptItem *si) const;
 
     virtual const char *name() const { return "CoreText"; }
-    inline CTFontRef macFontID() const { return ctfont; }
-
 protected:
     virtual void loadEngine(int at);
 
@@ -149,12 +140,6 @@ private:
     CGAffineTransform transform;
     friend class QFontDialogPrivate;
 };
-
-CGAffineTransform qt_transform_from_fontdef(const QFontDef &fontDef);
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif// !defined(Q_WS_MAC) || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
 

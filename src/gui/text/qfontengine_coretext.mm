@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -107,12 +107,7 @@ QCoreTextFontEngineMulti::QCoreTextFontEngineMulti(const QCFString &name, const 
 
     QCFType<CTFontDescriptorRef> descriptor = CTFontDescriptorCreateWithNameAndSize(name, fontDef.pixelSize);
     QCFType<CTFontRef> baseFont = CTFontCreateWithFontDescriptor(descriptor, fontDef.pixelSize, &transform);
-    ctfont = NULL;
-    // There is a side effect in Core Text: if we apply 0 as symbolic traits to a font in normal weight,
-    // we will get the light version of that font (while the way supposed to work doesn't:
-    // setting kCTFontWeightTrait to some value between -1.0 to 0.0 has no effect on font selection)
-    if (fontDef.weight != QFont::Normal || symbolicTraits)
-        ctfont = CTFontCreateCopyWithSymbolicTraits(baseFont, fontDef.pixelSize, &transform, symbolicTraits, symbolicTraits);
+    ctfont = CTFontCreateCopyWithSymbolicTraits(baseFont, fontDef.pixelSize, &transform, symbolicTraits, symbolicTraits);
 
     // CTFontCreateCopyWithSymbolicTraits returns NULL if we ask for a trait that does
     // not exist for the given font. (for example italic)
@@ -123,11 +118,17 @@ QCoreTextFontEngineMulti::QCoreTextFontEngineMulti(const QCFString &name, const 
     init(kerning);
 }
 
-QCoreTextFontEngineMulti::QCoreTextFontEngineMulti(CTFontRef ctFontRef, const QFontDef &fontDef, bool kerning)
+QCoreTextFontEngineMulti::QCoreTextFontEngineMulti(CGFontRef cgFontRef, const QFontDef &fontDef, bool kerning)
     : QFontEngineMulti(0)
 {
     this->fontDef = fontDef;
-    ctfont = (CTFontRef) CFRetain(ctFontRef);
+
+    transform = CGAffineTransformIdentity;
+    if (fontDef.stretch != 100) {
+        transform = CGAffineTransformMakeScale(float(fontDef.stretch) / float(100), 1);
+    }
+
+    ctfont = CTFontCreateWithGraphicsFont(cgFontRef, fontDef.pixelSize, &transform, NULL);
     init(kerning);
 }
 
@@ -142,7 +143,7 @@ void QCoreTextFontEngineMulti::init(bool kerning)
     attributeDict = CFDictionaryCreateMutable(0, 2,
                                        &kCFTypeDictionaryKeyCallBacks,
                                        &kCFTypeDictionaryValueCallBacks);
-    CFDictionaryAddValue(attributeDict, kCTFontAttributeName, ctfont);
+    CFDictionaryAddValue(attributeDict, NSFontAttributeName, ctfont);
     if (!kerning) {
         float zero = 0.0;
         QCFType<CFNumberRef> noKern = CFNumberCreate(kCFAllocatorDefault, kCFNumberFloatType, &zero);
@@ -150,9 +151,6 @@ void QCoreTextFontEngineMulti::init(bool kerning)
     }
 
     QCoreTextFontEngine *fe = new QCoreTextFontEngine(ctfont, fontDef);
-    fontDef.family = fe->fontDef.family;
-    fontDef.styleName = fe->fontDef.styleName;
-    transform = fe->transform;
     fe->ref.ref();
     engines.append(fe);
 }
@@ -271,7 +269,7 @@ bool QCoreTextFontEngineMulti::stringToCMap(const QChar *str, int len, QGlyphLay
             //NSLog(@"Dictionary %@", runAttribs);
             if (!runAttribs)
                 runAttribs = attributeDict;
-            CTFontRef runFont = static_cast<CTFontRef>(CFDictionaryGetValue(runAttribs, kCTFontAttributeName));
+            CTFontRef runFont = static_cast<CTFontRef>(CFDictionaryGetValue(runAttribs, NSFontAttributeName));
             uint fontIndex = fontIndexForFont(runFont);
             const QFontEngine *engine = engineAt(fontIndex);
             fontIndex <<= 24;
@@ -426,7 +424,7 @@ void QCoreTextFontEngineMulti::loadEngine(int)
 
 extern int qt_antialiasing_threshold; // from qapplication.cpp
 
-CGAffineTransform qt_transform_from_fontdef(const QFontDef &fontDef)
+static inline CGAffineTransform transformFromFontDef(const QFontDef &fontDef)
 {
     CGAffineTransform transform = CGAffineTransformIdentity;
     if (fontDef.stretch != 100)
@@ -437,7 +435,7 @@ CGAffineTransform qt_transform_from_fontdef(const QFontDef &fontDef)
 QCoreTextFontEngine::QCoreTextFontEngine(CTFontRef font, const QFontDef &def)
 {
     fontDef = def;
-    transform = qt_transform_from_fontdef(fontDef);
+    transform = transformFromFontDef(fontDef);
     ctfont = font;
     CFRetain(ctfont);
     cgFont = CTFontCopyGraphicsFont(font, NULL);
@@ -447,7 +445,7 @@ QCoreTextFontEngine::QCoreTextFontEngine(CTFontRef font, const QFontDef &def)
 QCoreTextFontEngine::QCoreTextFontEngine(CGFontRef font, const QFontDef &def)
 {
     fontDef = def;
-    transform = qt_transform_from_fontdef(fontDef);
+    transform = transformFromFontDef(fontDef);
     cgFont = font;
     // Keep reference count balanced
     CFRetain(cgFont);
@@ -485,9 +483,6 @@ void QCoreTextFontEngine::init()
     QCFString family = CTFontCopyFamilyName(ctfont);
     fontDef.family = family;
 
-    QCFString styleName = (CFStringRef) CTFontCopyAttribute(ctfont, kCTFontStyleNameAttribute);
-    fontDef.styleName = styleName;
-
     synthesisFlags = 0;
     CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(ctfont);
     if (traits & kCTFontItalicTrait)
@@ -516,6 +511,17 @@ void QCoreTextFontEngine::init()
         avgCharWidth = QFixed::fromReal(width * fontDef.pixelSize / emSize);
     } else
         avgCharWidth = QFontEngine::averageCharWidth();
+
+    ctMaxCharWidth = ctMinLeftBearing = ctMinRightBearing = 0;
+    QByteArray hheaTable = getSfntTable(MAKE_TAG('h', 'h', 'e', 'a'));
+    if (hheaTable.size() >= 16) {
+        quint16 width = qFromBigEndian<quint16>(reinterpret_cast<const uchar *>(hheaTable.constData() + 10));
+        ctMaxCharWidth = width * fontDef.pixelSize / emSize;
+        qint16 bearing = qFromBigEndian<qint16>(reinterpret_cast<const uchar *>(hheaTable.constData() + 12));
+        ctMinLeftBearing = bearing * fontDef.pixelSize / emSize;
+        bearing = qFromBigEndian<qint16>(reinterpret_cast<const uchar *>(hheaTable.constData() + 14));
+        ctMinRightBearing = bearing * fontDef.pixelSize / emSize;
+    }
 }
 
 bool QCoreTextFontEngine::stringToCMap(const QChar *str, int len, QGlyphLayout *glyphs,
@@ -595,6 +601,7 @@ glyph_metrics_t QCoreTextFontEngine::boundingBox(glyph_t glyph, Qt::Orientation 
         ret.xoff = ret.xoff.round();
         ret.yoff = ret.yoff.round();
     }
+
     return ret;
 }
 
@@ -635,17 +642,20 @@ QFixed QCoreTextFontEngine::averageCharWidth() const
 
 qreal QCoreTextFontEngine::maxCharWidth() const
 {
-    return 0;
+    return (fontDef.styleStrategy & QFont::ForceIntegerMetrics)
+            ? qRound(ctMaxCharWidth) : ctMaxCharWidth;
 }
 
 qreal QCoreTextFontEngine::minLeftBearing() const
 {
-    return 0;
+    return (fontDef.styleStrategy & QFont::ForceIntegerMetrics)
+            ? qRound(ctMinLeftBearing) : ctMinLeftBearing;
 }
 
 qreal QCoreTextFontEngine::minRightBearing() const
 {
-    return 0;
+    return (fontDef.styleStrategy & QFont::ForceIntegerMetrics)
+            ? qRound(ctMinRightBearing) : ctMinLeftBearing;
 }
 
 void QCoreTextFontEngine::draw(CGContextRef ctx, qreal x, qreal y, const QTextItemInt &ti, int paintDeviceHeight)
@@ -763,19 +773,13 @@ void QCoreTextFontEngine::addGlyphsToPath(glyph_t *glyphs, QFixedPoint *position
     }
 }
 
-QImage QCoreTextFontEngine::imageForGlyph(glyph_t glyph, QFixed subPixelPosition, int margin, bool aa)
+QImage QCoreTextFontEngine::imageForGlyph(glyph_t glyph, QFixed subPixelPosition, int /*margin*/, bool aa)
 {
-    Q_UNUSED(margin);
     const glyph_metrics_t br = boundingBox(glyph);
-    QImage im(qRound(br.width) + 2, qRound(br.height) + 2, QImage::Format_RGB32);
+    QImage im(qRound(br.width)+2, qRound(br.height)+2, QImage::Format_RGB32);
     im.fill(0);
 
-    CGColorSpaceRef colorspace =
-#ifdef Q_WS_MAC
-            CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
-#else
-            CGColorSpaceCreateDeviceRGB();
-#endif
+    CGColorSpaceRef colorspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
     uint cgflags = kCGImageAlphaNoneSkipFirst;
 #ifdef kCGBitmapByteOrder32Host //only needed because CGImage.h added symbols in the minor version
     cgflags |= kCGBitmapByteOrder32Host;
@@ -784,8 +788,9 @@ QImage QCoreTextFontEngine::imageForGlyph(glyph_t glyph, QFixed subPixelPosition
                                              8, im.bytesPerLine(), colorspace,
                                              cgflags);
     CGContextSetFontSize(ctx, fontDef.pixelSize);
-    CGContextSetShouldAntialias(ctx, (aa || fontDef.pointSize > qt_antialiasing_threshold)
-                                 && !(fontDef.styleStrategy & QFont::NoAntialias));
+    CGContextSetShouldAntialias(ctx, aa ||
+                                (fontDef.pointSize > qt_antialiasing_threshold
+                                 && !(fontDef.styleStrategy & QFont::NoAntialias)));
     CGContextSetShouldSmoothFonts(ctx, aa);
     CGAffineTransform oldTextMatrix = CGContextGetTextMatrix(ctx);
     CGAffineTransform cgMatrix = CGAffineTransformMake(1, 0, 0, 1, 0, 0);
@@ -803,8 +808,8 @@ QImage QCoreTextFontEngine::imageForGlyph(glyph_t glyph, QFixed subPixelPosition
 
     CGContextSetFont(ctx, cgFont);
 
-    qreal pos_x = -br.x.truncate() + subPixelPosition.toReal();
-    qreal pos_y = im.height() + br.y.toReal();
+    qreal pos_x = -br.x.toReal() + subPixelPosition.toReal();
+    qreal pos_y = im.height() + br.y.toReal() - 1;
     CGContextSetTextPosition(ctx, pos_x, pos_y);
 
     CGSize advance;
@@ -914,7 +919,7 @@ QFontEngine *QCoreTextFontEngine::cloneWithSize(qreal pixelSize) const
     newFontDef.pixelSize = pixelSize;
     newFontDef.pointSize = pixelSize * 72.0 / qt_defaultDpi();
 
-    return new QCoreTextFontEngine(cgFont, newFontDef);
+    return new QCoreTextFontEngine(cgFont, fontDef);
 }
 
 QT_END_NAMESPACE

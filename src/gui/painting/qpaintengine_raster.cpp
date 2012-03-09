@@ -2904,8 +2904,32 @@ bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
             if (c.isNull())
                 continue;
 
-            int x = qFloor(positions[i].x) + c.baseLineX - margin;
-            int y = qFloor(positions[i].y + offs) - c.baseLineY - margin;
+            //  When a transformation matrix type is QTransform::TxRotate,
+            // baselineX and baselineY (5, 6 parameter) is invalid except the case that
+            // transformation matrix is (m11, m12, m21, m22) is (1, 0, 0, 1), rotate 0 degree.
+            // This is because that the calculation of Coord::baseLineX & Coord::baseLineY in QTextureGlyphCache::populate
+            // doesn't consider about rotation. If you use this function with some rotation matrix other than above case,
+            // you can find the glyphs are placed unexpected positions.
+            //
+            //  Here we temporarily fix this problem by adjusting the baseLine from outside.
+            // NOTICE that this fix is only for the case that the transformation matrix is (0, 1, -1, 0).
+            // (clockwisely rotate 90 degree)
+            int baseLineX = c.baseLineX;
+            int baseLineY = c.baseLineY;
+
+            bool isRotate90 = (s->matrix.m11() == 0)
+                         && (s->matrix.m12() == 1)
+                         && (s->matrix.m21() == -1)
+                         && (s->matrix.m22() == 0)
+                         && (s->matrix.type() == QTransform::TxRotate);
+            if (isRotate90) {
+                glyph_metrics_t gm = fontEngine->boundingBox(glyphs[i]);
+                baseLineX = -(gm.height + gm.y).truncate();
+                baseLineY = c.baseLineY;
+            }
+
+            int x = qFloor(positions[i].x) + baseLineX - margin;
+            int y = qFloor(positions[i].y + offs) - baseLineY - margin;
 
             // printf("drawing [%d %d %d %d] baseline [%d %d], glyph: %d, to: %d %d, pos: %d %d\n",
             //        c.x, c.y,

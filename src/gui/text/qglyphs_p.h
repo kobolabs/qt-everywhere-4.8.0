@@ -39,86 +39,65 @@
 **
 ****************************************************************************/
 
-#ifndef QZIPREADER_H
-#define QZIPREADER_H
-
-#ifndef QT_NO_TEXTODFWRITER
+#ifndef QGLYPHS_P_H
+#define QGLYPHS_P_H
 
 //
 //  W A R N I N G
 //  -------------
 //
 // This file is not part of the Qt API.  It exists for the convenience
-// of the QZipReader class.  This header file may change from
-// version to version without notice, or even be removed.
+// of internal files.  This header file may change from version to version
+// without notice, or even be removed.
 //
 // We mean it.
 //
 
-#include <QtCore/qdatetime.h>
-#include <QtCore/qfile.h>
-#include <QtCore/qstring.h>
+#include "qglyphs.h"
+#include "qrawfont.h"
+
+#include <qfont.h>
+
+#if !defined(QT_NO_RAWFONT)
+
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QZipReaderPrivate;
-
-class Q_GUI_EXPORT QZipReader
+class QGlyphsPrivate: public QSharedData
 {
 public:
-    QZipReader(const QString &fileName, QIODevice::OpenMode mode = QIODevice::ReadOnly );
-
-    explicit QZipReader(QIODevice *device);
-    ~QZipReader();
-
-    QIODevice* device() const;
-
-    bool isReadable() const;
-    bool exists() const;
-
-    struct Q_GUI_EXPORT FileInfo
+    QGlyphsPrivate()
+        : overline(false)
+        , underline(false)
+        , strikeOut(false)
     {
-        FileInfo();
-        FileInfo(const FileInfo &other);
-        ~FileInfo();
-        FileInfo &operator=(const FileInfo &other);
-        bool isValid() const;
-        QString filePath;
-        uint isDir : 1;
-        uint isFile : 1;
-        uint isSymLink : 1;
-        QFile::Permissions permissions;
-        uint crc32;
-        qint64 size;
-        QDateTime lastModified;
-        void *d;
-    };
+    }
 
-    QList<FileInfo> fileInfoList() const;
-    int count() const;
+    QGlyphsPrivate(const QGlyphsPrivate &other)
+      : QSharedData(other)
+      , glyphIndexes(other.glyphIndexes)
+      , glyphPositions(other.glyphPositions)
+      , font(other.font)
+      , overline(other.overline)
+      , underline(other.underline)
+      , strikeOut(other.strikeOut)
+    {
+    }
 
-    FileInfo entryInfoAt(int index) const;
-    QByteArray fileData(const QString &fileName) const;
-    bool extractAll(const QString &destinationDir) const;
+    QVector<quint32> glyphIndexes;
+    QVector<QPointF> glyphPositions;
+    QRawFont font;
 
-    enum Status {
-        NoError,
-        FileReadError,
-        FileOpenError,
-        FilePermissionsError,
-        FileError
-    };
-
-    Status status() const;
-
-    void close();
-
-private:
-    QZipReaderPrivate *d;
-    Q_DISABLE_COPY(QZipReader)
+    uint overline  : 1;
+    uint underline : 1;
+    uint strikeOut : 1;
 };
 
 QT_END_NAMESPACE
 
-#endif // QT_NO_TEXTODFWRITER
-#endif // QZIPREADER_H
+QT_END_HEADER
+
+#endif // QGLYPHS_P_H
+
+#endif // QT_NO_RAWFONT

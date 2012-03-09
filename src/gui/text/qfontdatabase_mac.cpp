@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -104,15 +104,14 @@ if (QSysInfo::MacintoshVersion >= QSysInfo::MV_10_5) {
     const int numFonts = CFArrayGetCount(fonts);
     for(int i = 0; i < numFonts; ++i) {
         CTFontDescriptorRef font = (CTFontDescriptorRef)CFArrayGetValueAtIndex(fonts, i);
-        QCFString family_name = (CFStringRef)CTFontDescriptorCopyLocalizedAttribute(font, kCTFontFamilyNameAttribute, NULL);
-        QCFString style_name = (CFStringRef)CTFontDescriptorCopyLocalizedAttribute(font, kCTFontStyleNameAttribute, NULL);
+
+        QCFString family_name = (CFStringRef)CTFontDescriptorCopyAttribute(font, kCTFontFamilyNameAttribute);
         QtFontFamily *family = db->family(family_name, true);
         for(int ws = 1; ws < QFontDatabase::WritingSystemsCount; ++ws)
             family->writingSystems[ws] = QtFontFamily::Supported;
         QtFontFoundry *foundry = family->foundry(foundry_name, true);
 
         QtFontStyle::Key styleKey;
-        QString styleName = style_name;
         if(QCFType<CFDictionaryRef> styles = (CFDictionaryRef)CTFontDescriptorCopyAttribute(font, kCTFontTraitsAttribute)) {
             if(CFNumberRef weight = (CFNumberRef)CFDictionaryGetValue(styles, kCTFontWeightTrait)) {
                 Q_ASSERT(CFNumberIsFloatType(weight));
@@ -133,7 +132,7 @@ if (QSysInfo::MacintoshVersion >= QSysInfo::MV_10_5) {
             }
         }
 
-        QtFontStyle *style = foundry->style(styleKey, styleName, true);
+        QtFontStyle *style = foundry->style(styleKey, true);
         style->smoothScalable = true;
         if(QCFType<CFNumberRef> size = (CFNumberRef)CTFontDescriptorCopyAttribute(font, kCTFontSizeAttribute)) {
             //qDebug() << "WHEE";
@@ -206,7 +205,7 @@ if (QSysInfo::MacintoshVersion >= QSysInfo::MV_10_5) {
 
                 QtFontFamily *family = db->family(familyName, true);
                 QtFontFoundry *foundry = family->foundry(QString(), true);
-                QtFontStyle *style = foundry->style(styleKey, QString(), true);
+                QtFontStyle *style = foundry->style(styleKey, true);
                 style->pixelSize(0, true);
                 style->smoothScalable = true;
 
@@ -250,63 +249,6 @@ static inline float weightToFloat(unsigned int weight)
     return (weight - 50) / 100.0;
 }
 
-static QFontEngine *loadFromDatabase(QFontDef &req, const QFontPrivate *d)
-{
-#if defined(QT_MAC_USE_COCOA)
-    QCFString fontName = NULL;
-#else
-    ATSFontFamilyRef familyRef = 0;
-    ATSFontRef fontRef = 0;
-#endif
-
-    QStringList family_list = familyList(req);
-
-    const char *stylehint = styleHint(req);
-    if (stylehint)
-        family_list << QLatin1String(stylehint);
-
-    // add QFont::defaultFamily() to the list, for compatibility with previous versions
-    family_list << QApplication::font().defaultFamily();
-
-    QMutexLocker locker(fontDatabaseMutex());
-    QFontDatabasePrivate *db = privateDb();
-    if (!db->count)
-        initializeDb();
-    for (int i = 0; i < family_list.size(); ++i) {
-        for (int k = 0; k < db->count; ++k) {
-            if (db->families[k]->name.compare(family_list.at(i), Qt::CaseInsensitive) == 0) {
-                QByteArray family_name = db->families[k]->name.toUtf8();
-#if defined(QT_MAC_USE_COCOA)
-                QCFType<CTFontRef> ctFont = CTFontCreateWithName(QCFString(db->families[k]->name), 12, NULL);
-                if (ctFont) {
-                    fontName = CTFontCopyFullName(ctFont);
-                    goto found;
-                }
-#else
-                familyRef = ATSFontFamilyFindFromName(QCFString(db->families[k]->name), kATSOptionFlagsDefault);
-                if (familyRef) {
-                    fontRef = ATSFontFindFromName(QCFString(db->families[k]->name), kATSOptionFlagsDefault);
-                    goto found;
-                }
-#endif
-            }
-        }
-    }
-found:
-#ifdef QT_MAC_USE_COCOA
-    if (fontName)
-        return new QCoreTextFontEngineMulti(fontName, req, d->kerning);
-#else
-    if (familyRef) {
-        QCFString actualName;
-        if (ATSFontFamilyGetName(familyRef, kATSOptionFlagsDefault, &actualName) == noErr)
-            req.family = actualName;
-        return new QFontEngineMacMulti(familyRef, fontRef, req, d->kerning);
-    }
-#endif
-    return NULL;
-}
-
 void QFontDatabase::load(const QFontPrivate *d, int script)
 {
     // sanity checks
@@ -347,38 +289,69 @@ void QFontDatabase::load(const QFontPrivate *d, int script)
         return; // the font info and fontdef should already be filled
     }
 
-    QFontEngine *engine = NULL;
+    //find the font
+    QStringList family_list = familyList(req);
+
+    const char *stylehint = styleHint(req);
+    if (stylehint)
+        family_list << QLatin1String(stylehint);
+
+    // add QFont::defaultFamily() to the list, for compatibility with
+    // previous versions
+    family_list << QApplication::font().defaultFamily();
+
 #if defined(QT_MAC_USE_COCOA)
-    // Shortcut to get the font directly without going through the font database
-    if (!req.family.isEmpty() && !req.styleName.isEmpty()) {
-        QCFString expectedFamily = QCFString(req.family);
-        QCFString expectedStyle = QCFString(req.styleName);
+    QCFString fontName = NULL, familyName = NULL;
+#else
+    ATSFontFamilyRef familyRef = 0;
+    ATSFontRef fontRef = 0;
+#endif
 
-        QCFType<CFMutableDictionaryRef> attributes = CFDictionaryCreateMutable(NULL, 0,
-            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-        CFDictionaryAddValue(attributes, kCTFontFamilyNameAttribute, expectedFamily);
-        CFDictionaryAddValue(attributes, kCTFontStyleNameAttribute, expectedStyle);
-
-        QCFType<CTFontDescriptorRef> descriptor = CTFontDescriptorCreateWithAttributes(attributes);
-        CGAffineTransform transform = qt_transform_from_fontdef(req);
-        QCFType<CTFontRef> ctFont = CTFontCreateWithFontDescriptor(descriptor, req.pixelSize, &transform);
-        if (ctFont) {
-            QCFString familyName = CTFontCopyFamilyName(ctFont);
-            // Only accept the font if the family name is exactly the same as we specified
-            if (CFEqual(expectedFamily, familyName)) {
-                engine = new QCoreTextFontEngineMulti(ctFont, req, d->kerning);
+    QMutexLocker locker(fontDatabaseMutex());
+    QFontDatabasePrivate *db = privateDb();
+    if (!db->count)
+        initializeDb();
+    for(int i = 0; i < family_list.size(); ++i) {
+        for (int k = 0; k < db->count; ++k) {
+            if (db->families[k]->name.compare(family_list.at(i), Qt::CaseInsensitive) == 0) {
+                QByteArray family_name = db->families[k]->name.toUtf8();
+#if defined(QT_MAC_USE_COCOA)
+                QCFType<CTFontRef> ctFont = CTFontCreateWithName(QCFString(db->families[k]->name), 12, NULL);
+                if (ctFont) {
+                    fontName = CTFontCopyFullName(ctFont);
+                    familyName = CTFontCopyFamilyName(ctFont);
+                    goto FamilyFound;
+                }
+#else
+                familyRef = ATSFontFamilyFindFromName(QCFString(db->families[k]->name), kATSOptionFlagsDefault);
+                if (familyRef) {
+                    fontRef = ATSFontFindFromName(QCFString(db->families[k]->name), kATSOptionFlagsDefault);
+                    goto FamilyFound;
+                }
+#endif
             }
         }
     }
-#endif
-    if (!engine)
-        engine = loadFromDatabase(req, d);
+FamilyFound:
+    //fill in the engine's font definition
+    QFontDef fontDef = d->request; //copy..
+    if(fontDef.pointSize < 0)
+        fontDef.pointSize = qt_mac_pointsize(fontDef, d->dpi);
+    else
+        fontDef.pixelSize = qt_mac_pixelsize(fontDef, d->dpi);
 
-    if (engine) {
-        d->engineData->engine = engine;
-        engine->ref.ref();
-        QFontCache::instance()->insertEngine(key, engine);
-    }
+#ifdef QT_MAC_USE_COCOA
+    fontDef.family = familyName;
+    QFontEngine *engine = new QCoreTextFontEngineMulti(fontName, fontDef, d->kerning);
+#else
+    QCFString actualName;
+    if (ATSFontFamilyGetName(familyRef, kATSOptionFlagsDefault, &actualName) == noErr)
+        fontDef.family = actualName;
+    QFontEngine *engine = new QFontEngineMacMulti(familyRef, fontRef, fontDef, d->kerning);
+#endif
+    d->engineData->engine = engine;
+    engine->ref.ref(); //a ref for the engineData->engine
+    QFontCache::instance()->insertEngine(key, engine);
 }
 
 static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
@@ -389,6 +362,7 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
     if(fnt->data.isEmpty()) {
 #if (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
         if (QSysInfo::MacintoshVersion >= QSysInfo::MV_10_5) {
+                extern OSErr qt_mac_create_fsref(const QString &, FSRef *); // qglobal.cpp
                 FSRef ref;
                 if(qt_mac_create_fsref(fnt->fileName, &ref) != noErr)
                     return;
@@ -398,6 +372,7 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
 #endif
         {
 #ifndef Q_WS_MAC64
+                extern Q_CORE_EXPORT OSErr qt_mac_create_fsspec(const QString &, FSSpec *); // global.cpp
                 FSSpec spec;
                 if(qt_mac_create_fsspec(fnt->fileName, &spec) != noErr)
                     return;
@@ -486,27 +461,6 @@ bool QFontDatabase::removeAllApplicationFonts()
 bool QFontDatabase::supportsThreadedFontRendering()
 {
     return true;
-}
-
-QString QFontDatabase::resolveFontFamilyAlias(const QString &family)
-{
-    QCFString expectedFamily = QCFString(family);
-
-    QCFType<CFMutableDictionaryRef> attributes = CFDictionaryCreateMutable(NULL, 0,
-        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-    CFDictionaryAddValue(attributes, kCTFontFamilyNameAttribute, expectedFamily);
-    QCFType<CTFontDescriptorRef> descriptor = CTFontDescriptorCreateWithAttributes(attributes);
-
-    QCFType<CFMutableSetRef> mandatoryAttributes = CFSetCreateMutable(NULL, 0, &kCFTypeSetCallBacks);
-    CFSetAddValue(mandatoryAttributes, kCTFontFamilyNameAttribute);
-
-    QCFType<CTFontRef> font = CTFontCreateWithFontDescriptor(descriptor, 0.0, NULL);
-    QCFType<CTFontDescriptorRef> matched = CTFontDescriptorCreateMatchingFontDescriptor(descriptor, mandatoryAttributes);
-    if (!matched)
-        return family;
-
-    QCFString familyName = (CFStringRef) CTFontDescriptorCopyLocalizedAttribute(matched, kCTFontFamilyNameAttribute, NULL);
-    return familyName;
 }
 
 QT_END_NAMESPACE

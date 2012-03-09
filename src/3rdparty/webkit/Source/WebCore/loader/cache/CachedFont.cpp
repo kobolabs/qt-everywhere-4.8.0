@@ -53,6 +53,7 @@
 #include "SVGNames.h"
 #endif
 
+#include <QtCore/QtDebug>
 namespace WebCore {
 
 CachedFont::CachedFont(const String &url)

@@ -79,7 +79,7 @@ const SimpleFontData* FontCache::getFontDataForCharacters(const Font& font, cons
     QRawFont computedFont = rawFontForCharacters(qstring, font.font());
     if (!computedFont.isValid())
         return 0;
-    FontPlatformData alternateFont(computedFont);
+    FontPlatformData alternateFont(computedFont, font.fontDescription().orientation());
     return getCachedFontData(&alternateFont);
 #else
     Q_UNUSED(font);
@@ -106,6 +106,11 @@ void FontCache::getTraitsInFamily(const AtomicString&, Vector<unsigned>&)
 
 FontPlatformData* FontCache::createFontPlatformData(const FontDescription& fontDescription, const AtomicString& familyName)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(4, 8, 0)
+    QFontDatabase db;
+    if (!db.hasFamily(familyName))
+        return 0;
+#endif
     return new FontPlatformData(fontDescription, familyName);
 }
 

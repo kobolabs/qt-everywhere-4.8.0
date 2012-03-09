@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qfontengine_p.h"
+#include <private/qunicodetables_p.h>
 #include <qwsdisplay_qws.h>
 #include <qvarlengtharray.h>
 #include <private/qpainter_p.h>
@@ -50,16 +51,14 @@
 
 #include <qdebug.h>
 
+
 #ifndef QT_NO_QWS_QPF
 
-#include "qplatformdefs.h"
 #include "qfile.h"
+#include "qdir.h"
 
-#include <stdlib.h>
-
-#if !defined(Q_OS_INTEGRITY)
 #define QT_USE_MMAP
-#endif
+#include <stdlib.h>
 
 #ifdef QT_USE_MMAP
 // for mmap
@@ -70,25 +69,33 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifndef MAP_FILE
-#  define MAP_FILE 0
-#endif
-#ifndef MAP_FAILED
-#  define MAP_FAILED (void *)-1
+#  if defined(QT_LINUXBASE) && !defined(MAP_FILE)
+     // LSB 3.2 does not define MAP_FILE
+#    define MAP_FILE 0
+#  endif
+
 #endif
 
-#endif // QT_USE_MMAP
+#endif // QT_NO_QWS_QPF
 
 QT_BEGIN_NAMESPACE
 
+#ifndef QT_NO_QWS_QPF
+QT_BEGIN_INCLUDE_NAMESPACE
+#include "qplatformdefs.h"
+QT_END_INCLUDE_NAMESPACE
+
 static inline unsigned int getChar(const QChar *str, int &i, const int len)
 {
-    uint ucs4 = str[i].unicode();
-    if (str[i].isHighSurrogate() && i < len-1 && str[i+1].isLowSurrogate()) {
-        ++i;
-        ucs4 = QChar::surrogateToUcs4(ucs4, str[i].unicode());
+    unsigned int uc = str[i].unicode();
+    if (uc >= 0xd800 && uc < 0xdc00 && i < len-1) {
+        uint low = str[i+1].unicode();
+       if (low >= 0xdc00 && low < 0xe000) {
+            uc = (uc - 0xd800)*0x400 + (low - 0xdc00) + 0x10000;
+            ++i;
+        }
     }
-    return ucs4;
+    return uc;
 }
 
 #define FM_SMOOTH 1
@@ -154,10 +161,17 @@ public:
     QPFGlyphTree* more;
     QPFGlyph* glyph;
 public:
+#ifdef QT_USE_MMAP
     QPFGlyphTree(uchar*& data)
     {
         read(data);
     }
+#else
+    QPFGlyphTree(QIODevice& f)
+    {
+        read(f);
+    }
+#endif
 
     ~QPFGlyphTree()
     {
@@ -223,6 +237,7 @@ private:
     {
     }
 
+#ifdef QT_USE_MMAP
     void read(uchar*& data)
     {
         // All node data first
@@ -232,7 +247,19 @@ private:
         // Then all video data
         readData(data);
     }
+#else
+    void read(QIODevice& f)
+    {
+        // All node data first
+        readNode(f);
+        // Then all non-video data
+        readMetrics(f);
+        // Then all video data
+        readData(f);
+    }
+#endif
 
+#ifdef QT_USE_MMAP
     void readNode(uchar*& data)
     {
         uchar rw = *data++;
@@ -258,7 +285,38 @@ private:
         if ( more )
             more->readNode(data);
     }
+#else
+    void readNode(QIODevice& f)
+    {
+        char rw;
+        char cl;
+        f.getChar(&rw);
+        f.getChar(&cl);
+        min = (rw << 8) | cl;
+        f.getChar(&rw);
+        f.getChar(&cl);
+        max = (rw << 8) | cl;
+        char flags;
+        f.getChar(&flags);
+        if ( flags & 1 )
+            less = new QPFGlyphTree;
+        else
+            less = 0;
+        if ( flags & 2 )
+            more = new QPFGlyphTree;
+        else
+            more = 0;
+        int n = max-min+1;
+        glyph = new QPFGlyph[n];
 
+        if ( less )
+            less->readNode(f);
+        if ( more )
+            more->readNode(f);
+    }
+#endif
+
+#ifdef QT_USE_MMAP
     void readMetrics(uchar*& data)
     {
         int n = max-min+1;
@@ -271,7 +329,22 @@ private:
         if ( more )
             more->readMetrics(data);
     }
+#else
+    void readMetrics(QIODevice& f)
+    {
+        int n = max-min+1;
+        for (int i=0; i<n; i++) {
+            glyph[i].metrics = new QPFGlyphMetrics;
+            f.read((char*)glyph[i].metrics, sizeof(QPFGlyphMetrics));
+        }
+        if ( less )
+            less->readMetrics(f);
+        if ( more )
+            more->readMetrics(f);
+    }
+#endif
 
+#ifdef QT_USE_MMAP
     void readData(uchar*& data)
     {
         int n = max-min+1;
@@ -286,6 +359,24 @@ private:
         if ( more )
             more->readData(data);
     }
+#else
+    void readData(QIODevice& f)
+    {
+        int n = max-min+1;
+        for (int i=0; i<n; i++) {
+            QSize s( glyph[i].metrics->width, glyph[i].metrics->height );
+            //############### s = qt_screen->mapToDevice( s );
+            uint datasize = glyph[i].metrics->linestep * s.height();
+            glyph[i].data = new uchar[datasize]; // ### deleted?
+            f.read((char*)glyph[i].data, datasize);
+        }
+        if ( less )
+            less->readData(f);
+        if ( more )
+            more->readData(f);
+    }
+#endif
+
 };
 
 class QFontEngineQPF1Data
@@ -293,58 +384,73 @@ class QFontEngineQPF1Data
 public:
     QPFFontMetrics fm;
     QPFGlyphTree *tree;
-    uchar *mmapStart;
+    void *mmapStart;
     size_t mmapLength;
-#ifdef QT_USE_MMAP
-    bool used_mmap;
-#endif
 };
+
+#if defined(Q_OS_INTEGRITY)
+static void *qt_mmap(void *start, size_t length, int /*prot*/, int /*flags*/, int fd, off_t offset)
+{
+    // INTEGRITY cannot mmap local files - load it into a local buffer
+    if (::lseek(fd, offset, SEEK_SET) == -1) {
+#  if defined(DEBUG_FONTENGINE)
+        perror("lseek failed");
+#  endif
+    }
+    void *buf = malloc(length);
+    if (::read(fd, buf, length) != (ssize_t)length) {
+#  if defined(DEBUG_FONTENGINE)
+        perror("read failed");
+#  endif
+    }
+
+    return buf;
+}
+#else
+static inline void *qt_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    return mmap(start, length, prot, flags, fd, offset);
+}
+#endif
+
+
 
 QFontEngineQPF1::QFontEngineQPF1(const QFontDef&, const QString &fn)
 {
     cache_cost = 1;
 
-    int fd = QT_OPEN(QFile::encodeName(fn).constData(), O_RDONLY, 0);
-    if (fd == -1)
-        qFatal("Failed to open '%s'", QFile::encodeName(fn).constData());
-
+    int f = QT_OPEN( QFile::encodeName(fn), O_RDONLY, 0);
+    Q_ASSERT(f>=0);
     QT_STATBUF st;
-    if (QT_FSTAT(fd, &st) != 0)
-        qFatal("Failed to stat '%s'", QFile::encodeName(fn).constData());
+    if ( QT_FSTAT( f, &st ) )
+        qFatal("Failed to stat %s",QFile::encodeName(fn).data());
+    uchar* data = (uchar*)qt_mmap( 0, // any address
+                                st.st_size, // whole file
+                                PROT_READ, // read-only memory
+#if defined(Q_OS_INTEGRITY)
+	                        0,
+#elif !defined(Q_OS_SOLARIS) && !defined(Q_OS_QNX4) && !defined(Q_OS_VXWORKS)
+                                MAP_FILE | MAP_PRIVATE, // swap-backed map from file
+#else
+                                MAP_PRIVATE,
+#endif
+                                f, 0 ); // from offset 0 of f
+#if !defined(MAP_FAILED) && (defined(Q_OS_QNX4) || defined(Q_OS_INTEGRITY))
+#define MAP_FAILED ((void *)-1)
+#endif
+    if ( !data || data == (uchar*)MAP_FAILED )
+        qFatal("Failed to mmap %s",QFile::encodeName(fn).data());
+    QT_CLOSE(f);
 
     d = new QFontEngineQPF1Data;
-    d->mmapStart = 0;
+    d->mmapStart = data;
     d->mmapLength = st.st_size;
+    memcpy(reinterpret_cast<char*>(&d->fm),data,sizeof(d->fm));
 
-#ifdef QT_USE_MMAP
-    d->used_mmap = true;
-    d->mmapStart = (uchar *)::mmap(0, st.st_size,             // any address, whole file
-                                   PROT_READ,                 // read-only memory
-                                   MAP_FILE | MAP_PRIVATE,    // swap-backed map from file
-                                   fd, 0);                   // from offset 0 of fd
-    if (d->mmapStart == (uchar *)MAP_FAILED)
-        d->mmapStart = 0;
-#endif
-
-    if (!d->mmapStart) {
-#ifdef QT_USE_MMAP
-        d->used_mmap = false;
-#endif
-        d->mmapStart = new uchar[d->mmapLength];
-        if (QT_READ(fd, d->mmapStart, d->mmapLength) != d->mmapLength)
-            qFatal("Failed to read '%s'", QFile::encodeName(fn).constData());
-    }
-    QT_CLOSE(fd);
-
-    if (d->mmapStart) {
-        uchar* data = d->mmapStart;
-
-        memcpy(reinterpret_cast<char*>(&d->fm), data, sizeof(d->fm));
-        data += sizeof(d->fm);
-
-        d->tree = new QPFGlyphTree(data);
-        glyphFormat = (d->fm.flags & FM_SMOOTH) ? QFontEngineGlyphCache::Raster_A8
-                                                : QFontEngineGlyphCache::Raster_Mono;
+    data += sizeof(d->fm);
+    d->tree = new QPFGlyphTree(data);
+    glyphFormat = (d->fm.flags & FM_SMOOTH) ? QFontEngineGlyphCache::Raster_A8
+                  : QFontEngineGlyphCache::Raster_Mono;
 #if 0
     qDebug() << "font file" << fn
              << "ascent" << d->fm.ascent << "descent" << d->fm.descent
@@ -356,19 +462,12 @@ QFontEngineQPF1::QFontEngineQPF1(const QFontDef&, const QString &fn)
              << "underlinepos" << d->fm.underlinepos
              << "underlinewidth" << d->fm.underlinewidth;
 #endif
-    }
 }
 
 QFontEngineQPF1::~QFontEngineQPF1()
 {
-    if (d->mmapStart) {
-#if defined(QT_USE_MMAP)
-        if (d->used_mmap)
-            ::munmap(d->mmapStart, d->mmapLength);
-        else
-#endif
-            delete [] d->mmapStart;
-    }
+    if (d->mmapStart)
+        munmap(d->mmapStart, d->mmapLength);
     delete d->tree;
     delete d;
 }

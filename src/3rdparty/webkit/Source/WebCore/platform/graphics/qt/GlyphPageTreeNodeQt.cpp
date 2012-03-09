@@ -25,6 +25,7 @@
 
 #if HAVE(QRAWFONT)
 #include "SimpleFontData.h"
+#include "Font.h"
 #include <QFontMetricsF>
 #include <QTextLayout>
 #endif
@@ -39,6 +40,16 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
     QVector<quint32> indexes = rawFont.glyphIndexesForString(qstring);
 
     bool haveGlyphs = false;
+    bool lookVariants = false;
+
+    if (fontData->hasVerticalGlyphs()) {
+        for (unsigned i = 0; i < length; ++i) {
+            if (!Font::isCJKIdeograph(buffer[i])) {
+                lookVariants = true;
+                break;
+            }
+        }
+    }
 
     for (unsigned i = 0; i < length; ++i) {
         Glyph glyph = (i < indexes.size()) ? indexes.at(i) : 0;
@@ -46,7 +57,10 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
             setGlyphDataForIndex(offset + i, 0, 0);
         else {
             haveGlyphs = true;
-            setGlyphDataForIndex(offset + i, glyph, fontData);
+            if (lookVariants)
+                glyph = rawFont.glyphVerticalVariant(glyph);
+
+            setGlyphDataForIndex(offset + i, glyph, glyph ? fontData : 0);
         }
     }
     return haveGlyphs;

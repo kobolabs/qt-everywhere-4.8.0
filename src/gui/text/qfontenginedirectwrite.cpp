@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -269,12 +269,15 @@ QFixed QFontEngineDirectWrite::emSquareSize() const
 
 inline unsigned int getChar(const QChar *str, int &i, const int len)
 {
-    uint ucs4 = str[i].unicode();
-    if (str[i].isHighSurrogate() && i < len-1 && str[i+1].isLowSurrogate()) {
-        ++i;
-        ucs4 = QChar::surrogateToUcs4( ucs4, str[i].unicode());
+    unsigned int uc = str[i].unicode();
+    if (uc >= 0xd800 && uc < 0xdc00 && i < len-1) {
+        uint low = str[i+1].unicode();
+       if (low >= 0xdc00 && low < 0xe000) {
+            uc = (uc - 0xd800)*0x400 + (low - 0xdc00) + 0x10000;
+            ++i;
+        }
     }
-    return ucs4;
+    return uc;
 }
 
 bool QFontEngineDirectWrite::stringToCMap(const QChar *str, int len, QGlyphLayout *glyphs,
@@ -387,60 +390,6 @@ glyph_metrics_t QFontEngineDirectWrite::boundingBox(const QGlyphLayout &glyphs)
     return glyph_metrics_t(0, -m_ascent, w - lastRightBearing(glyphs), m_ascent + m_descent, w, 0);
 }
 
-glyph_metrics_t QFontEngineDirectWrite::alphaMapBoundingBox(glyph_t glyph, QFixed subPixelPosition,
-                                                            const QTransform &matrix,
-                                                            GlyphFormat /*format*/)
-{
-    glyph_metrics_t bbox = QFontEngine::boundingBox(glyph, matrix); // To get transformed advance
-
-    UINT16 glyphIndex = glyph;
-    FLOAT glyphAdvance = 0;
-
-    DWRITE_GLYPH_OFFSET glyphOffset;
-    glyphOffset.advanceOffset = 0;
-    glyphOffset.ascenderOffset = 0;
-
-    DWRITE_GLYPH_RUN glyphRun;
-    glyphRun.fontFace = m_directWriteFontFace;
-    glyphRun.fontEmSize = fontDef.pixelSize;
-    glyphRun.glyphCount = 1;
-    glyphRun.glyphIndices = &glyphIndex;
-    glyphRun.glyphAdvances = &glyphAdvance;
-    glyphRun.isSideways = false;
-    glyphRun.bidiLevel = 0;
-    glyphRun.glyphOffsets = &glyphOffset;
-
-    DWRITE_MATRIX transform;
-    transform.dx = subPixelPosition.toReal();
-    transform.dy = 0;
-    transform.m11 = matrix.m11();
-    transform.m12 = matrix.m12();
-    transform.m21 = matrix.m21();
-    transform.m22 = matrix.m22();
-
-    IDWriteGlyphRunAnalysis *glyphAnalysis = NULL;
-    HRESULT hr = m_directWriteFactory->CreateGlyphRunAnalysis(
-                &glyphRun,
-                1.0f,
-                &transform,
-                DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC,
-                DWRITE_MEASURING_MODE_NATURAL,
-                0.0, 0.0,
-                &glyphAnalysis
-                );
-
-    if (SUCCEEDED(hr)) {
-        RECT rect;
-        glyphAnalysis->GetAlphaTextureBounds(DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
-        glyphAnalysis->Release();
-
-        return glyph_metrics_t(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                               bbox.xoff, bbox.yoff);
-    } else {
-        return glyph_metrics_t();
-    }
-}
-
 glyph_metrics_t QFontEngineDirectWrite::boundingBox(glyph_t g)
 {
     if (m_directWriteFontFace == 0)
@@ -510,10 +459,9 @@ qreal QFontEngineDirectWrite::maxCharWidth() const
 
 extern uint qt_pow_gamma[256];
 
-QImage QFontEngineDirectWrite::alphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition,
-                                                const QTransform &xform)
+QImage QFontEngineDirectWrite::alphaMapForGlyph(glyph_t glyph, QFixed subPixelPosition)
 {
-    QImage im = imageForGlyph(glyph, subPixelPosition, 0, xform);
+    QImage im = imageForGlyph(glyph, subPixelPosition, 0, QTransform());
 
     QImage indexed(im.width(), im.height(), QImage::Format_Indexed8);
     QVector<QRgb> colors(256);
@@ -544,8 +492,12 @@ QImage QFontEngineDirectWrite::imageForGlyph(glyph_t t,
                                              int margin,
                                              const QTransform &xform)
 {
+    glyph_metrics_t metrics = QFontEngine::boundingBox(t, xform);
+    int width = (metrics.width + margin * 2 + 4).ceil().toInt() ;
+    int height = (metrics.height + margin * 2 + 4).ceil().toInt();
+
     UINT16 glyphIndex = t;
-    FLOAT glyphAdvance = 0;
+    FLOAT glyphAdvance = metrics.xoff.toReal();
 
     DWRITE_GLYPH_OFFSET glyphOffset;
     glyphOffset.advanceOffset = 0;
@@ -561,9 +513,12 @@ QImage QFontEngineDirectWrite::imageForGlyph(glyph_t t,
     glyphRun.bidiLevel = 0;
     glyphRun.glyphOffsets = &glyphOffset;
 
+    QFixed x = margin - metrics.x.round() + subPixelPosition;
+    QFixed y = margin - metrics.y.floor();
+
     DWRITE_MATRIX transform;
-    transform.dx = subPixelPosition.toReal();
-    transform.dy = 0;
+    transform.dx = x.toReal();
+    transform.dy = y.toReal();
     transform.m11 = xform.m11();
     transform.m12 = xform.m12();
     transform.m21 = xform.m21();
@@ -582,54 +537,48 @@ QImage QFontEngineDirectWrite::imageForGlyph(glyph_t t,
 
     if (SUCCEEDED(hr)) {
         RECT rect;
-        glyphAnalysis->GetAlphaTextureBounds(DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
-
-        rect.left -= margin;
-        rect.top -= margin;
-        rect.right += margin;
-        rect.bottom += margin;
-
-        int width = rect.right - rect.left;
-        int height = rect.bottom - rect.top;
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = width;
+        rect.bottom = height;
 
         int size = width * height * 3;
-        if (size > 0) {
-            BYTE *alphaValues = new BYTE[size];
-            qMemSet(alphaValues, size, 0);
+        BYTE *alphaValues = new BYTE[size];
+        qMemSet(alphaValues, size, 0);
 
-            hr = glyphAnalysis->CreateAlphaTexture(DWRITE_TEXTURE_CLEARTYPE_3x1,
-                                                   &rect,
-                                                   alphaValues,
-                                                   size);
+        hr = glyphAnalysis->CreateAlphaTexture(DWRITE_TEXTURE_CLEARTYPE_3x1,
+                                               &rect,
+                                               alphaValues,
+                                               size);
 
-            if (SUCCEEDED(hr)) {
-                QImage img(width, height, QImage::Format_RGB32);
-                img.fill(0xffffffff);
+        if (SUCCEEDED(hr)) {
+            QImage img(width, height, QImage::Format_RGB32);
+            img.fill(0xffffffff);
 
-                for (int y=0; y<height; ++y) {
-                    uint *dest = reinterpret_cast<uint *>(img.scanLine(y));
-                    BYTE *src = alphaValues + width * 3 * y;
+            for (int y=0; y<height; ++y) {
+                uint *dest = reinterpret_cast<uint *>(img.scanLine(y));
+                BYTE *src = alphaValues + width * 3 * y;
 
-                    for (int x=0; x<width; ++x) {
-                        dest[x] = *(src) << 16
-                                | *(src + 1) << 8
-                                | *(src + 2);
+                for (int x=0; x<width; ++x) {
+                    dest[x] = *(src) << 16
+                            | *(src + 1) << 8
+                            | *(src + 2);
 
-                        src += 3;
-                    }
+                    src += 3;
                 }
-
-                delete[] alphaValues;
-                glyphAnalysis->Release();
-
-                return img;
-            } else {
-                delete[] alphaValues;
-                glyphAnalysis->Release();
-
-                qErrnoWarning("QFontEngineDirectWrite::imageForGlyph: CreateAlphaTexture failed");
             }
+
+            delete[] alphaValues;
+            glyphAnalysis->Release();
+
+            return img;
+        } else {
+            delete[] alphaValues;
+            glyphAnalysis->Release();
+
+            qErrnoWarning("QFontEngineDirectWrite::imageForGlyph: CreateAlphaTexture failed");
         }
+
     } else {
         qErrnoWarning("QFontEngineDirectWrite::imageForGlyph: CreateGlyphRunAnalysis failed");
     }

@@ -39,31 +39,69 @@
 **
 ****************************************************************************/
 
-#include <QtCore/qglobal.h>
+#ifndef QGLYPHS_H
+#define QGLYPHS_H
+
+#include <QtCore/qsharedpointer.h>
+#include <QtCore/qvector.h>
+#include <QtCore/qpoint.h>
+#include <QtGui/qrawfont.h>
 
 #if !defined(QT_NO_RAWFONT)
 
-#include "qrawfont_p.h"
-#include <QtGui/qplatformfontdatabase_qpa.h>
-#include <private/qapplication_p.h>
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-void QRawFontPrivate::platformCleanUp()
-{
-}
+QT_MODULE(Gui)
 
-void QRawFontPrivate::platformLoadFromData(const QByteArray &fontData, int pixelSize,
-                                           QFont::HintingPreference hintingPreference)
+class QGlyphsPrivate;
+class Q_GUI_EXPORT QGlyphs
 {
-    Q_ASSERT(fontEngine == 0);
+public:
+    QGlyphs();
+    QGlyphs(const QGlyphs &other);
+    ~QGlyphs();
 
-    QPlatformFontDatabase *pfdb = QApplicationPrivate::platformIntegration()->fontDatabase();
-    fontEngine = pfdb->fontEngine(fontData, pixelSize, hintingPreference);
-    if (fontEngine != 0)
-        fontEngine->ref.ref();
-}
+    QRawFont font() const;
+    void setFont(const QRawFont &font);
+
+    QVector<quint32> glyphIndexes() const;
+    void setGlyphIndexes(const QVector<quint32> &glyphIndexes);
+
+    QVector<QPointF> positions() const;
+    void setPositions(const QVector<QPointF> &positions);
+
+    void clear();
+
+    QGlyphs &operator=(const QGlyphs &other);
+    bool operator==(const QGlyphs &other) const;
+    bool operator!=(const QGlyphs &other) const;
+
+    void setOverline(bool overline);
+    bool overline() const;
+
+    void setUnderline(bool underline);
+    bool underline() const;
+
+    void setStrikeOut(bool strikeOut);
+    bool strikeOut() const;
+
+private:
+    friend class QGlyphsPrivate;
+    friend class QTextLine;
+
+    QGlyphs operator+(const QGlyphs &other) const;
+    QGlyphs &operator+=(const QGlyphs &other);
+
+    void detach();
+    QExplicitlySharedDataPointer<QGlyphsPrivate> d;
+};
 
 QT_END_NAMESPACE
 
+QT_END_HEADER
+
 #endif // QT_NO_RAWFONT
+
+#endif // QGLYPHS_H

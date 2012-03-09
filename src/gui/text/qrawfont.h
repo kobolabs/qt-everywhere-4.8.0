@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -70,10 +70,10 @@ public:
 
     QRawFont();
     QRawFont(const QString &fileName,
-             qreal pixelSize,
+             int pixelSize,
              QFont::HintingPreference hintingPreference = QFont::PreferDefaultHinting);
     QRawFont(const QByteArray &fontData,
-             qreal pixelSize,
+             int pixelSize,
              QFont::HintingPreference hintingPreference = QFont::PreferDefaultHinting);
     QRawFont(const QRawFont &other);
     ~QRawFont();
@@ -81,60 +81,55 @@ public:
     bool isValid() const;
 
     QRawFont &operator=(const QRawFont &other);
-
     bool operator==(const QRawFont &other) const;
-    inline bool operator!=(const QRawFont &other) const
-    { return !operator==(other); }
 
     QString familyName() const;
-    QString styleName() const;
 
     QFont::Style style() const;
     int weight() const;
 
     QVector<quint32> glyphIndexesForString(const QString &text) const;
     QVector<QPointF> advancesForGlyphIndexes(const QVector<quint32> &glyphIndexes) const;
-    bool glyphIndexesForChars(const QChar *chars, int numChars, quint32 *glyphIndexes, int *numGlyphs) const;
-    bool advancesForGlyphIndexes(const quint32 *glyphIndexes, QPointF *advances, int numGlyphs) const;
 
     QImage alphaMapForGlyph(quint32 glyphIndex,
                             AntialiasingType antialiasingType = SubPixelAntialiasing,
                             const QTransform &transform = QTransform()) const;
     QPainterPath pathForGlyph(quint32 glyphIndex) const;
 
-    void setPixelSize(qreal pixelSize);
-    qreal pixelSize() const;
+    void setPixelSize(int pixelSize);
+    int pixelSize() const;
 
     QFont::HintingPreference hintingPreference() const;
 
     qreal ascent() const;
     qreal descent() const;
-    qreal leading() const;
-    qreal xHeight() const;
-    qreal averageCharWidth() const;
-    qreal maxCharWidth() const;
 
     qreal unitsPerEm() const;
 
     void loadFromFile(const QString &fileName,
-                      qreal pixelSize,
+                      int pixelSize,
                       QFont::HintingPreference hintingPreference);
 
     void loadFromData(const QByteArray &fontData,
-                      qreal pixelSize,
+                      int pixelSize,
                       QFont::HintingPreference hintingPreference);
 
     bool supportsCharacter(quint32 ucs4) const;
-    bool supportsCharacter(QChar character) const;
+    bool supportsCharacter(const QChar &character) const;
     QList<QFontDatabase::WritingSystem> supportedWritingSystems() const;
 
     QByteArray fontTable(const char *tagName) const;
+    quint32 glyphVerticalVariant(const quint32) const;
+    bool hasVerticalGlyphs() const;
 
     static QRawFont fromFont(const QFont &font,
                              QFontDatabase::WritingSystem writingSystem = QFontDatabase::Any);
 
 private:
     friend class QRawFontPrivate;
+
+    void detach();
+
     QExplicitlySharedDataPointer<QRawFontPrivate> d;
 };
 

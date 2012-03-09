@@ -26,6 +26,7 @@
 
 #if HAVE(QRAWFONT)
 #include "NotImplemented.h"
+#include <QFontMetricsF>
 #else
 #include <QFontMetricsF>
 #endif
@@ -61,7 +62,7 @@ bool SimpleFontData::containsCharacters(const UChar* characters, int length) con
 
 float SimpleFontData::platformWidthForGlyph(Glyph glyph) const
 {
-    if (!platformData().size())
+    if (!platformData().size() || !glyph)
         return 0;
 
     QVector<quint32> glyphIndexes;
@@ -128,7 +129,12 @@ void SimpleFontData::platformInit()
          return;
     }
 
-#if HAVE(QRAWFONT)
+    if (platformData().orientation() == Vertical && !isTextOrientationFallback())
+        m_hasVerticalGlyphs = m_platformData.rawFont().hasVerticalGlyphs();
+    else
+        m_hasVerticalGlyphs = false;
+
+#if 0 //HAVE(QRAWFONT)
     QRawFont rawFont(m_platformData.rawFont());
     float descent = rawFont.descent();
     float ascent = rawFont.ascent();
@@ -173,7 +179,7 @@ void SimpleFontData::platformCharWidthInit()
 {
     if (!m_platformData.size())
         return;
-#if HAVE(QRAWFONT)
+#if 0 //HAVE(QRAWFONT)
     QRawFont rawFont(m_platformData.rawFont());
     m_avgCharWidth = rawFont.averageCharWidth();
     m_maxCharWidth = rawFont.maxCharWidth();

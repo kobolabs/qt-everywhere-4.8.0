@@ -133,7 +133,6 @@ GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant va
                     }
                     return data;
                 }
-
                 if (node->isSystemFallback())
                     break;
             }

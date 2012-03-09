@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -42,38 +42,21 @@
 #include "qfont.h"
 #include "qfont_p.h"
 #include <private/qt_s60_p.h>
-#include <private/qpixmap_raster_symbian_p.h>
+#include <private/qpixmap_s60_p.h>
 #include "qmutex.h"
 
 QT_BEGIN_NAMESPACE
 
 #ifdef QT_NO_FREETYPE
 Q_GLOBAL_STATIC(QMutex, lastResortFamilyMutex);
+#endif // QT_NO_FREETYPE
+
 extern QStringList qt_symbian_fontFamiliesOnFontServer(); // qfontdatabase_s60.cpp
 Q_GLOBAL_STATIC_WITH_INITIALIZER(QStringList, fontFamiliesOnFontServer, {
     // We are only interested in the initial font families. No Application fonts.
     // Therefore, we are allowed to cache the list.
     x->append(qt_symbian_fontFamiliesOnFontServer());
 });
-
-extern bool qt_symbian_isLinkedFont(const TDesC &typefaceName); // qfontdatabase_s60.cpp
-
-static QString classicalSymbianSystemFont()
-{
-    static QString font;
-    if (font.isEmpty()) {
-        static const char* const classicSymbianSystemFonts[] = { "Nokia Sans S60", "Series 60 Sans" };
-        for (int i = 0; i < sizeof classicSymbianSystemFonts / sizeof classicSymbianSystemFonts[0]; ++i) {
-            const QString classicFont = QLatin1String(classicSymbianSystemFonts[i]);
-            if (fontFamiliesOnFontServer()->contains(classicFont)) {
-                font = classicFont;
-                break;
-            }
-        }
-    }
-    return font;
-}
-#endif // QT_NO_FREETYPE
 
 QString QFont::lastResortFont() const
 {
@@ -102,10 +85,6 @@ QString QFont::lastResortFamily() const
         S60->screenDevice()->ReleaseFont(font);
         
         lock.relock();
-
-        // We must not return a Symbian Linked Font. See QTBUG-20007
-        if (qt_symbian_isLinkedFont(spec.iTypeface.iName) && !classicalSymbianSystemFont().isEmpty())
-            family = classicalSymbianSystemFont();
     }
     return family;
 #else // QT_NO_FREETYPE
@@ -138,9 +117,14 @@ QString QFont::defaultFamily() const
 {
 #ifdef QT_NO_FREETYPE
     switch(d->request.styleHint) {
-        case QFont::SansSerif:
-        if (!classicalSymbianSystemFont().isEmpty())
-            return classicalSymbianSystemFont();
+        case QFont::SansSerif: {
+            static const char* const preferredSansSerif[] = {"Nokia Sans S60", "Series 60 Sans"};
+            for (int i = 0; i < sizeof preferredSansSerif / sizeof preferredSansSerif[0]; ++i) {
+                const QString sansSerif = QLatin1String(preferredSansSerif[i]);
+                if (fontFamiliesOnFontServer()->contains(sansSerif))
+                    return sansSerif;
+            }
+        }
         // No break. Intentional fall through.
         default:
             return lastResortFamily();

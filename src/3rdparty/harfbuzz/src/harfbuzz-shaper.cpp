@@ -648,7 +648,11 @@ const HB_ScriptEngine HB_ScriptEngines[] = {
     // Khmer
     { HB_KhmerShape, HB_KhmerAttributes },
     // N'Ko
-    { HB_ArabicShape, 0}
+    { HB_ArabicShape, 0},
+    // CJK Ideograph
+    { HB_BasicShape, 0 },
+    // Hiragana / Katakana
+    { HB_BasicShape, 0 }
 };
 
 void HB_GetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
@@ -891,7 +895,11 @@ static const OTScripts ot_scripts [] = {
     // Khmer
     { HB_MAKE_TAG('k', 'h', 'm', 'r'), 1 },
     // N'Ko
-    { HB_MAKE_TAG('n', 'k', 'o', ' '), 1 }
+    { HB_MAKE_TAG('n', 'k', 'o', ' '), 1 },
+    // CJK Ideograph
+    { HB_MAKE_TAG('h', 'a', 'n', 'i'), 1 },
+    // Hiragana / Katakana
+    { HB_MAKE_TAG('k', 'a', 'n', 'a'), 1 }
 };
 enum { NumOTScripts = sizeof(ot_scripts)/sizeof(OTScripts) };
 

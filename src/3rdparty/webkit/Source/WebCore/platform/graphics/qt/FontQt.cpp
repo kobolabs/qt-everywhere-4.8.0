@@ -359,8 +359,17 @@ void Font::drawGlyphs(GraphicsContext* context, const SimpleFontData* fontData, 
     if (context->paintingDisabled())
         return;
 
+    bool isVertical = fontData->platformData().orientation() == Vertical;
     bool shouldFill = context->textDrawingMode() & TextModeFill;
     bool shouldStroke = context->textDrawingMode() & TextModeStroke;
+
+    QPainter* painter = context->platformContext();
+
+    painter->save();
+    painter->translate(point);
+
+    if (isVertical)
+        painter->rotate(-90.);
 
     // Stroking text should always take the complex path.
     ASSERT(!shouldStroke);
@@ -378,14 +387,22 @@ void Font::drawGlyphs(GraphicsContext* context, const SimpleFontData* fontData, 
     positions.reserve(numGlyphs);
 
     float x = 0;
+    float descent = fontData->fontMetrics().floatDescent();
+    QPointF origin = isVertical ? QPointF(-descent, -descent) : QPointF(0, 0);
 
     for (int i = 0; i < numGlyphs; ++i) {
         Glyph glyph = glyphBuffer.glyphAt(from + i);
         float advance = glyphBuffer.advanceAt(from + i);
         if (!glyph)
             continue;
+
+        QVector<quint32> idx;
+        idx.append(glyph);
+        float glyphAdvance = fontData->platformData().rawFont().advancesForGlyphIndexes(idx).at(0).x();
+
         glyphIndexes.append(glyph);
-        positions.append(QPointF(x, 0));
+        QPointF gOrigin = isVertical ? QPointF(0, x + glyphAdvance) : QPointF(x, 0);
+        positions.append(gOrigin);
         x += advance;
     }
 
@@ -394,17 +411,17 @@ void Font::drawGlyphs(GraphicsContext* context, const SimpleFontData* fontData, 
     qtGlyphs.setPositions(positions);
     qtGlyphs.setFont(fontData->platformData().rawFont());
 
-    QPainter* painter = context->platformContext();
-
     QPen previousPen = painter->pen();
     painter->setPen(fillPenForContext(context));
-    painter->drawGlyphs(point, qtGlyphs);
+    painter->drawGlyphs(origin, qtGlyphs);
     painter->setPen(previousPen);
+
+    painter->restore();
 }
 
 bool Font::canExpandAroundIdeographsInComplexText()
 {
-    return false;
+    return true;
 }
 
 #else // !HAVE(QRAWFONT)

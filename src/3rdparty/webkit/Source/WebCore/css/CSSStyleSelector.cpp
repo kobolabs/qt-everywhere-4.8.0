@@ -4411,23 +4411,28 @@ void CSSStyleSelector::applyProperty(int id, CSSValue *value)
                         break;
                     case CSSValueSerif:
                         face = "-webkit-serif";
-                        fontDescription.setGenericFamily(FontDescription::SerifFamily);
+                        if (fontDescription.genericFamily() == FontDescription::NoFamily)
+                            fontDescription.setGenericFamily(FontDescription::SerifFamily);
                         break;
                     case CSSValueSansSerif:
                         face = "-webkit-sans-serif";
-                        fontDescription.setGenericFamily(FontDescription::SansSerifFamily);
+                        if (fontDescription.genericFamily() == FontDescription::NoFamily)
+                            fontDescription.setGenericFamily(FontDescription::SansSerifFamily);
                         break;
                     case CSSValueCursive:
                         face = "-webkit-cursive";
-                        fontDescription.setGenericFamily(FontDescription::CursiveFamily);
+                        if (fontDescription.genericFamily() == FontDescription::NoFamily)
+                            fontDescription.setGenericFamily(FontDescription::CursiveFamily);
                         break;
                     case CSSValueFantasy:
                         face = "-webkit-fantasy";
-                        fontDescription.setGenericFamily(FontDescription::FantasyFamily);
+                        if (fontDescription.genericFamily() == FontDescription::NoFamily)
+                            fontDescription.setGenericFamily(FontDescription::FantasyFamily);
                         break;
                     case CSSValueMonospace:
                         face = "-webkit-monospace";
-                        fontDescription.setGenericFamily(FontDescription::MonospaceFamily);
+                        if (fontDescription.genericFamily() == FontDescription::NoFamily)
+                            fontDescription.setGenericFamily(FontDescription::MonospaceFamily);
                         break;
                 }
             }

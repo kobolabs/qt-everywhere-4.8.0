@@ -68,6 +68,8 @@ Q_CORE_EXPORT HB_Bool qShapeItem(HB_ShaperItem *item);
 // ### temporary
 Q_CORE_EXPORT HB_Face qHBNewFace(void *font, HB_GetFontTableFunc tableFunc);
 Q_CORE_EXPORT void qHBFreeFace(HB_Face);
+Q_CORE_EXPORT quint32 qGlyphVerticalVariant(HB_FaceRec_* hbFace, const quint32 glyph);
+Q_CORE_EXPORT bool qHasVerticalGlyphs(HB_FaceRec_* hbFace);
 
 Q_DECLARE_TYPEINFO(HB_GlyphAttributes, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(HB_FixedPoint, Q_PRIMITIVE_TYPE);

@@ -137,4 +137,53 @@ void qGetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
     HB_GetCharAttributes(string, stringLength, items, numItems, attributes);
 }
 
+quint32 qGlyphVerticalVariant(HB_FaceRec_* hbFace, const quint32 glyph)
+{
+    if(!hbFace)
+        return glyph;
+
+    quint32 subbed = glyph;
+    HB_Buffer buffer;
+    hb_buffer_new(&buffer);
+    hb_buffer_add_glyph(buffer, glyph, 0, 0);
+    HB_UShort scriptIndex;
+    HB_UShort featureIndex;
+
+    if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('D', 'F', 'L', 'T'), &scriptIndex) != HB_Err_Ok ){
+        if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('h', 'a', 'n', 'i'), &scriptIndex) != HB_Err_Ok ){
+            HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex);
+        }
+    }
+    HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex);
+    HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1);
+    HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex);
+    HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1);
+    int error = HB_GSUB_Apply_String(hbFace->gsub, buffer);
+    if (!error){
+        subbed = static_cast<uint>(buffer->out_string[0].gindex);
+    }
+    return subbed;
+}
+
+bool qHasVerticalGlyphs(HB_FaceRec_* hbFace)
+{
+    if(!hbFace)
+        return false;
+
+    HB_UShort scriptIndex;
+    HB_UShort featureIndex;
+
+    if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('D', 'F', 'L', 'T'), &scriptIndex) == HB_Err_Ok
+        || HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('h', 'a', 'n', 'i'), &scriptIndex) == HB_Err_Ok
+        || HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex) == HB_Err_Ok )
+    {
+        if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok)
+            return HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1) == HB_Err_Ok;
+        else if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok)
+            return HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1) == HB_Err_Ok;
+    }
+    return false;
+}
+
+
 QT_END_NAMESPACE

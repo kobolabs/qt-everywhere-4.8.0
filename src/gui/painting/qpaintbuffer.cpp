@@ -1768,12 +1768,12 @@ void QPainterReplayer::process(const QPaintBufferCommand &cmd)
             rawFontD->fontEngine = fontD->engineForScript(QUnicodeTables::Common);
             rawFontD->fontEngine->ref.ref();
 
-            QGlyphRun glyphs;
-            glyphs.setRawFont(rawFont);
+            QGlyphs glyphs;
+            glyphs.setFont(rawFont);
             glyphs.setGlyphIndexes(glyphIndexes);
             glyphs.setPositions(positions);
 
-            painter->drawGlyphRun(QPointF(), glyphs);
+            painter->drawGlyphs(QPointF(), glyphs);
             break;
     }
 #endif

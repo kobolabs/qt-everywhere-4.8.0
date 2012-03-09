@@ -87,6 +87,18 @@ FontPlatformData::FontPlatformData(const FontDescription& description, const Ato
 }
 
 #if HAVE(QRAWFONT)
+FontPlatformData::FontPlatformData(const FontPlatformData& src)
+    : m_data(adoptRef(new FontPlatformDataPrivate()))
+{
+    m_data->font = src.m_data->font;
+    m_data->rawFont = QRawFont::fromFont(m_data->font, QFontDatabase::Any);
+    m_data->size = src.m_data->size;
+    m_data->bold = src.m_data->bold;
+    m_data->oblique = src.m_data->oblique;
+    m_data->orientation = src.m_data->orientation;
+    m_data->isDeletedValue = src.m_data->isDeletedValue;
+}
+
 FontPlatformData::FontPlatformData(const FontPlatformData& other, float size)
     : m_data(adoptRef(new FontPlatformDataPrivate()))
 {
@@ -97,6 +109,7 @@ FontPlatformData::FontPlatformData(const FontPlatformData& other, float size)
     m_data->font.setPixelSize(size);
     m_data->rawFont.setPixelSize(size);
     m_data->size = size ? m_data->font.pixelSize() : 0;
+    m_data->orientation = other.m_data->orientation;
 }
 #endif
 

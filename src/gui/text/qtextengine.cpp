@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -319,26 +319,6 @@ static void appendItems(QScriptAnalysis *analysis, int &start, int &stop, const 
     start = stop;
 }
 
-static QChar::Direction skipBoundryNeutrals(QScriptAnalysis *analysis,
-                                            const ushort *unicode, int length,
-                                            int &sor, int &eor, QBidiControl &control)
-{
-    QChar::Direction dir = control.basicDirection();
-    int level = sor > 0 ? analysis[sor - 1].bidiLevel : control.level;
-    while (sor < length) {
-        dir = QChar::direction(unicode[sor]);
-        // Keep skipping DirBN as if it doesn't exist
-        if (dir != QChar::DirBN)
-            break;
-        analysis[sor++].bidiLevel = level;
-    }
-
-    eor = sor;
-    if (eor == length)
-        dir = control.basicDirection();
-
-    return dir;
-}
 
 // creates the next QScript items.
 static bool bidiItemize(QTextEngine *engine, QScriptAnalysis *analysis, QBidiControl &control)
@@ -450,7 +430,8 @@ static bool bidiItemize(QTextEngine *engine, QScriptAnalysis *analysis, QBidiCon
                 case QChar::DirAN:
                     if (eor >= 0) {
                         appendItems(analysis, sor, eor, control, dir);
-                        status.eor = dir = skipBoundryNeutrals(analysis, unicode, length, sor, eor, control);
+                        dir = eor < length ? QChar::direction(unicode[eor]) : control.basicDirection();
+                        status.eor = dir;
                     } else {
                         eor = current; status.eor = dir;
                     }
@@ -474,7 +455,8 @@ static bool bidiItemize(QTextEngine *engine, QScriptAnalysis *analysis, QBidiCon
                             }
                             eor = current - 1;
                             appendItems(analysis, sor, eor, control, dir);
-                            status.eor = dir = skipBoundryNeutrals(analysis, unicode, length, sor, eor, control);
+                            dir = eor < length ? QChar::direction(unicode[eor]) : control.basicDirection();
+                            status.eor = dir;
                         } else {
                             if(status.eor != QChar::DirL) {
                                 appendItems(analysis, sor, eor, control, dir);
@@ -876,7 +858,7 @@ void QTextEngine::shapeLine(const QScriptLine &line)
     }
 }
 
-#if !defined(QT_ENABLE_HARFBUZZ_FOR_MAC) && defined(Q_WS_MAC)
+#if !defined(QT_ENABLE_HARFBUZZ_FOR_MAC)
 static bool enableHarfBuzz()
 {
     static enum { Yes, No, Unknown } status = Unknown;
@@ -970,7 +952,7 @@ void QTextEngine::shapeText(int item) const
     }
 
     for (int i = 0; i < si.num_glyphs; ++i)
-        si.width += glyphs.advances_x[i] * !glyphs.attributes[i].dontPrint;
+        si.width += glyphs.advances_x[i];
 }
 
 static inline bool hasCaseChange(const QScriptItem &si)
@@ -995,7 +977,8 @@ static void heuristicSetGlyphAttributes(const QChar *uc, int length, QGlyphLayou
 
     int glyph_pos = 0;
     for (int i = 0; i < length; i++) {
-        if (uc[i].isHighSurrogate() && i < length-1 && uc[i+1].isLowSurrogate()) {
+        if (uc[i].unicode() >= 0xd800 && uc[i].unicode() < 0xdc00 && i < length-1
+            && uc[i+1].unicode() >= 0xdc00 && uc[i+1].unicode() < 0xe000) {
             logClusters[i] = glyph_pos;
             logClusters[++i] = glyph_pos;
         } else {
@@ -1391,7 +1374,6 @@ QTextEngine::~QTextEngine()
     if (!stackEngine)
         delete layoutData;
     delete specialData;
-    resetFontEngineCache();
 }
 
 const HB_CharAttributes *QTextEngine::attributes() const
@@ -1452,13 +1434,6 @@ static inline void releaseCachedFontEngine(QFontEngine *fontEngine)
     }
 }
 
-void QTextEngine::resetFontEngineCache()
-{
-    releaseCachedFontEngine(feCache.prevFontEngine);
-    releaseCachedFontEngine(feCache.prevScaledFontEngine);
-    feCache.reset();
-}
-
 void QTextEngine::invalidate()
 {
     freeMemory();
@@ -1467,7 +1442,9 @@ void QTextEngine::invalidate()
     if (specialData)
         specialData->resolvedFormatIndices.clear();
 
-    resetFontEngineCache();
+    releaseCachedFontEngine(feCache.prevFontEngine);
+    releaseCachedFontEngine(feCache.prevScaledFontEngine);
+    feCache.reset();
 }
 
 void QTextEngine::clearLineData()
@@ -1542,38 +1519,33 @@ void QTextEngine::itemize() const
     const ushort *e = uc + length;
     int lastScript = QUnicodeTables::Common;
     while (uc < e) {
-        switch (*uc) {
-        case QChar::ObjectReplacementCharacter:
+        int script = QUnicodeTables::script(*uc);
+        if (script == QUnicodeTables::Inherited)
+            script = lastScript;
+        analysis->flags = QScriptAnalysis::None;
+        if (*uc == QChar::ObjectReplacementCharacter) {
+            if (analysis->bidiLevel % 2)
+                --analysis->bidiLevel;
             analysis->script = QUnicodeTables::Common;
             analysis->flags = QScriptAnalysis::Object;
-            break;
-        case QChar::LineSeparator:
+        } else if (*uc == QChar::LineSeparator) {
             if (analysis->bidiLevel % 2)
                 --analysis->bidiLevel;
             analysis->script = QUnicodeTables::Common;
             analysis->flags = QScriptAnalysis::LineOrParagraphSeparator;
             if (option.flags() & QTextOption::ShowLineAndParagraphSeparators)
                 *const_cast<ushort*>(uc) = 0x21B5; // visual line separator
-            break;
-        case 9: // Tab
+        } else if (*uc == 9) {
             analysis->script = QUnicodeTables::Common;
             analysis->flags = QScriptAnalysis::Tab;
             analysis->bidiLevel = control.baseLevel();
-            break;
-        case 32: // Space
-        case QChar::Nbsp:
-            if (option.flags() & QTextOption::ShowTabsAndSpaces) {
-                analysis->script = QUnicodeTables::Common;
-                analysis->flags = QScriptAnalysis::Space;
-                analysis->bidiLevel = control.baseLevel();
-                break;
-            }
-        // fall through
-        default:
-            int script = QUnicodeTables::script(*uc);
-            analysis->script = script == QUnicodeTables::Inherited ? lastScript : script;
-            analysis->flags = QScriptAnalysis::None;
-            break;
+        } else if ((*uc == 32 || *uc == QChar::Nbsp)
+                   && (option.flags() & QTextOption::ShowTabsAndSpaces)) {
+            analysis->script = QUnicodeTables::Common;
+            analysis->flags = QScriptAnalysis::Space;
+            analysis->bidiLevel = control.baseLevel();
+        } else {
+            analysis->script = script;
         }
         lastScript = analysis->script;
         ++uc;
@@ -1647,13 +1619,19 @@ bool QTextEngine::isRightToLeft() const
 int QTextEngine::findItem(int strPos) const
 {
     itemize();
-
-    int item;
-    for (item = layoutData->items.size()-1; item > 0; --item) {
-        if (layoutData->items[item].position <= strPos)
-            break;
+    int left = 0;
+    int right = layoutData->items.size()-1;
+    while(left <= right) {
+        int middle = ((right-left)/2)+left;
+        if (strPos > layoutData->items[middle].position)
+            left = middle+1;
+        else if(strPos < layoutData->items[middle].position)
+            right = middle-1;
+        else {
+            return middle;
+        }
     }
-    return item;
+    return right;
 }
 
 QFixed QTextEngine::width(int from, int len) const
@@ -2097,8 +2075,7 @@ void QTextEngine::justify(const QScriptLine &line)
         }
     }
 
-    QFixed leading = leadingSpaceWidth(line);
-    QFixed need = line.width - line.textWidth - leading;
+    QFixed need = line.width - line.textWidth;
     if (need < 0) {
         // line overflows already!
         const_cast<QScriptLine &>(line).justified = true;
@@ -2442,7 +2419,7 @@ void QTextEngine::indexAdditionalFormats()
    between the text that gets truncated and the ellipsis. This is important to get
    correctly shaped results for arabic text.
 */
-static inline bool nextCharJoins(const QString &string, int pos)
+static bool nextCharJoins(const QString &string, int pos)
 {
     while (pos < string.length() && string.at(pos).category() == QChar::Mark_NonSpacing)
         ++pos;
@@ -2451,14 +2428,13 @@ static inline bool nextCharJoins(const QString &string, int pos)
     return string.at(pos).joining() != QChar::OtherJoining;
 }
 
-static inline bool prevCharJoins(const QString &string, int pos)
+static bool prevCharJoins(const QString &string, int pos)
 {
     while (pos > 0 && string.at(pos - 1).category() == QChar::Mark_NonSpacing)
         --pos;
     if (pos == 0)
         return false;
-    QChar::Joining joining = string.at(pos - 1).joining();
-    return (joining == QChar::Dual || joining == QChar::Center);
+    return (string.at(pos - 1).joining() == QChar::Dual || string.at(pos - 1).joining() == QChar::Center);
 }
 
 QString QTextEngine::elidedText(Qt::TextElideMode mode, const QFixed &width, int flags) const
@@ -2668,7 +2644,7 @@ void QTextEngine::splitItem(int item, int pos) const
         QFixed w = 0;
         const QGlyphLayout g = shapedGlyphs(&oldItem);
         for(int j = 0; j < breakGlyph; ++j)
-            w += g.advances_x[j] * !g.attributes[j].dontPrint;
+            w += g.advances_x[j];
 
         newItem.width = oldItem.width - w;
         oldItem.width = w;
@@ -2819,7 +2795,7 @@ QFixed QTextEngine::alignLine(const QScriptLine &line)
         if (align & Qt::AlignRight)
             x = line.width - (line.textAdvance + leadingSpaceWidth(line));
         else if (align & Qt::AlignHCenter)
-            x = (line.width - line.textAdvance)/2 - leadingSpaceWidth(line);
+            x = (line.width - (line.textAdvance + leadingSpaceWidth(line)))/2;
     }
     return x;
 }
@@ -2852,76 +2828,6 @@ QFixed QTextEngine::offsetInLigature(const QScriptItem *si, int pos, int max, in
     }
 
     return 0;
-}
-
-// Scan in logClusters[from..to-1] for glyph_pos
-int QTextEngine::getClusterLength(unsigned short *logClusters,
-                                  const HB_CharAttributes *attributes,
-                                  int from, int to, int glyph_pos, int *start)
-{
-    int clusterLength = 0;
-    for (int i = from; i < to; i++) {
-        if (logClusters[i] == glyph_pos && attributes[i].charStop) {
-            if (*start < 0)
-                *start = i;
-            clusterLength++;
-        }
-        else if (clusterLength)
-            break;
-    }
-    return clusterLength;
-}
-
-int QTextEngine::positionInLigature(const QScriptItem *si, int end,
-                                    QFixed x, QFixed edge, int glyph_pos,
-                                    bool cursorOnCharacter)
-{
-    unsigned short *logClusters = this->logClusters(si);
-    int clusterStart = -1;
-    int clusterLength = 0;
-
-    if (si->analysis.script != QUnicodeTables::Common &&
-        si->analysis.script != QUnicodeTables::Greek) {
-        if (glyph_pos == -1)
-            return si->position + end;
-        else {
-            int i;
-            for (i = 0; i < end; i++)
-                if (logClusters[i] == glyph_pos)
-                    break;
-            return si->position + i;
-        }
-    }
-
-    if (glyph_pos == -1 && end > 0)
-        glyph_pos = logClusters[end - 1];
-    else {
-        if (x <= edge)
-            glyph_pos--;
-    }
-
-    const HB_CharAttributes *attrs = attributes();
-    logClusters = this->logClusters(si);
-    clusterLength = getClusterLength(logClusters, attrs, 0, end, glyph_pos, &clusterStart);
-
-    if (clusterLength) {
-        const QGlyphLayout &glyphs = shapedGlyphs(si);
-        QFixed glyphWidth = glyphs.effectiveAdvance(glyph_pos);
-        // the approximate width of each individual element of the ligature
-        QFixed perItemWidth = glyphWidth / clusterLength;
-        QFixed left = x > edge ? edge : edge - glyphWidth;
-        int n = ((x - left) / perItemWidth).floor().toInt();
-        QFixed dist = x - left - n * perItemWidth;
-        int closestItem = dist > (perItemWidth / 2) ? n + 1 : n;
-        if (cursorOnCharacter && closestItem > 0)
-            closestItem--;
-        int pos = si->position + clusterStart + closestItem;
-        // Jump to the next charStop
-        while (!attrs[pos].charStop && pos < end)
-            pos++;
-        return pos;
-    }
-    return si->position + end;
 }
 
 int QTextEngine::previousLogicalPosition(int oldPos) const
@@ -2961,7 +2867,7 @@ int QTextEngine::lineNumberForTextPosition(int pos)
         return lines.size() - 1;
     for (int i = 0; i < lines.size(); ++i) {
         const QScriptLine& line = lines[i];
-        if (line.from + line.length + line.trailingSpaces > pos)
+        if (line.from + line.length > pos)
             return i;
     }
     return -1;
@@ -3063,22 +2969,6 @@ QTextItemInt::QTextItemInt(const QScriptItem &si, QFont *font, const QTextCharFo
     : justified(false), underlineStyle(QTextCharFormat::NoUnderline), charFormat(format),
       num_chars(0), chars(0), logClusters(0), f(0), fontEngine(0)
 {
-    f = font;
-    fontEngine = f->d->engineForScript(si.analysis.script);
-    Q_ASSERT(fontEngine);
-
-    initWithScriptItem(si);
-}
-
-QTextItemInt::QTextItemInt(const QGlyphLayout &g, QFont *font, const QChar *chars_, int numChars, QFontEngine *fe, const QTextCharFormat &format)
-    : flags(0), justified(false), underlineStyle(QTextCharFormat::NoUnderline), charFormat(format),
-      num_chars(numChars), chars(chars_), logClusters(0), f(font),  glyphs(g), fontEngine(fe)
-{
-}
-
-// Fix up flags and underlineStyle with given info
-void QTextItemInt::initWithScriptItem(const QScriptItem &si)
-{
     // explicitly initialize flags so that initFontAttributes can be called
     // multiple times on the same TextItem
     flags = 0;
@@ -3086,10 +2976,13 @@ void QTextItemInt::initWithScriptItem(const QScriptItem &si)
         flags |= QTextItem::RightToLeft;
     ascent = si.ascent;
     descent = si.descent;
+    f = font;
+    fontEngine = f->d->engineForScript(si.analysis.script);
+    Q_ASSERT(fontEngine);
 
-    if (charFormat.hasProperty(QTextFormat::TextUnderlineStyle)) {
-        underlineStyle = charFormat.underlineStyle();
-    } else if (charFormat.boolProperty(QTextFormat::FontUnderline)
+    if (format.hasProperty(QTextFormat::TextUnderlineStyle)) {
+        underlineStyle = format.underlineStyle();
+    } else if (format.boolProperty(QTextFormat::FontUnderline)
                || f->d->underline) {
         underlineStyle = QTextCharFormat::SingleUnderline;
     }
@@ -3098,10 +2991,16 @@ void QTextItemInt::initWithScriptItem(const QScriptItem &si)
     if (underlineStyle == QTextCharFormat::SingleUnderline)
         flags |= QTextItem::Underline;
 
-    if (f->d->overline || charFormat.fontOverline())
+    if (f->d->overline || format.fontOverline())
         flags |= QTextItem::Overline;
-    if (f->d->strikeOut || charFormat.fontStrikeOut())
+    if (f->d->strikeOut || format.fontStrikeOut())
         flags |= QTextItem::StrikeOut;
+}
+
+QTextItemInt::QTextItemInt(const QGlyphLayout &g, QFont *font, const QChar *chars_, int numChars, QFontEngine *fe)
+    : flags(0), justified(false), underlineStyle(QTextCharFormat::NoUnderline),
+      num_chars(numChars), chars(chars_), logClusters(0), f(font),  glyphs(g), fontEngine(fe)
+{
 }
 
 QTextItemInt QTextItemInt::midItem(QFontEngine *fontEngine, int firstGlyphIndex, int numGlyphs) const

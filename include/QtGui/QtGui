@@ -81,7 +81,7 @@
 #include "qfontdatabase.h"
 #include "qfontinfo.h"
 #include "qfontmetrics.h"
-#include "qglyphrun.h"
+#include "qglyphs.h"
 #include "qrawfont.h"
 #include "qstatictext.h"
 #include "qsyntaxhighlighter.h"

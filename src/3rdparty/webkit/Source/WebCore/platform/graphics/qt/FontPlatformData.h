@@ -26,6 +26,7 @@
 
 #include "FontDescription.h"
 #include "FontOrientation.h"
+#include "TextOrientation.h"
 #include <QFont>
 #include <QHash>
 #if HAVE(QRAWFONT)
@@ -46,7 +47,7 @@ public:
         , orientation(Horizontal)
         , isDeletedValue(false)
     { }
-    FontPlatformDataPrivate(const float size, const bool bold, const bool oblique, FontOrientation orientation)
+    FontPlatformDataPrivate(const float size, const bool bold, const bool oblique, FontOrientation orientation = Horizontal)
         : size(size)
         , bold(bold)
         , oblique(oblique)
@@ -71,6 +72,7 @@ public:
         , size(rawFont.pixelSize())
         , bold(rawFont.weight() >= QFont::Bold)
         , oblique(false)
+        , orientation(Horizontal)
         , isDeletedValue(false)
     { }
 #endif
@@ -98,10 +100,13 @@ public:
         : m_data(adoptRef(new FontPlatformDataPrivate(font, orientation)))
     { }
 #if HAVE(QRAWFONT)
+    FontPlatformData(const FontPlatformData& src);
     FontPlatformData(const FontPlatformData&, float size);
-    FontPlatformData(const QRawFont& rawFont)
+    FontPlatformData(const QRawFont& rawFont, FontOrientation orientation)
         : m_data(adoptRef(new FontPlatformDataPrivate(rawFont)))
-    { }
+    {
+        m_data->orientation = orientation;
+    }
 #endif
     FontPlatformData(WTF::HashTableDeletedValueType)
         : m_data(adoptRef(new FontPlatformDataPrivate()))
@@ -174,8 +179,10 @@ public:
             return m_data->orientation;
         return Horizontal;
     }
-    void setOrientation(FontOrientation) { } // FIXME: Implement.
-
+    void setOrientation(FontOrientation orientation)
+    {
+        m_data->orientation = orientation;
+    }
     unsigned hash() const;
 
 #ifndef NDEBUG

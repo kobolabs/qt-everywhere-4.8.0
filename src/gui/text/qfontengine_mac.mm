@@ -7,29 +7,29 @@
 ** This file is part of the QtGui module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
 ** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 **
 ** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** rights.  These rights are described in the Nokia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
 **
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
+**
+**
 **
 **
 **
@@ -257,8 +257,10 @@ static OSStatus atsuPostLayoutCallback(ATSULayoutOperationSelector selector, ATS
 #if !defined(QT_NO_DEBUG)
         int surrogates = 0;
         const QChar *str = item->string;
-        for (int i = item->from; i < item->from + item->length - 1; ++i)
-            surrogates += (str[i].isHighSurrogate() && str[i+1].isLowSurrogate());
+        for (int i = item->from; i < item->from + item->length - 1; ++i) {
+            surrogates += (str[i].unicode() >= 0xd800 && str[i].unicode() < 0xdc00
+                           && str[i+1].unicode() >= 0xdc00 && str[i+1].unicode() < 0xe000);
+        }
 #endif
         for (nextCharStop = item->from; nextCharStop < item->from + item->length; ++nextCharStop)
             if (item->charAttributes[nextCharStop].charStop)
@@ -326,8 +328,10 @@ static OSStatus atsuPostLayoutCallback(ATSULayoutOperationSelector selector, ATS
             if (charOffset < item->length - 1) {
                 QChar current = item->string[item->from + charOffset];
                 QChar next = item->string[item->from + charOffset + 1];
-                if (current.isHighSurrogate() && next.isLowSurrogate())
+                if (current.unicode() >= 0xd800 && current.unicode() < 0xdc00
+                    && next.unicode() >= 0xdc00 && next.unicode() < 0xe000) {
                     item->log_clusters[charOffset + 1] = currentClusterGlyph;
+                }
             }
         }
     }
@@ -369,7 +373,7 @@ int QFontEngineMacMulti::fontIndexForFontID(ATSUFontID id) const
 
 bool QFontEngineMacMulti::stringToCMap(const QChar *str, int len, QGlyphLayout *glyphs, int *nglyphs, QTextEngine::ShaperFlags flags) const
 {
-    return stringToCMap(str, len, glyphs, nglyphs, flags, /*logClusters=*/0, /*charAttributes=*/0, /*si=*/0);
+    return stringToCMap(str, len, glyphs, nglyphs, flags, /*logClusters=*/0, /*charAttributes=*/0);
 }
 
 bool QFontEngineMacMulti::stringToCMap(const QChar *str, int len, QGlyphLayout *glyphs, int *nglyphs, QTextEngine::ShaperFlags flags,
@@ -734,12 +738,15 @@ QFontEngineMac::~QFontEngineMac()
 
 static inline unsigned int getChar(const QChar *str, int &i, const int len)
 {
-    uint ucs4 = str[i].unicode();
-    if (str[i].isHighSurrogate() && i < len-1 && str[i+1].isLowSurrogate()) {
-        ++i;
-        ucs4 = QChar::surrogateToUcs4(ucs4, str[i].unicode());
+    unsigned int uc = str[i].unicode();
+    if (uc >= 0xd800 && uc < 0xdc00 && i < len-1) {
+        uint low = str[i+1].unicode();
+       if (low >= 0xdc00 && low < 0xe000) {
+            uc = (uc - 0xd800)*0x400 + (low - 0xdc00) + 0x10000;
+            ++i;
+        }
     }
-    return ucs4;
+    return uc;
 }
 
 // Not used directly for shaping, only used to calculate m_averageCharWidth

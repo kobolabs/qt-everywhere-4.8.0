@@ -2769,6 +2769,7 @@ QT_LICENSED_MODULE(DBus)
     && !(defined(Q_WS_QPA))
 #  define QT_NO_RAWFONT
 #endif
+#undef QT_NO_RAWFONT
 
 namespace QtPrivate {
 //like std::enable_if
