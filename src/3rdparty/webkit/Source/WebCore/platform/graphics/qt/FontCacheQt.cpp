@@ -35,6 +35,7 @@
 #include <wtf/text/StringHash.h>
 
 #include <QFont>
+#include <QFontDatabase>
 #if HAVE(QRAWFONT)
 #include <QTextLayout>
 #endif
