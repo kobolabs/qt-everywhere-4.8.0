@@ -3149,6 +3149,8 @@ void QRasterPaintEngine::drawTextItem(const QPointF &p, const QTextItem &textIte
 #else // Q_WS_WIN || Q_WS_MAC
 
     QFontEngine *fontEngine = ti.fontEngine;
+    if (!fontEngine)
+        return;
 
 #if defined(Q_WS_QWS)
     if (fontEngine->type() == QFontEngine::Box) {
