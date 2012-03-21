@@ -5800,7 +5800,6 @@ void QPainter::drawImage(const QRectF &targetRect, const QImage &image, const QR
 
     \sa QGlyphs::setFont(), QGlyphs::setPositions(), QGlyphs::setGlyphIndexes()
 */
-#if !defined(QT_NO_RAWFONT)
 void QPainter::drawGlyphs(const QPointF &position, const QGlyphs &glyphs)
 {
 #ifdef QT_DEBUG_DRAW
@@ -5913,7 +5912,6 @@ void QPainterPrivate::drawGlyphs(quint32 *glyphArray, QFixedPoint *positions, in
                               : QTextCharFormat::NoUnderline),
                            flags, width.toReal(), QTextCharFormat());
 }
-#endif // QT_NO_RAWFONT
 
 /*!
 
