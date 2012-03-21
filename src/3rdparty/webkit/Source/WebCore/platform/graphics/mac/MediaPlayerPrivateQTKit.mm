@@ -47,6 +47,9 @@
 #import "SoftLinking.h"
 #import "TimeRanges.h"
 #import "WebCoreSystemInterface.h"
+#if defined(slots)
+#undef slots
+#endif
 #import <QTKit/QTKit.h>
 #import <objc/objc-runtime.h>
 #import <wtf/UnusedParam.h>
