@@ -365,3 +365,9 @@ defineTest(prependWebCoreLib) {
 
     return(true)
 }
+
+mac {
+    INCLUDEPATH += $$NICKEL_BASE/scripts/icu/public/common
+    INCLUDEPATH += $$NICKEL_BASE/scripts/icu/public/i18n
+    LIBS += -L$$NICKEL_BASE/scripts/icu/source/lib -licuuc -licudata
+}
