@@ -367,6 +367,5 @@ defineTest(prependWebCoreLib) {
 }
 
 mac {
-    LIBS += -L$$NICKEL_BASE/scripts/icu/source/lib -licuuc -licudata
-    QMAKE_OBJECTIVE_CFLAGS += -I$$NICKEL_BASE/scripts/icu/public/common -I$$NICKEL_BASE/scripts/icu/public/i18n
+    QMAKE_OBJECTIVE_CFLAGS += -I$${NICKEL_BASE}/scripts/icu/public/common -I$${NICKEL_BASE}/scripts/icu/public/i18n
 }
