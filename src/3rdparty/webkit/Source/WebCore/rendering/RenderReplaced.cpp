@@ -128,6 +128,14 @@ void RenderReplaced::paint(PaintInfo& paintInfo, int tx, int ty)
         return;
     
     bool drawSelectionTint = selectionState() != SelectionNone && !document()->printing();
+
+// On the device our selection background is opaque white,
+// which means images get turned white when they're selected.
+// Just draw them as if they weren't selected.
+#if OS(LINUX) && !(CPU(X86) || CPU(X86_64))
+    drawSelectionTint = false;
+#endif
+
     if (paintInfo.phase == PaintPhaseSelection) {
         if (selectionState() == SelectionNone)
             return;
