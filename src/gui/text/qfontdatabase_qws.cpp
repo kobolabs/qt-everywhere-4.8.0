@@ -360,7 +360,7 @@ static void initializeDb()
 #ifndef QT_NO_FREETYPE
     dir.setNameFilters(QStringList() << QLatin1String("*.ttf")
                        << QLatin1String("*.ttc") << QLatin1String("*.pfa")
-                       << QLatin1String("*.pfb"));
+                       << QLatin1String("*.pfb") << QLatin1String("*.otf"));
     dir.refresh();
     for (int i = 0; i < int(dir.count()); ++i) {
         const QByteArray file = QFile::encodeName(dir.absoluteFilePath(dir[i]));
