@@ -73,7 +73,7 @@
 #include <private/qpaintengine_raster_p.h>
 #include <private/qmath_p.h>
 #include <private/qstatictext_p.h>
-#include <private/qglyphs_p.h>
+#include "../text/qglyphs_p.h"
 #include <private/qstylehelper_p.h>
 #include <private/qrawfont_p.h>
 
