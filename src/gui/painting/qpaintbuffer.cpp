@@ -48,6 +48,7 @@
 #include <qstatictext.h>
 #include <private/qstatictext_p.h>
 #include <private/qrawfont_p.h>
+#include "../text/qglyphs.h"
 
 #include <QDebug>
 
