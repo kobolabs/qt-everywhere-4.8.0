@@ -50,6 +50,7 @@
 #include <QtGui/qimage.h>
 #include <QtGui/qtextoption.h>
 #include <QtGui/qdrawutil.h>
+#include <QtGui/qglyphs.h>
 
 #ifndef QT_INCLUDE_COMPAT
 #include <QtGui/qpolygon.h>
@@ -79,7 +80,6 @@ class QTextItem;
 class QMatrix;
 class QTransform;
 class QStaticText;
-class QGlyphs;
 
 class QPainterPrivateDeleter;
 
