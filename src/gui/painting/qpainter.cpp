@@ -62,7 +62,7 @@
 #include "qthread.h"
 #include "qvarlengtharray.h"
 #include "qstatictext.h"
-#include "qglyphs.h"
+#include <qglyphs.h>
 
 #include <private/qfontengine_p.h>
 #include <private/qpaintengine_p.h>
