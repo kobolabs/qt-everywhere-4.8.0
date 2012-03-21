@@ -62,7 +62,7 @@
 #include "qthread.h"
 #include "qvarlengtharray.h"
 #include "qstatictext.h"
-#include "../text/qglyphs.h"
+#include <qglyphs.h>
 
 #include <private/qfontengine_p.h>
 #include <private/qpaintengine_p.h>
@@ -73,7 +73,7 @@
 #include <private/qpaintengine_raster_p.h>
 #include <private/qmath_p.h>
 #include <private/qstatictext_p.h>
-#include "../text/qglyphs_p.h"
+#include <private/qglyphs_p.h>
 #include <private/qstylehelper_p.h>
 #include <private/qrawfont_p.h>
 
@@ -5800,6 +5800,7 @@ void QPainter::drawImage(const QRectF &targetRect, const QImage &image, const QR
 
     \sa QGlyphs::setFont(), QGlyphs::setPositions(), QGlyphs::setGlyphIndexes()
 */
+#if !defined(QT_NO_RAWFONT)
 void QPainter::drawGlyphs(const QPointF &position, const QGlyphs &glyphs)
 {
 #ifdef QT_DEBUG_DRAW
@@ -5912,6 +5913,7 @@ void QPainterPrivate::drawGlyphs(quint32 *glyphArray, QFixedPoint *positions, in
                               : QTextCharFormat::NoUnderline),
                            flags, width.toReal(), QTextCharFormat());
 }
+#endif // QT_NO_RAWFONT
 
 /*!
 
