@@ -80,6 +80,7 @@ class QTextItem;
 class QMatrix;
 class QTransform;
 class QStaticText;
+class QGlyphs;
 
 class QPainterPrivateDeleter;
 
