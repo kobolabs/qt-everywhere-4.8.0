@@ -114,6 +114,8 @@ win32 {
                 painting/qprintengine_win.cpp \
                 painting/qprinterinfo_win.cpp
 
+	INCLUDEPATH += ../text
+
         !win32-borland:!wince*:LIBS += -lmsimg32
 }
 
