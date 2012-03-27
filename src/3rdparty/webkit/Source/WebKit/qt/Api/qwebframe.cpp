@@ -1566,6 +1566,9 @@ bool QWebFrame::selectionIntersectsElement(const QString &nodeName, const QStrin
 {
 	ExceptionCode ec = 0;
 	PassRefPtr<Range> range = QWebFramePrivate::core(this)->domWindow()->getSelection()->getRangeAt(0, ec);
+	if (!range) {
+		return false;
+	}
 	Node *node = range->startContainer();
 	bool done = false;
 	while (!done) {
