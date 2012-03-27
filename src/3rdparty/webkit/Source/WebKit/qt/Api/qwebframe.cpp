@@ -1572,6 +1572,9 @@ bool QWebFrame::selectionIntersectsElement(const QString &nodeName, const QStrin
 	Node *node = range->startContainer();
 	bool done = false;
 	while (!done) {
+		if (!node) {
+			return false;
+		}
 		Element *element;
 		if (node->nodeType() == Node::ELEMENT_NODE) {
 			element = static_cast<Element*>(node);
