@@ -421,9 +421,8 @@ QVector<QPointF> QRawFont::advancesForGlyphIndexes(const QVector<quint32> &glyph
     d->fontEngine->recalcAdvances(&glyphs, 0);
 
     QVector<QPointF> advances;
-    for (int i=0; i<numGlyphs; ++i){
+    for (int i=0; i<numGlyphs; ++i)
         advances.append(QPointF(glyphs.advances_x[i].toReal(), glyphs.advances_y[i].toReal()));
-    }
 
     return advances;
 }

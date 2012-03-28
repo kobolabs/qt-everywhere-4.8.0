@@ -106,22 +106,26 @@ QString QFont::defaultFamily() const
 {
     switch(d->request.styleHint) {
         case QFont::Times:
-            return QString::fromLatin1("times");
+            //return QString::fromLatin1("times");
+            return QString::fromLatin1("TT Ryumin Pr6");
         case QFont::Courier:
         case QFont::Monospace:
             return QString::fromLatin1("courier");
         case QFont::Decorative:
             return QString::fromLatin1("old english");
         case QFont::Helvetica:
+            return QString::fromLatin1("TT Shin Go Pr6");
         case QFont::System:
         default:
-            return QString::fromLatin1("helvetica");
+            return QString::fromLatin1("TT Ryumin Pr6");
+            //return QString::fromLatin1("helvetica");
     }
 }
 
 QString QFont::lastResortFamily() const
 {
-    return QString::fromLatin1("helvetica");
+    return QString::fromLatin1("TT-Ryumin-regular");
+    //return QString::fromLatin1("helvetica");
 }
 
 QString QFont::lastResortFont() const

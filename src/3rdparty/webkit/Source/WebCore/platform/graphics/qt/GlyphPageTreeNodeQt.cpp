@@ -60,7 +60,7 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
             if (lookVariants)
                 glyph = rawFont.glyphVerticalVariant(glyph);
 
-            setGlyphDataForIndex(offset + i, glyph, glyph ? fontData : 0);
+            setGlyphDataForIndex(offset + i, glyph, fontData);
         }
     }
     return haveGlyphs;
