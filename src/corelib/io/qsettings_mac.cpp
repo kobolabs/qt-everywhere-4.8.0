@@ -586,7 +586,7 @@ QSettingsPrivate *QSettingsPrivate::create(QSettings::Format format,
     if (format == QSettings::NativeFormat) {
         QString org = organization;
         QString app = application;
-#ifndef QT_NO_QOBJECT
+#if 0
         static int forAppStore = -1;
         if (forAppStore == -1) {
             // Check for a Key called "QtForAppStore" in Info.plist
