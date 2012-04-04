@@ -71,6 +71,10 @@
 #include <QDebug>
 #endif
 
+#include "RenderRubyRun.h"
+#include "RenderRubyBase.h"
+#include "RenderRubyText.h"
+
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -826,32 +830,67 @@ String markerTextForListItem(Element* element)
     return toRenderListItem(renderer)->markerText();
 }
 
-
 static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, int indent*/)
 {
     /* Figure out what the runs' positions are relative to. */
     FloatPoint origin;
     bool flippedVertical = false;
+    bool isRubyBlock = false;
+    int rubyRunBlockWidth = 0;
+
     if (RenderBlock* block = o.containingBlock()) {
+        if (dynamic_cast< RenderRubyText* > (block) ) {
+             // Ignore the ruby text block, since the ruby base block rect will be enlarged to cover the whole ruby run
+             return;
+        }
+        else if (dynamic_cast< RenderRubyBase* > (block) ) {
+             isRubyBlock = true;
+        }
         origin = block->localToAbsolute(FloatPoint());
         flippedVertical = !block->style()->isHorizontalWritingMode() && block->style()->isFlippedBlocksWritingMode();
         if (flippedVertical) {
-            origin.setX(origin.x() + block->width());
+            if (isRubyBlock) {
+                RenderObject* pa = o.parent();
+                if (pa) {
+                    RenderObject* grandPa = pa->parent();
+                    if (grandPa) {
+                        RenderObject* grandGrandPa = grandPa->parent();
+                        if (grandGrandPa) {
+                            RenderBlock* grandPaBlock = grandPa->containingBlock();
+                            RenderBlock* grandGrandPaBlock = grandGrandPa->containingBlock();
+                            if (grandPaBlock && grandGrandPaBlock) {
+                                FloatPoint grandGrandPaOrigin = grandGrandPaBlock->localToAbsolute(FloatPoint());
+                                grandGrandPaOrigin.setX(grandGrandPaOrigin.x() + grandGrandPaBlock->width());
+                                origin.setX(grandGrandPaOrigin.x() - grandPaBlock->x());
+                                rubyRunBlockWidth = block->width();
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                origin.setX(origin.x() + block->width());
+            }
         }
     }
 
     if (o.isText() && !o.isBR()) {
         const RenderText& text = *toRenderText(&o);
-        for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox())
-        {
+        for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox()) {
             InlineTextBox& run = *box;
 
             int dy = 0;
-            if (o.containingBlock()->isTableCell())
+            if (o.containingBlock()->isTableCell()) {
                 dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
+            }
             QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.width(), run.height());
             if (flippedVertical) {
-                r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width(), run.height());
+                if (isRubyBlock) {
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
+                }
+                else {
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width(), run.height());
+                }
             }
             out.append(r);
         }
