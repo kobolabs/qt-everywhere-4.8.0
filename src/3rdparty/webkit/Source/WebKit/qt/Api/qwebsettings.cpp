@@ -481,8 +481,10 @@ QWebSettings::QWebSettings()
     d->fontSizes.insert(QWebSettings::DefaultFixedFontSize, 13);
 
     QFont defaultFont;
-    defaultFont.setStyleHint(QFont::Serif);
+    defaultFont.setStyleHint(QFont::SansSerif);
     d->fontFamilies.insert(QWebSettings::StandardFont, defaultFont.defaultFamily());
+
+    defaultFont.setStyleHint(QFont::Serif);
     d->fontFamilies.insert(QWebSettings::SerifFont, defaultFont.defaultFamily());
 
     defaultFont.setStyleHint(QFont::Fantasy);

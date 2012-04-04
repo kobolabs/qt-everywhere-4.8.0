@@ -117,14 +117,14 @@ QString QFont::defaultFamily() const
             return QString::fromLatin1("TT Shin Go Pr6");
         case QFont::System:
         default:
-            return QString::fromLatin1("TT Ryumin Pr6");
+            return QString::fromLatin1("TT Shin Go Pr6");
             //return QString::fromLatin1("helvetica");
     }
 }
 
 QString QFont::lastResortFamily() const
 {
-    return QString::fromLatin1("TT-Ryumin-regular");
+    return QString::fromLatin1("TT Shin Go Pr6");
     //return QString::fromLatin1("helvetica");
 }
 
