@@ -44,6 +44,7 @@
 #include "Text.h"
 #include "break_lines.h"
 #include <wtf/AlwaysInline.h>
+#include <QSettings>
 
 using namespace std;
 
@@ -600,6 +601,10 @@ void InlineTextBox::paint(PaintInfo& paintInfo, int tx, int ty, int /*lineTop*/,
     float selectionStrokeWidth = textStrokeWidth;
     const ShadowData* selectionShadow = textShadow;
     if (haveSelection) {
+        // If we're underlining, force the foreground text to be black
+        QSettings settings;
+        paintInfo.forceBlackText = paintInfo.forceBlackText || settings.value("selectionStyle", "underline") == "underline";	
+
         // Check foreground color first.
         Color foreground = paintInfo.forceBlackText ? Color::black : renderer()->selectionForegroundColor();
         if (foreground.isValid() && foreground != selectionFillColor) {
