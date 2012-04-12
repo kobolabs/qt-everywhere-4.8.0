@@ -114,17 +114,16 @@ QString QFont::defaultFamily() const
         case QFont::Decorative:
             return QString::fromLatin1("old english");
         case QFont::Helvetica:
-            return QString::fromLatin1("TT Shin Go Pr6");
         case QFont::System:
         default:
-            return QString::fromLatin1("TT Shin Go Pr6");
+            return QString::fromLatin1("TT Gothic MB101 Pr6");
             //return QString::fromLatin1("helvetica");
     }
 }
 
 QString QFont::lastResortFamily() const
 {
-    return QString::fromLatin1("TT Shin Go Pr6");
+    return QString::fromLatin1("TT Gothic MB101 Pr6");
     //return QString::fromLatin1("helvetica");
 }
 
