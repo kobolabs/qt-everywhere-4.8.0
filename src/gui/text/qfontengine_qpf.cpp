@@ -276,6 +276,44 @@ QList<QByteArray> QFontEngineQPF::cleanUpAfterClientCrash(const QList<int> &cras
 }
 #endif
 
+static void removeOldFontCacheFiles(const int createSize, const qint64 limitSize)
+{
+    if (createSize < 0 || limitSize < 0)
+        return;
+
+    QDir dir(qws_fontCacheDir(), QLatin1String("*.qsf"));
+    int count = int(dir.count());
+    qint64 qsfSize = qint64(createSize);
+    for (int i = 0; i < count; ++i)
+        qsfSize += QFileInfo(dir.absoluteFilePath(dir[i])).size();
+
+    while (count && qsfSize > limitSize) {
+        QString oldestFileName;
+        QDateTime oldestDate = QDateTime::currentDateTime();
+        for (int i = 0; i < count; ++i) {
+            const QFileInfo info(dir.absoluteFilePath(dir[i]));
+            const QDateTime date = info.lastRead();
+            if (date < oldestDate && info.size() > 0) {
+                oldestFileName = dir[i];
+                oldestDate = date;
+#if defined(DEBUG_FONTENGINE)
+                qDebug() << "oldest:" << oldestDate.toString() << ":" << oldestFileName;
+#endif
+            }
+        }
+        if (!oldestFileName.isEmpty()) {
+            qint64 removedSize = QFileInfo(dir.absoluteFilePath(oldestFileName)).size();
+            dir.remove(oldestFileName);
+            qsfSize -= removedSize;
+            dir = QDir(qws_fontCacheDir(), QLatin1String("*.qsf"));
+            count = int(dir.count());
+#if defined(DEBUG_FONTENGINE)
+            qDebug() << "removed:" << oldestFileName << "(" << removedSize << "), remaining size:" << qsfSize << ", file count:" << count;
+#endif
+        }
+    }
+}
+
 static inline unsigned int getChar(const QChar *str, int &i, const int len)
 {
     unsigned int uc = str[i].unicode();
@@ -372,6 +410,12 @@ QFontEngineQPF::QFontEngineQPF(const QFontDef &def, int fileDescriptor, QFontEng
                 generator.generate();
                 buffer.close();
                 const QByteArray &data = buffer.data();
+#if defined(DEBUG_FONTENGINE)
+                QFileInfo info(QFile::decodeName(encodedFileName));
+                qDebug() << info.lastRead().toString() << ":" << info.fileName() << ", size:" << data.size();
+                qDebug() << "QFontEngineQPF: removeOldFontCacheFiles is called";
+#endif
+                removeOldFontCacheFiles(data.size(), 20 * 1024 * 1024); //TODO: Determine .qsf-files limit size.
                 if (QT_WRITE(fd, data.constData(), data.size()) == -1) {
 #if defined(DEBUG_FONTENGINE)
                     qErrnoWarning(errno, "QFontEngineQPF: write() failed for %s", encodedName.constData());
