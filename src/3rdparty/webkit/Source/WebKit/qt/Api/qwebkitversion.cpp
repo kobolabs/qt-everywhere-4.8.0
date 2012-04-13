@@ -20,7 +20,7 @@
 #include "config.h"
 #include <qwebkitversion.h>
 #include <WebKitVersion.h>
-#include <qwebkitengineversion.h>
+#include "qwebkitengineversion.h"
 
 /*!
     \relates QWebPage
