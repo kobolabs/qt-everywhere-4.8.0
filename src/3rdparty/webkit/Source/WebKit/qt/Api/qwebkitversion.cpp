@@ -20,6 +20,7 @@
 #include "config.h"
 #include <qwebkitversion.h>
 #include <WebKitVersion.h>
+#include <qwebkitengineversion.h>
 
 /*!
     \relates QWebPage
@@ -112,3 +113,17 @@ int qWebKitMinorVersion()
     #endif
     \endcode
 */
+
+/*!
+    \relates QWebPage
+
+    Returns the engine version string of WebKit at run-time as a string
+    (for example, 20120411). This is the version of WebKit Engine release
+    was compiled against.
+
+    \sa qWebKitVersion()
+*/
+QString qWebKitEngineVersion()
+{
+    return QString::fromLatin1(WEBKIT_ENGINE_VERSION);
+}
