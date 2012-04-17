@@ -888,7 +888,10 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     RenderBlock* paBlock = pa->containingBlock();
                     if (paBlock) {
                         horizontalInVerticalDoc = !paBlock->style()->isHorizontalWritingMode() && paBlock->style()->isFlippedBlocksWritingMode();
-                    }
+                        if (horizontalInVerticalDoc) {
+                            origin.setX(paOrigin.x() + paBlock->width() - block->x() - block->width());
+                        }
+                   }
                 }
             }
         }
@@ -913,7 +916,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 }
             }
             else if (horizontalInVerticalDoc) {
-                    r = QRect(run.m_x + origin.x() - run.width() , run.m_y + origin.y(), run.width(), run.height());
+                    r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
             }
             out.append(r);
         }
