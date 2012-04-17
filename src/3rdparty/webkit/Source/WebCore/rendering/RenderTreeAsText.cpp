@@ -830,12 +830,14 @@ String markerTextForListItem(Element* element)
     return toRenderListItem(renderer)->markerText();
 }
 
-static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, int indent*/)
+static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, bool docVertical/*, int indent*/)
 {
     /* Figure out what the runs' positions are relative to. */
     FloatPoint origin;
     bool flippedVertical = false;
     bool isRubyBlock = false;
+    bool horizontalInVerticalDoc = false;
+    bool verticalBlockWithVisibleBorder = false;
     int rubyRunBlockWidth = 0;
 
     if (RenderBlock* block = o.containingBlock()) {
@@ -849,31 +851,48 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, i
         origin = block->localToAbsolute(FloatPoint());
         flippedVertical = !block->style()->isHorizontalWritingMode() && block->style()->isFlippedBlocksWritingMode();
         if (flippedVertical) {
+             RenderObject* pa = o.parent();
+             RenderObject* grandPa = NULL;
+             RenderBlock* grandPaBlock = NULL;
+             RenderObject* grandGrandPa = NULL;
+             RenderBlock* grandGrandPaBlock = NULL;
+             if (pa) {
+                 grandPa = pa->parent();
+                 if (grandPa) {
+                     grandGrandPa = grandPa->parent();
+                     if (grandGrandPa) {
+                         grandPaBlock = grandPa->containingBlock();
+                         grandGrandPaBlock = grandGrandPa->containingBlock();
+                     }
+                 }
+            }
             if (isRubyBlock) {
-                RenderObject* pa = o.parent();
-                if (pa) {
-                    RenderObject* grandPa = pa->parent();
-                    if (grandPa) {
-                        RenderObject* grandGrandPa = grandPa->parent();
-                        if (grandGrandPa) {
-                            RenderBlock* grandPaBlock = grandPa->containingBlock();
-                            RenderBlock* grandGrandPaBlock = grandGrandPa->containingBlock();
-                            if (grandPaBlock && grandGrandPaBlock) {
-                                FloatPoint grandGrandPaOrigin = grandGrandPaBlock->localToAbsolute(FloatPoint());
-                                grandGrandPaOrigin.setX(grandGrandPaOrigin.x() + grandGrandPaBlock->width());
-                                origin.setX(grandGrandPaOrigin.x() - grandPaBlock->x());
-                                rubyRunBlockWidth = block->width();
-                            }
-                        }
-                    }
+                if (grandPaBlock && grandGrandPaBlock) {
+                    FloatPoint grandGrandPaOrigin = grandGrandPaBlock->localToAbsolute(FloatPoint());
+                    grandGrandPaOrigin.setX(grandGrandPaOrigin.x() + grandGrandPaBlock->width());
+                    origin.setX(grandGrandPaOrigin.x() - grandPaBlock->x());
+                    rubyRunBlockWidth = block->width();
                 }
             }
             else {
                 origin.setX(origin.x() + block->width());
+                if (grandPa) {
+                        verticalBlockWithVisibleBorder = (grandPa->style()->borderRightStyle() != BNONE && grandPa->style()->borderRightStyle() != BHIDDEN);
+                }
+            }
+        }
+        else {
+            if (docVertical) {
+                RenderObject* pa = o.parent();
+                if (pa) {
+                    RenderBlock* paBlock = pa->containingBlock();
+                    if (paBlock) {
+                        horizontalInVerticalDoc = !paBlock->style()->isHorizontalWritingMode() && paBlock->style()->isFlippedBlocksWritingMode();
+                    }
+                }
             }
         }
     }
-
     if (o.isText() && !o.isBR()) {
         const RenderText& text = *toRenderText(&o);
         for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox()) {
@@ -889,8 +908,12 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, i
                     r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
                 }
                 else {
-                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width(), run.height());
+                    // Painted borders: We cannot get accurate border geometry so we assume actual run width is larger
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), (verticalBlockWithVisibleBorder ? run.width() * 1.2 : run.width()), run.height());
                 }
+            }
+            else if (horizontalInVerticalDoc) {
+                    r = QRect(run.m_x + origin.x() - run.width() , run.m_y + origin.y(), run.width(), run.height());
             }
             out.append(r);
         }
@@ -899,13 +922,14 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o/*, i
     for (RenderObject* child = o.firstChild(); child; child = child->nextSibling()) {
         if (child->hasLayer())
             continue;
-        getRunRectsRecursively(out, *child);
+        getRunRectsRecursively(out, *child, docVertical);
     }
 }
 
 static void getRunRectsForAllLayers(
     QList<QRect>& out,
-    RenderLayer* l)
+    RenderLayer* l,
+    bool docVertical)
 {
     /* heavily based on writeLayers, mostly without any understanding of what "layers" even are. */
 
@@ -916,26 +940,26 @@ static void getRunRectsForAllLayers(
     Vector<RenderLayer*>* negList = l->negZOrderList();
     if (negList) {
         for (unsigned i = 0; i != negList->size(); ++i)
-            getRunRectsForAllLayers(out, negList->at(i));
+            getRunRectsForAllLayers(out, negList->at(i), docVertical);
     }
 
-    getRunRectsRecursively(out, *l->renderer());
+    getRunRectsRecursively(out, *l->renderer(), docVertical);
 
     Vector<RenderLayer*>* normalFlowList = l->normalFlowList();
     if (normalFlowList) {
         for (unsigned i = 0; i != normalFlowList->size(); ++i)
-            getRunRectsForAllLayers(out, normalFlowList->at(i));
+            getRunRectsForAllLayers(out, normalFlowList->at(i), docVertical);
     }
 
     Vector<RenderLayer*>* posList = l->posZOrderList();
     if (posList) {
         for (unsigned i = 0; i != posList->size(); ++i)
-            getRunRectsForAllLayers(out, posList->at(i));
+            getRunRectsForAllLayers(out, posList->at(i), docVertical);
     }
 }
 
 
-QList<QRect> getRunRects(RenderObject* o)
+QList<QRect> getRunRects(RenderObject* o, bool docVertical)
 {
     if (o->view()->frameView())
         o->view()->frameView()->layout();
@@ -943,7 +967,7 @@ QList<QRect> getRunRects(RenderObject* o)
     QList<QRect> ret;
     if (o->hasLayer()) {
         RenderLayer* l = toRenderBox(o)->layer();
-        getRunRectsForAllLayers(ret, l);
+        getRunRectsForAllLayers(ret, l, docVertical);
     }
 
     return ret;
