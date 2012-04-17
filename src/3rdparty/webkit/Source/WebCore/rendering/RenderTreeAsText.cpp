@@ -889,6 +889,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     if (paBlock) {
                         horizontalInVerticalDoc = !paBlock->style()->isHorizontalWritingMode() && paBlock->style()->isFlippedBlocksWritingMode();
                         if (horizontalInVerticalDoc) {
+                            FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
                             origin.setX(paOrigin.x() + paBlock->width() - block->x() - block->width());
                         }
                    }
