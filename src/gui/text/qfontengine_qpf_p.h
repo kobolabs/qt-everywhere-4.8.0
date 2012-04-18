@@ -157,7 +157,8 @@ public:
         quint8 bytesPerLine;
         qint8 x;
         qint8 y;
-        qint8 advance;
+        qint8 advanceX;
+        qint8 advanceY;
     };
 
 #ifdef QT_FONTS_ARE_RESOURCES

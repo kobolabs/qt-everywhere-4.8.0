@@ -894,12 +894,12 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyphMetrics(QGlyphSet *set, uint glyph
     bottom = FLOOR(bottom);
     top = CEIL(top);
 
-    g->linearAdvance = face->glyph->linearHoriAdvance >> 10;
     g->width = TRUNC(right-left);
     g->height = TRUNC(top-bottom);
     g->x = TRUNC(left);
     g->y = TRUNC(top);
-    g->advance = TRUNC(ROUND(face->glyph->advance.x));
+    g->advanceX = TRUNC(ROUND(face->glyph->linearHoriAdvance >> 10));
+    g->advanceY = TRUNC(ROUND(face->glyph->linearVertAdvance >> 10));
     g->format = Format_None;
 
     return g;
@@ -985,8 +985,8 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(slot);
     FT_Library library = qt_getFreetype();
 
-    info.xOff = TRUNC(ROUND(slot->advance.x));
-    info.yOff = TRUNC(ROUND(slot->advance.y));
+    info.xOff = TRUNC(ROUND(slot->linearHoriAdvance >> 10));
+    info.yOff = TRUNC(ROUND(slot->linearVertAdvance >> 10));
 
     uchar *glyph_buffer = 0;
     int glyph_buffer_size = 0;
@@ -1197,12 +1197,12 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
         g->data = 0;
     }
 
-    g->linearAdvance = vertical ? (slot->linearVertAdvance >> 10) : (slot->linearHoriAdvance >> 10);
     g->width = info.width;
     g->height = info.height;
     g->x = -info.x;
     g->y = info.y;
-    g->advance = vertical ? info.yOff : info.xOff;
+    g->advanceX = info.xOff;
+    g->advanceY = info.yOff;
     g->format = format;
     delete [] g->data;
     g->data = glyph_buffer;
@@ -1510,6 +1510,7 @@ void QFontEngineFT::getUnscaledGlyph(glyph_t glyph, QPainterPath *path, glyph_me
     metrics->x = QFixed::fromFixed(left);
     metrics->y = QFixed::fromFixed(-top);
     metrics->xoff = QFixed::fromFixed(face->glyph->advance.x);
+    metrics->yoff = QFixed::fromFixed(face->glyph->advance.y);
 
     if (!FT_IS_SCALABLE(freetype->face))
         QFreetypeFace::addBitmapToPath(face->glyph, p, path);
@@ -1709,22 +1710,18 @@ void QFontEngineFT::recalcAdvances(QGlyphLayout *glyphs, QTextEngine::ShaperFlag
     for (int i = 0; i < glyphs->numGlyphs; i++) {
         Glyph *g = defaultGlyphSet.getGlyph(glyphs->glyphs[i]);
         if (g) {
-            glyphs->advances_x[i] = design ? QFixed::fromFixed(g->linearAdvance) : QFixed(g->advance);
-            advance = design ? QFixed::fromFixed(g->linearAdvance) : QFixed(g->advance);
-            glyphs->advances_x[i] = vertical ? 0 : advance;
-            glyphs->advances_y[i] = vertical ? advance : 0;
+            glyphs->advances_x[i] = QFixed(g->advanceX);
+            glyphs->advances_y[i] = QFixed(g->advanceY);
         } else {
             if (!face)
                 face = lockFace();
             g = loadGlyph(glyphs->glyphs[i], 0, Format_None, true, vertical);
-            if (vertical)
-                advance = design ? QFixed::fromFixed(face->glyph->linearHoriAdvance >> 10)
-                                 : QFixed::fromFixed(face->glyph->metrics.horiAdvance).round();
-            else
-                advance = design ? QFixed::fromFixed(face->glyph->linearVertAdvance >> 10)
-                                 : QFixed::fromFixed(face->glyph->metrics.vertAdvance).round();
-            glyphs->advances_x[i] = vertical ? 0 : advance;
-            glyphs->advances_y[i] = vertical ? advance : 0;
+            advance = design ? QFixed::fromFixed(face->glyph->linearHoriAdvance >> 10)
+                             : QFixed::fromFixed(face->glyph->metrics.horiAdvance).round();
+            glyphs->advances_x[i] = advance;
+            advance = design ? QFixed::fromFixed(face->glyph->linearVertAdvance >> 10)
+                             : QFixed::fromFixed(face->glyph->metrics.vertAdvance).round();
+            glyphs->advances_y[i] = advance;
         }
         if (fontDef.styleStrategy & QFont::ForceIntegerMetrics) {
             glyphs->advances_x[i] = glyphs->advances_x[i].round();
@@ -1761,7 +1758,11 @@ glyph_metrics_t QFontEngineFT::boundingBox(const QGlyphLayout &glyphs)
             overall.y = qMin(overall.y, y);
             xmax = qMax(xmax, x + g->width);
             ymax = qMax(ymax, y + g->height);
-            overall.xoff += qRound(g->advance);
+            if (g->vertical) {
+                overall.yoff += qRound(g->advanceY);
+            } else {
+                overall.xoff += qRound(g->advanceX);
+            }
         } else {
             int left  = FLOOR(face->glyph->metrics.horiBearingX);
             int right = CEIL(face->glyph->metrics.horiBearingX + face->glyph->metrics.width);
@@ -1774,7 +1775,12 @@ glyph_metrics_t QFontEngineFT::boundingBox(const QGlyphLayout &glyphs)
             overall.y = qMin(overall.y, y);
             xmax = qMax(xmax, x + TRUNC(right - left));
             ymax = qMax(ymax, y + TRUNC(top - bottom));
-            overall.xoff += qRound(TRUNC(ROUND(face->glyph->advance.x)));
+            
+            if (g->vertical) {
+                overall.yoff += qRound(TRUNC(ROUND(face->glyph->advance.y)));
+            } else {
+                overall.xoff += qRound(TRUNC(ROUND(face->glyph->advance.x)));
+            }
         }
     }
     overall.height = qMax(overall.height, ymax - overall.y);
@@ -1800,9 +1806,12 @@ glyph_metrics_t QFontEngineFT::boundingBox(glyph_t glyph)
         overall.y = -g->y;
         overall.width = g->width;
         overall.height = g->height;
-        overall.xoff = g->advance;
-        if (fontDef.styleStrategy & QFont::ForceIntegerMetrics)
+        overall.xoff = g->advanceX;
+        overall.yoff = g->advanceY;
+        if (fontDef.styleStrategy & QFont::ForceIntegerMetrics) {
             overall.xoff = overall.xoff.round();
+            overall.yoff = overall.yoff.round();
+        }
     } else {
         int left  = FLOOR(face->glyph->metrics.horiBearingX);
         int right = CEIL(face->glyph->metrics.horiBearingX + face->glyph->metrics.width);
@@ -1814,6 +1823,7 @@ glyph_metrics_t QFontEngineFT::boundingBox(glyph_t glyph)
         overall.x = TRUNC(left);
         overall.y = -TRUNC(top);
         overall.xoff = TRUNC(ROUND(face->glyph->advance.x));
+        overall.yoff = TRUNC(ROUND(face->glyph->advance.y));
     }
     if (face)
         unlockFace();
@@ -1883,7 +1893,8 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
         overall.y = -g->y;
         overall.width = g->width;
         overall.height = g->height;
-        overall.xoff = g->advance;
+        overall.xoff = g->advanceX;
+        overall.yoff = g->advanceY;
     } else {
         int left  = FLOOR(face->glyph->metrics.horiBearingX);
         int right = CEIL(face->glyph->metrics.horiBearingX + face->glyph->metrics.width);
@@ -1895,6 +1906,7 @@ glyph_metrics_t QFontEngineFT::alphaMapBoundingBox(glyph_t glyph, QFixed subPixe
         overall.x = TRUNC(left);
         overall.y = -TRUNC(top);
         overall.xoff = TRUNC(ROUND(face->glyph->advance.x));
+        overall.yoff = TRUNC(ROUND(face->glyph->advance.y));
     }
     if (face)
         unlockFace();

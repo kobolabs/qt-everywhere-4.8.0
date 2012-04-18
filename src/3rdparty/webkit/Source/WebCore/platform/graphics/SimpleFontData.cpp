@@ -221,7 +221,7 @@ SimpleFontData* SimpleFontData::uprightOrientationFontData() const
     if (!m_derivedFontData)
         m_derivedFontData = DerivedFontData::create(isCustomFont());
     if (!m_derivedFontData->uprightOrientation)
-        m_derivedFontData->uprightOrientation = adoptPtr(new SimpleFontData(m_platformData, isCustomFont(), false, true));
+        m_derivedFontData->uprightOrientation = adoptPtr(new SimpleFontData(m_platformData, isCustomFont(), false, false));
     return m_derivedFontData->uprightOrientation.get();
 }
 

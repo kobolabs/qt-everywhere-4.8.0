@@ -358,7 +358,7 @@ static void initializeDb()
     }
 
 #ifndef QT_NO_FREETYPE
-    dir.setNameFilters(QStringList() << QLatin1String("*.ttf")
+    dir.setNameFilters(QStringList() << QLatin1String("*.ttf") << QLatin1String("*.otf")
                        << QLatin1String("*.ttc") << QLatin1String("*.pfa")
                        << QLatin1String("*.pfb") << QLatin1String("*.otf"));
     dir.refresh();

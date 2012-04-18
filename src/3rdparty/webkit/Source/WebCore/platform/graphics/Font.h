@@ -145,6 +145,7 @@ public:
     static bool isCJKIdeograph(UChar32);
     static bool isCJKIdeographOrSymbol(UChar32);
     static bool isUnbreakableCharactersPair(UChar32, UChar32);
+    static bool isInterIdeographExpansionTarget(UChar32 c);
 
 #if ENABLE(EPUB)
     enum customCJKStatus {

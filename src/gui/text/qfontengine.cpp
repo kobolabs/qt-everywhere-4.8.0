@@ -302,8 +302,12 @@ void QFontEngine::getGlyphPositions(const QGlyphLayout &glyphs, const QTransform
         int i = glyphs.numGlyphs;
         int totalKashidas = 0;
         while(i--) {
-            xpos += glyphs.advances_x[i] + QFixed::fromFixed(glyphs.justifications[i].space_18d6);
-            ypos += glyphs.advances_y[i];
+            if (flags & QTextItem::TopToBottom) {
+                // TODO justifications ??
+                ypos += glyphs.advances_y[i];
+            } else {
+                xpos += glyphs.advances_x[i] + QFixed::fromFixed(glyphs.justifications[i].space_18d6);   
+            }
             totalKashidas += glyphs.justifications[i].nKashidas;
         }
         positions.resize(glyphs.numGlyphs+totalKashidas);
@@ -315,8 +319,11 @@ void QFontEngine::getGlyphPositions(const QGlyphLayout &glyphs, const QTransform
                 ++i;
                 continue;
             }
-            xpos -= glyphs.advances_x[i];
-            ypos -= glyphs.advances_y[i];
+            if (flags & QTextItem::TopToBottom) {
+                ypos -= glyphs.advances_y[i];
+            } else {
+                xpos -= glyphs.advances_x[i];   
+            }
 
             QFixed gpos_x = xpos + glyphs.offsets[i].x;
             QFixed gpos_y = ypos + glyphs.offsets[i].y;
@@ -336,8 +343,11 @@ void QFontEngine::getGlyphPositions(const QGlyphLayout &glyphs, const QTransform
                 int nglyphs = 7;
                 stringToCMap(&ch, 1, &g, &nglyphs, 0);
                 for (uint k = 0; k < glyphs.justifications[i].nKashidas; ++k) {
-                    xpos -= g.advances_x[0];
-                    ypos -= g.advances_y[0];
+                    if (flags & QTextItem::TopToBottom) {
+                        ypos -= g.advances_y[0];
+                    } else {
+                        xpos -= g.advances_x[0];
+                    }
 
                     QFixed gpos_x = xpos + glyphs.offsets[i].x;
                     QFixed gpos_y = ypos + glyphs.offsets[i].y;
@@ -367,8 +377,13 @@ void QFontEngine::getGlyphPositions(const QGlyphLayout &glyphs, const QTransform
                     positions[current].x = xpos + glyphs.offsets[i].x;
                     positions[current].y = ypos + glyphs.offsets[i].y;
                     glyphs_out[current] = glyphs.glyphs[i];
-                    xpos += glyphs.advances_x[i] + QFixed::fromFixed(glyphs.justifications[i].space_18d6);
-                    ypos += glyphs.advances_y[i];
+
+                    if (flags & QTextItem::TopToBottom) {
+                        // TODO justifications ??
+                        ypos += glyphs.advances_y[i];
+                    } else {
+                        xpos += glyphs.advances_x[i] + QFixed::fromFixed(glyphs.justifications[i].space_18d6);   
+                    }
                     ++current;
                 }
                 ++i;
@@ -383,8 +398,12 @@ void QFontEngine::getGlyphPositions(const QGlyphLayout &glyphs, const QTransform
                     positions[current].x = QFixed::fromReal(gpos.x());
                     positions[current].y = QFixed::fromReal(gpos.y());
                     glyphs_out[current] = glyphs.glyphs[i];
-                    xpos += glyphs.advances_x[i] + QFixed::fromFixed(glyphs.justifications[i].space_18d6);
-                    ypos += glyphs.advances_y[i];
+                    if (flags & QTextItem::TopToBottom) {
+                        // TODO justifications ??
+                        ypos += glyphs.advances_y[i];
+                    } else {
+                        xpos += glyphs.advances_x[i] + QFixed::fromFixed(glyphs.justifications[i].space_18d6);   
+                    }
                     ++current;
                 }
                 ++i;

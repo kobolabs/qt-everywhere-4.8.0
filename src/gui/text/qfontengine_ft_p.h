@@ -138,12 +138,12 @@ public:
     /* we don't cache glyphs that are too large anyway, so we can make this struct rather small */
     struct Glyph {
         ~Glyph();
-        short linearAdvance;
         unsigned char width;
         unsigned char height;
         signed char x;
         signed char y;
-        signed char advance;
+        signed char advanceX;
+        signed char advanceY;
         signed char format;
         uchar *data;
         unsigned int vertical : 1;

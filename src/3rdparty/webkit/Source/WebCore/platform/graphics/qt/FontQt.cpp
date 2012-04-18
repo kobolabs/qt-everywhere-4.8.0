@@ -396,9 +396,7 @@ void Font::drawGlyphs(GraphicsContext* context, const SimpleFontData* fontData, 
         if (!glyph)
             continue;
 
-        QVector<quint32> idx;
-        idx.append(glyph);
-        float glyphAdvance = fontData->platformData().rawFont().advancesForGlyphIndexes(idx).at(0).x();
+        float glyphAdvance = fontData->platformWidthForGlyph(glyph);
 
         glyphIndexes.append(glyph);
         QPointF gOrigin = isVertical ? QPointF(0, x + glyphAdvance) : QPointF(x, 0);

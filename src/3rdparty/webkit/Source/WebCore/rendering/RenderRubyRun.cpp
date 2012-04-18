@@ -227,11 +227,14 @@ void RenderRubyRun::layout()
 {
     RenderBlock::layout();
     
-    // Place the RenderRubyText such that its bottom is flush with the lineTop of the first line of the RenderRubyBase.
     RenderRubyText* rt = rubyText();
     if (!rt)
         return;
+
+    // Logical left of RenderRubyText should always be 0.
+    rt->setLogicalLeft(0);
     
+    // Place the RenderRubyText such that its bottom is flush with the lineTop of the first line of the RenderRubyBase.
     int lastLineRubyTextBottom = rt->logicalHeight();
     int firstLineRubyTextTop = 0;
     RootInlineBox* rootBox = rt->lastRootBox();

@@ -186,7 +186,7 @@ void WidthIterator::advance(int offset, GlyphBuffer* glyphBuffer)
 
             static bool expandAroundIdeographs = Font::canExpandAroundIdeographsInComplexText();
             bool treatAsSpace = Font::treatAsSpace(c);
-            if (treatAsSpace || (expandAroundIdeographs && Font::isCJKIdeographOrSymbol(c) )) {
+            if (treatAsSpace || (expandAroundIdeographs && Font::isInterIdeographExpansionTarget(c) )) {
                 // Distribute the run's total expansion evenly over all expansion opportunities in the run.
                 if (m_expansion) {
                     if (!treatAsSpace && !m_isAfterExpansion && !Font::isUnbreakableCharactersPair(prev, c)) {

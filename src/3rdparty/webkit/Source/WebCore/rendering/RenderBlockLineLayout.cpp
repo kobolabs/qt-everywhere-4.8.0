@@ -1811,6 +1811,33 @@ void RenderBlock::LineBreaker::reset()
     m_clear = CNONE;
 }
 
+static bool isKinsokuAtBeginningOfLine(const UChar c)
+{
+    bool isKinsoku = false;
+    // As we cannot use ubrk_following here. we checks the line break property
+    // to guess if the line can be broken before this.
+    ULineBreak lineBreak = (ULineBreak)u_getIntPropertyValue(c, UCHAR_LINE_BREAK);
+    // Using Table 2 Example Pair Table of
+    // http://www.unicode.org/reports/tr14/tr14-15.html
+    // (Unicode 4.0.1) for MacOS.
+    // http://www.unicode.org/reports/tr14/tr14-22.html
+    // (Unicode 5.1) for Android.
+    switch (lineBreak) {
+    case U_LB_NONSTARTER:
+    case U_LB_CLOSE_PUNCTUATION:
+    case U_LB_EXCLAMATION:
+    case U_LB_BREAK_SYMBOLS:
+    case U_LB_INFIX_NUMERIC:
+    case U_LB_ZWSPACE:
+    case U_LB_WORD_JOINER:
+        isKinsoku = true;
+        break;
+    default:
+        break;
+    }
+    return isKinsoku;
+}
+
 InlineIterator RenderBlock::LineBreaker::nextLineBreak(InlineBidiResolver& resolver, LineInfo& lineInfo,
     LineBreakIteratorInfo& lineBreakIteratorInfo, FloatingObject* lastFloatFromPreviousLine)
 {
@@ -2283,28 +2310,8 @@ InlineIterator RenderBlock::LineBreaker::nextLineBreak(InlineBidiResolver& resol
                 if (nextText->textLength()) {
                     UChar c = nextText->characters()[0];
                     checkForBreak = (c == ' ' || c == '\t' || (c == '\n' && !next->preservesNewline()));
-                    if (!checkForBreak && current.m_obj->isReplaced()) {
-                        // As we cannot use ubrk_following here. we checks the line break property
-                        // to guess if the line can be broken before this.
-                        ULineBreak lineBreak = (ULineBreak)u_getIntPropertyValue(c, UCHAR_LINE_BREAK);
-                        // Using Table 2 Example Pair Table of
-                        // http://www.unicode.org/reports/tr14/tr14-15.html
-                        // (Unicode 4.0.1) for MacOS.
-                        // http://www.unicode.org/reports/tr14/tr14-22.html
-                        // (Unicode 5.1) for Android.
-                        switch (lineBreak) {
-                        case U_LB_CLOSE_PUNCTUATION:
-                        case U_LB_EXCLAMATION:
-                        case U_LB_BREAK_SYMBOLS:
-                        case U_LB_INFIX_NUMERIC:
-                        case U_LB_ZWSPACE:
-                        case U_LB_WORD_JOINER:
-                            break;
-                        default:
-                            checkForBreak = true;
-                            break;
-                        }
-                    }
+                    if (!checkForBreak && current.m_obj->isReplaced())
+                        checkForBreak = !isKinsokuAtBeginningOfLine(c);
                     // If the next item on the line is text, and if we did not end with
                     // a space, then the next text run continues our word (and so it needs to
                     // keep adding to |tmpW|. Just update and continue.
@@ -2341,6 +2348,12 @@ InlineIterator RenderBlock::LineBreaker::nextLineBreak(InlineBidiResolver& resol
 
         if (!current.m_obj->isFloatingOrPositioned()) {
             last = current.m_obj;
+//#if ENABLE(EPUB)
+            if (!autoWrap && last->isRubyRun() && (!next || !next->isText() || !toRenderText(next)->textLength() || !isKinsokuAtBeginningOfLine(toRenderText(next)->characters()[0]))) {
+                width.commit();
+                lBreak.moveToStartOf(next);
+            } else
+//#endif
             if (last->isReplaced() && autoWrap && !last->isRubyRun() && !last->isInlineBlockOrInlineTable() && !last->isImage() && (!last->isListMarker() || toRenderListMarker(last)->isInside())) {
                 width.commit();
                 lBreak.moveToStartOf(next);

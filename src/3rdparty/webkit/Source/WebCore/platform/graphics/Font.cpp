@@ -496,15 +496,6 @@ bool Font::isCJKIdeograph(UChar32 c)
 
 bool Font::isCJKIdeographOrSymbol(UChar32 c)
 {
-#if ENABLE(EPUB)
-    customCJKStatus result = isCustomTreatAsCJKIdeograph(c);
-    if (result == True){
-        return true;
-    } else if(result == False){
-        return false;
-    }
-#endif
-
     // 0x2C7 Caron, Mandarin Chinese 3rd Tone
     // 0x2CA Modifier Letter Acute Accent, Mandarin Chinese 2nd Tone
     // 0x2CB Modifier Letter Grave Access, Mandarin Chinese 4th Tone 
@@ -562,7 +553,8 @@ bool Font::isCJKIdeographOrSymbol(UChar32 c)
 
 #if ENABLE(EPUB)
 
-Font::customCJKStatus Font::isCustomTreatAsCJKIdeograph(UChar32 c){
+Font::customCJKStatus Font::isCustomTreatAsCJKIdeograph(UChar32 c)
+{
     // General Punctuation
     if (c >= 0x2000 && c <= 0x206F)
         return True;
@@ -651,6 +643,19 @@ Font::customCJKStatus Font::isCustomTreatAsCJKIdeograph(UChar32 c){
 }
 #endif
 
+bool Font::isInterIdeographExpansionTarget(UChar32 c)
+{
+#if ENABLE(EPUB)
+    customCJKStatus result = isCustomTreatAsCJKIdeograph(c);
+    if (result == True){
+        return true;
+    } else if(result == False){
+        return false;
+    }
+#endif
+    return isCJKIdeographOrSymbol(c);
+}
+
 unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length, TextDirection direction, bool& isAfterExpansion)
 {
     static bool expandAroundIdeographs = canExpandAroundIdeographsInComplexText();
@@ -675,7 +680,7 @@ unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length,
             if (U16_IS_LEAD(next) && j + 1 < length && U16_IS_TRAIL(characters[j + 1])) {
                 next = U16_GET_SUPPLEMENTARY(next, characters[j + 1]);
             }
-            if (expandAroundIdeographs && isCJKIdeographOrSymbol(character) ){
+            if (expandAroundIdeographs && isInterIdeographExpansionTarget(character) ){
                 if (!isAfterExpansion && !isUnbreakableCharactersPair(prev, character))
                     count++;
 
@@ -710,7 +715,7 @@ unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length,
             if (prev && U16_IS_TRAIL(prev) && U16_IS_LEAD(characters[j - 2])) {
                 prev = U16_GET_SUPPLEMENTARY(characters[j - 2], prev);
             }
-            if (expandAroundIdeographs && isCJKIdeographOrSymbol(character) ){
+            if (expandAroundIdeographs && isInterIdeographExpansionTarget(character) ){
                 if (!isAfterExpansion && !isUnbreakableCharactersPair(prev, character))
                     count++;
 

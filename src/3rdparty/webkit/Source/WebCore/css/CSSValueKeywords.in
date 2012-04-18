@@ -796,6 +796,11 @@ farthest-corner
 # -webkit-text-orientation
 upright
 vertical-right
+upright-right
+sideways-right
+sideways-left
+sideways
+
 
 # -webkit-line-box-contain
 font

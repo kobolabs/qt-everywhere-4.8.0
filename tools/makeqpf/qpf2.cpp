@@ -531,15 +531,17 @@ void QPF::addGlyphs(QFontEngine *fe, const QList<CharacterRange> &ranges)
                 glyph->bytesPerLine = img.bytesPerLine();
                 glyph->x = qRound(metrics.x);
                 glyph->y = qRound(metrics.y);
-                glyph->advance = qRound(metrics.xoff);
+                glyph->advanceX = qRound(metrics.xoff);
+                glyph->advanceY = qRound(metrics.yoff);
                 data += sizeof(QFontEngineQPF::Glyph);
 
                 if (debugVerbosity && uc >= 'A' && uc <= 'z' || debugVerbosity > 1) {
                     qDebug() << "adding glyph with index" << glyphIndex << " uc =" << char(uc) << ":\n"
                         << "    glyph->x =" << glyph->x << "rounded from" << metrics.x << "\n"
                         << "    glyph->y =" << glyph->y << "rounded from" << metrics.y << "\n"
-                        << "    width =" << glyph->width << "height =" << glyph->height
-                        << "    advance =" << glyph->advance << "rounded from" << metrics.xoff
+                        << "    width =" << glyph->width << "height =" << glyph->height << "\n"
+                        << "    advanceX =" << glyph->advanceX << "rounded from" << metrics.xoff << "\n"
+                        << "    advanceY =" << glyph->advanceY << "rounded from" << metrics.yoff
                         ;
                 }
 
@@ -739,7 +741,8 @@ void QPF::dumpGlyphBlock(const quint32 *gmap, int glyphCount, const uchar *data,
             qDebug() << "############: Glyph present in glyph block is not listed in glyph map!";
         qDebug("glyph at offset 0x%x glyphIndex = %u", quint32(glyphOffset), glyphIndex);
         qDebug() << "    width =" << g->width << "height =" << g->height << "x =" << g->x << "y =" << g->y;
-        qDebug() << "    advance =" << g->advance << "bytesPerLine =" << g->bytesPerLine;
+        qDebug() << "    advanceX =" << g->advanceX << "advanceY =" << g->advanceY;
+        qDebug() << "    bytesPerLine =" << g->bytesPerLine;
 
         data += sizeof(*g);
         if (glyphIndex == 0xffffffff || debugVerbosity > 4) {

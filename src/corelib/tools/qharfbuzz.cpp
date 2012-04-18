@@ -154,10 +154,14 @@ quint32 qGlyphVerticalVariant(HB_FaceRec_* hbFace, const quint32 glyph)
             HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex);
         }
     }
-    HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex);
+
+    if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok){
+        if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok){
+            return glyph;
+        }
+    }
     HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1);
-    HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex);
-    HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1);
+
     int error = HB_GSUB_Apply_String(hbFace->gsub, buffer);
     if (!error){
         subbed = static_cast<uint>(buffer->out_string[0].gindex);
@@ -177,10 +181,8 @@ bool qHasVerticalGlyphs(HB_FaceRec_* hbFace)
         || HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('h', 'a', 'n', 'i'), &scriptIndex) == HB_Err_Ok
         || HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex) == HB_Err_Ok )
     {
-        if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok)
-            return HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1) == HB_Err_Ok;
-        else if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok)
-            return HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1) == HB_Err_Ok;
+        return HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok
+                || HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok;
     }
     return false;
 }

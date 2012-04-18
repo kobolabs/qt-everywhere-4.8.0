@@ -1996,9 +1996,17 @@ bool CSSParser::parseValue(int propId, bool important)
         return parseTextEmphasisStyle(important);
 
     case CSSPropertyWebkitTextOrientation:
-        // FIXME: For now just support upright and vertical-right.
-        if (id == CSSValueVerticalRight || id == CSSValueUpright)
+        // FIXME: For now just support upright and vertical-right upright-right sideways-right sideways-left sideways.
+        switch (id) {
+        case CSSValueVerticalRight:
+        case CSSValueUpright:
+        case CSSValueUprightRight:
+        case CSSValueSidewaysRight:
+        case CSSValueSidewaysLeft:
+        case CSSValueSideways:
             validPrimitive = true;
+            break;
+        }
         break;
 
     case CSSPropertyWebkitLineBoxContain:

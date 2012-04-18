@@ -2201,6 +2201,15 @@ template<> inline CSSPrimitiveValue::CSSPrimitiveValue(TextOrientation e)
     case TextOrientationUpright:
         m_value.ident = CSSValueUpright;
         break;
+    case TextOrientationSidewaysRight:
+        m_value.ident = CSSValueSidewaysRight;
+        break;
+    case TextOrientationSidewaysLeft:
+        m_value.ident = CSSValueSidewaysLeft;
+        break;
+    case TextOrientationSideways:
+        m_value.ident = CSSValueSideways;
+        break;
     }
 }
 
@@ -2211,6 +2220,14 @@ template<> inline CSSPrimitiveValue::operator TextOrientation() const
         return TextOrientationVerticalRight;
     case CSSValueUpright:
         return TextOrientationUpright;
+    case CSSValueUprightRight:
+        return TextOrientationUprightRight;
+    case CSSValueSidewaysRight:
+        return TextOrientationSidewaysRight;
+    case CSSValueSidewaysLeft:
+        return TextOrientationSidewaysLeft;
+    case CSSValueSideways:
+        return TextOrientationSideways;
     default:
         ASSERT_NOT_REACHED();
         return TextOrientationVerticalRight;
