@@ -1993,17 +1993,17 @@ QWebFrame *QWebHitTestResult::frame() const
 }
 
 namespace WebCore {
-	QList<QRect> getRunRects(RenderObject*, bool);
+    QList<QRect> getRunRects(RenderObject*, bool, bool);
 }
 
-QList<QRect> QWebFrame::renderTreeRunRects()
+QList<QRect> QWebFrame::renderTreeRunRects(bool imgRun)
 {
     if (d->frame->view() && d->frame->view()->layoutPending()) {
         d->frame->view()->layout();
     }
 
     RenderObject* o = d->frame->contentRenderer();
-    return WebCore::getRunRects(o, documentElement().styleProperty("-epub-writing-mode", QWebElement::ComputedStyle).startsWith("vertical"));
+    return WebCore::getRunRects(o, imgRun, documentElement().styleProperty("-epub-writing-mode", QWebElement::ComputedStyle).startsWith("vertical"));
 }
 
 #include "moc_qwebframe.cpp"
