@@ -881,6 +881,10 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 out.append(QRect(paOrigin.x() + paBlock->width() - block->width(), block->y(), block->width(), block->height()));
                 return;
             }
+            else  if(o.isText() && pa && paBlock && pa->isTableCell()) {
+                FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
+                origin.setX(paOrigin.x() + paBlock->width() - block->x());
+            }
             else {
                 origin.setX(origin.x() + block->width());
                 if (grandPa) {
