@@ -878,7 +878,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
             }
             else if (o.isImage() && paBlock && imgRun) {
                 FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
-                out.append(QRect(paOrigin.x() + paBlock->width(), block->y(), block->width(), block->height()));
+                out.append(QRect(paOrigin.x() + paBlock->width() - block->width(), block->y(), block->width(), block->height()));
                 return;
             }
             else {
