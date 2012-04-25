@@ -1225,7 +1225,7 @@ HB_Bool HB_OpenTypeShape(HB_ShaperItem *item, const hb_uint32 *properties)
 #endif
 
     face->glyphs_substituted = false;
-    if (face->gsub) {
+    if ((face->current_flags & HB_ShaperFlag_VerticalWriting) && face->gsub) {
         unsigned int error = HB_GSUB_Apply_String(face->gsub, face->buffer);
         if (error && error != HB_Err_Not_Covered)
             return false;
