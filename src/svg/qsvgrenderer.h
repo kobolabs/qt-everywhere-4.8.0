@@ -50,6 +50,7 @@
 #include <QtCore/qsize.h>
 #include <QtCore/qrect.h>
 #include <QtCore/qxmlstream.h>
+#include <QtNetwork/qnetworkaccessmanager.h>
 
 QT_BEGIN_HEADER
 
@@ -94,6 +95,8 @@ public:
     QRectF boundsOnElement(const QString &id) const;
     bool elementExists(const QString &id) const;
     QMatrix matrixForElement(const QString &id) const;
+
+    void setNetworkAccessManager(QNetworkAccessManager *nam);
 
 public Q_SLOTS:
     bool load(const QString &filename);

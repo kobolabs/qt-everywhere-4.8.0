@@ -59,6 +59,7 @@
 
 #include "QtCore/qhash.h"
 #include "QtCore/qstack.h"
+#include "QtNetwork/qnetworkaccessmanager.h"
 #include "qsvgstyle_p.h"
 #include "private/qcssparser_p.h"
 #include "private/qsvggraphics_p.h"
@@ -93,9 +94,9 @@ public:
     };
 
 public:
-    QSvgHandler(QIODevice *device);
-    QSvgHandler(const QByteArray &data);
-    QSvgHandler(QXmlStreamReader *const data);
+    QSvgHandler(QIODevice *device, QNetworkAccessManager *nam = 0);
+    QSvgHandler(const QByteArray &data, QNetworkAccessManager *nam = 0);
+    QSvgHandler(QXmlStreamReader *const data, QNetworkAccessManager *nam = 0);
     ~QSvgHandler();
 
     QSvgTinyDocument *document() const;
@@ -127,6 +128,9 @@ public:
 
     inline QPen defaultPen() const
     { return m_defaultPen; }
+
+    inline QNetworkAccessManager *networkAccessManager() const
+    { return m_nam; }
 
 public:
     bool startElement(const QString &localName, const QXmlStreamAttributes &attributes);
@@ -180,6 +184,8 @@ private:
      * we need to delete it.
      */
     const bool m_ownsReader;
+
+    QNetworkAccessManager *m_nam;
 };
 
 QT_END_NAMESPACE

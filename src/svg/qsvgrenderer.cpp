@@ -120,6 +120,7 @@ public:
     QSvgTinyDocument *render;
     QTimer *timer;
     int fps;
+    QNetworkAccessManager *nam;
 };
 
 /*!
@@ -314,7 +315,7 @@ static bool loadDocument(QSvgRenderer *const q,
                          const TInputType &in)
 {
     delete d->render;
-    d->render = QSvgTinyDocument::load(in);
+    d->render = QSvgTinyDocument::load(in, d->nam);
     if (d->render && d->render->animated() && d->fps > 0) {
         if (!d->timer)
             d->timer = new QTimer(q);
@@ -492,6 +493,12 @@ QMatrix QSvgRenderer::matrixForElement(const QString &id) const
     if (d->render)
         mat = d->render->matrixForElement(id);
     return mat;
+}
+
+void QSvgRenderer::setNetworkAccessManager(QNetworkAccessManager *nam)
+{
+    Q_D(QSvgRenderer);
+    d->nam = nam;
 }
 
 QT_END_NAMESPACE

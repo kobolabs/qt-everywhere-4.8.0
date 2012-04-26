@@ -69,6 +69,10 @@
 
 #include "float.h"
 
+#include "QtCore/qeventloop.h"
+#include "QtNetwork/qnetworkrequest.h"
+#include "QtNetwork/qnetworkreply.h"
+
 QT_BEGIN_NAMESPACE
 
 static const char *qt_inherit_text = "inherit";
@@ -2704,6 +2708,14 @@ static QSvgNode *createImageNode(QSvgNode *parent,
         } else {
             qDebug()<<"QSvgHandler::createImageNode: Unrecognized inline image format!";
         }
+    } else if (!QFile::exists(filename) && handler->networkAccessManager()) {
+        QUrl url(filename);
+        QNetworkRequest req(filename);
+        QNetworkReply *reply = handler->networkAccessManager()->get(req);
+        QEventLoop loop;
+        QObject::connect(reply, SIGNAL(readyRead()), &loop, SLOT(quit()));
+        loop.exec();
+        image.loadFromData(reply->readAll());
     } else
         image = QImage(filename);
 
@@ -3510,20 +3522,20 @@ static StyleParseMethod findStyleUtilFactoryMethod(const QString &name)
     return 0;
 }
 
-QSvgHandler::QSvgHandler(QIODevice *device) : xml(new QXmlStreamReader(device))
-                                             , m_ownsReader(true)
+QSvgHandler::QSvgHandler(QIODevice *device, QNetworkAccessManager *nam) : xml(new QXmlStreamReader(device))
+                                             , m_ownsReader(true), m_nam(nam)
 {
     init();
 }
 
-QSvgHandler::QSvgHandler(const QByteArray &data) : xml(new QXmlStreamReader(data))
-                                                 , m_ownsReader(true)
+QSvgHandler::QSvgHandler(const QByteArray &data, QNetworkAccessManager *nam) : xml(new QXmlStreamReader(data))
+                                                 , m_ownsReader(true), m_nam(nam)
 {
     init();
 }
 
-QSvgHandler::QSvgHandler(QXmlStreamReader *const reader) : xml(reader)
-                                                         , m_ownsReader(false)
+QSvgHandler::QSvgHandler(QXmlStreamReader *const reader, QNetworkAccessManager *nam) : xml(reader)
+                                                         , m_ownsReader(false), m_nam(nam)
 {
     init();
 }

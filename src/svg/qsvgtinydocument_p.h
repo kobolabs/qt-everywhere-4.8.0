@@ -62,6 +62,7 @@
 #include "QtCore/qhash.h"
 #include "QtCore/qdatetime.h"
 #include "QtCore/qxmlstream.h"
+#include "QtNetwork/qnetworkaccessmanager.h"
 #include "qsvgstyle_p.h"
 #include "qsvgfont_p.h"
 
@@ -74,9 +75,9 @@ class QSvgFont;
 class Q_SVG_EXPORT QSvgTinyDocument : public QSvgStructureNode
 {
 public:
-    static QSvgTinyDocument * load(const QString &file);
-    static QSvgTinyDocument * load(const QByteArray &contents);
-    static QSvgTinyDocument * load(QXmlStreamReader *contents);
+    static QSvgTinyDocument * load(const QString &file, QNetworkAccessManager *nam = 0);
+    static QSvgTinyDocument * load(const QByteArray &contents, QNetworkAccessManager *nam = 0);
+    static QSvgTinyDocument * load(QXmlStreamReader *contents, QNetworkAccessManager *nam = 0);
 public:
     QSvgTinyDocument();
     ~QSvgTinyDocument();
