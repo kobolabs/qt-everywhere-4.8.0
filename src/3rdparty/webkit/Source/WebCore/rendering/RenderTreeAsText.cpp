@@ -837,7 +837,6 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
     bool flippedVertical = false;
     bool isRubyBlock = false;
     bool horizontalInVerticalDoc = false;
-    bool verticalBlockWithVisibleBorder = false;
     int rubyRunBlockWidth = 0;
 
     if (RenderBlock* block = o.containingBlock()) {
@@ -887,9 +886,6 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
             }
             else {
                 origin.setX(origin.x() + block->width());
-                if (grandPa) {
-                        verticalBlockWithVisibleBorder = (grandPa->style()->borderRightStyle() != BNONE && grandPa->style()->borderRightStyle() != BHIDDEN);
-                }
             }
         }
         else {
@@ -923,8 +919,8 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
                 }
                 else {
-                    // Painted borders: We cannot get accurate border geometry so we assume actual run width is larger
-                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), (verticalBlockWithVisibleBorder ? run.width() * 1.2 : run.width()), run.height());
+                    // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width() * 1.48, run.height());
                 }
             }
             else if (horizontalInVerticalDoc) {
