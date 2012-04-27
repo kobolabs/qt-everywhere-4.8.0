@@ -920,7 +920,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 }
                 else {
                     // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
-                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width() * 1.48, run.height());
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width() * 1.53f, run.height());
                 }
             }
             else if (horizontalInVerticalDoc) {
