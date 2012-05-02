@@ -838,6 +838,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
     bool isRubyBlock = false;
     bool horizontalInVerticalDoc = false;
     int rubyRunBlockWidth = 0;
+    int verticalBlockLineHeight = 0;
 
     if (RenderBlock* block = o.containingBlock()) {
         if (dynamic_cast< RenderRubyText* > (block) ) {
@@ -856,6 +857,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
             RenderBlock* grandPaBlock = NULL;
             RenderObject* grandGrandPa = NULL;
             RenderBlock* grandGrandPaBlock = NULL;
+            verticalBlockLineHeight = block->lineHeight(true, VerticalLine);
             if (pa) {
                 paBlock = pa->containingBlock();
                 grandPa = pa->parent();
@@ -919,8 +921,12 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
                 }
                 else {
-                    // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
-                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), run.width() * 1.53f, run.height());
+                    if (verticalBlockLineHeight < 1) {
+                        // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
+                        verticalBlockLineHeight = run.width() * 1.48f;
+                    }
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), verticalBlockLineHeight, run.height());
+
                 }
             }
             else if (horizontalInVerticalDoc) {
