@@ -44,6 +44,7 @@
 #include "qtextstream.h"
 #include "qvariant.h"
 #include "qfontengine_ft_p.h"
+#include <dlfcn.h>
 
 #ifndef QT_NO_FREETYPE
 
@@ -256,6 +257,14 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
         newFreetype->matrix.yx = 0;
         newFreetype->unicode_map = 0;
         newFreetype->symbol_map = 0;
+
+
+        newFreetype->csmSharpnessOffset = 0;
+        newFreetype->csmSharpnessSlope = 0;
+        newFreetype->csmThicknessOffset = 0;
+        newFreetype->csmThicknessSlope = 0;
+
+   
 #ifndef QT_NO_FONTCONFIG
         newFreetype->charset = 0;
 #endif
@@ -285,6 +294,12 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
 
         if (!FT_IS_SCALABLE(newFreetype->face) && newFreetype->face->num_fixed_sizes == 1)
             FT_Set_Char_Size (face, X_SIZE(newFreetype->face, 0), Y_SIZE(newFreetype->face, 0), 0, 0);
+            
+#if 0
+        if (!FT_IS_SCALABLE(newFreetype->face) && newFreetype->face->num_fixed_sizes == 1)
+            FT_Set_CSM_Adjustments (face,newFreetype->csmSharpnessOffset, newFreetype->csmSharpnessSlope, newFreetype->csmThicknessOffset, newFreetype->csmThicknessSlope); 
+#endif
+
 # if 0
         FcChar8 *name;
         FcPatternGetString(pattern, FC_FAMILY, 0, &name);
@@ -855,6 +870,28 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyphMetrics(QGlyphSet *set, uint glyph
     int right = slot->metrics.horiBearingX + slot->metrics.width;
     int top    = slot->metrics.horiBearingY;
     int bottom = slot->metrics.horiBearingY - slot->metrics.height;
+
+
+#if 0
+    /* possibly adjust glyph image size for Edge outside cutoff value */
+    if( (face->glyph->outline.flags & FT_OUTLINE_FROM_ITYPE_DRV) ) {
+        FT_Outline *outline = &face->glyph->outline;
+        FT_Raster_User_Params_ITC *itc_params;
+        itc_params = (FT_Raster_User_Params_ITC *)&outline->points[outline->n_points];
+
+        if (itc_params) {
+            if (itc_params->useEdge) {
+                FT_Pos delta = (FT_CeilFix((-itc_params->outsideCutoff))) >> 16;
+                /* need to expand the image to account for Edge tuning */
+                right += delta << 1; 
+                top   -= delta << 1; 
+            } 
+        } 
+    }
+#endif
+
+
+
     if (transform && slot->format != FT_GLYPH_FORMAT_BITMAP) { // freetype doesn't apply the transformation on the metrics
         int l, r, t, b;
         FT_Vector vector;
@@ -960,10 +997,27 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
 
     FT_Face face = freetype->face;
 
+
     FT_Vector v;
     v.x = format == Format_Mono ? 0 : FT_Pos(subPixelPosition.toReal() * 64);
     v.y = 0;
     FT_Set_Transform(face, &freetype->matrix, &v);
+
+    static bool initialized = false;
+    static FT_Error (*FT_Set_CSM_Adjustments)(FT_Face, FT_Fixed, FT_Fixed, FT_Fixed, FT_Fixed) = NULL;
+    if (!initialized) {
+        initialized = true;
+        void *ft = dlopen("libfreetype.so", RTLD_LAZY);
+        FT_Set_CSM_Adjustments = (FT_Error (*)(FT_Face, FT_Fixed, FT_Fixed, FT_Fixed, FT_Fixed)) dlsym(ft, "FT_Set_CSM_Adjustments");
+        qDebug() << "Loading iType.. " << (FT_Set_CSM_Adjustments ? "YES" : "NO");
+    }
+
+    if (FT_Set_CSM_Adjustments) {
+        FT_Set_CSM_Adjustments(freetype->face, (QFixed::fromReal(fontDef.csmSharpnessOffset).value()),
+                                               (QFixed::fromReal(fontDef.csmSharpnessSlope).value()),
+                                               (QFixed::fromReal(fontDef.csmThicknessOffset).value()),
+                                               (QFixed::fromReal(fontDef.csmThicknessSlope).value()));
+    }
 
     FT_Error err = FT_Load_Glyph(face, glyph, load_flags);
     if (err && (load_flags & FT_LOAD_NO_BITMAP)) {
@@ -978,8 +1032,12 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     if (err != FT_Err_Ok)
         qWarning("load glyph failed err=%x face=%p, glyph=%d", err, face, glyph);
 
+
+#if 0
+// BMC removed this to fix the > 64 spacing problem
     if (set->outline_drawing && fetchMetricsOnly)
-        return 0;
+       return 0;
+#endif
 
     FT_GlyphSlot slot = face->glyph;
     if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(slot);
@@ -1025,6 +1083,32 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     int right = slot->metrics.horiBearingX + slot->metrics.width;
     int top    = slot->metrics.horiBearingY;
     int bottom = slot->metrics.horiBearingY - slot->metrics.height;
+
+
+#if 0
+    /* possibly adjust glyph image size for Edge outside cutoff value */
+    if( (face->glyph->outline.flags & FT_OUTLINE_FROM_ITYPE_DRV) ) {
+        FT_Outline *outline = &face->glyph->outline;
+        FT_Raster_User_Params_ITC *itc_params;
+        itc_params = (FT_Raster_User_Params_ITC *)&outline->points[outline->n_points];
+
+        if (itc_params) {
+            if (itc_params->useEdge) {
+                FT_Pos delta = (FT_CeilFix((-itc_params->outsideCutoff))) >> 16;
+                /* need to expand the image to account for Edge tuning */
+                right += delta << 1; 
+                top   -= delta << 1; 
+            } 
+        } 
+    }
+#endif
+
+
+
+
+
+
+
     if(transform && slot->format != FT_GLYPH_FORMAT_BITMAP) {
         int l, r, t, b;
         FT_Vector vector;

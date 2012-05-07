@@ -56,6 +56,7 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Gui)
 
+
 class QFontPrivate;                                     /* don't touch */
 class QStringList;
 class QVariant;
@@ -175,6 +176,21 @@ public:
 
     int pixelSize() const;
     void setPixelSize(int);
+
+
+    qreal csmThicknessOffset() const;
+    void  setCSMThicknessOffset(qreal);
+
+    qreal csmThicknessSlope() const;
+    void  setCSMThicknessSlope(qreal);
+
+
+    qreal csmSharpnessOffset() const;
+    void  setCSMSharpnessOffset(qreal);
+
+    qreal csmSharpnessSlope() const;
+    void  setCSMSharpnessSlope(qreal);
+
 
     int weight() const;
     void setWeight(int);

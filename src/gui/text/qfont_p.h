@@ -72,7 +72,9 @@ struct QFontDef
         : pointSize(-1.0), pixelSize(-1),
           styleStrategy(QFont::PreferDefault), styleHint(QFont::AnyStyle),
           weight(50), fixedPitch(false), style(QFont::StyleNormal), stretch(100),
-          ignorePitch(true), hintingPreference(QFont::PreferDefaultHinting)
+          ignorePitch(true), hintingPreference(QFont::PreferDefaultHinting),
+          csmThicknessOffset(0), csmThicknessSlope(0),
+          csmSharpnessOffset(0), csmSharpnessSlope(0)
 #ifdef Q_WS_MAC
           ,fixedPitchComputed(false)
 #endif
@@ -101,6 +103,11 @@ struct QFontDef
     uint fixedPitchComputed : 1; // for Mac OS X only
     int reserved   : 14; // for future extensions
 
+    qreal csmThicknessOffset;
+    qreal csmThicknessSlope;
+    qreal csmSharpnessOffset;
+    qreal csmSharpnessSlope;
+
     bool exactMatch(const QFontDef &other) const;
     bool operator==(const QFontDef &other) const
     {
@@ -113,6 +120,12 @@ struct QFontDef
                     && ignorePitch == other.ignorePitch && fixedPitch == other.fixedPitch
                     && family == other.family
                     && hintingPreference == other.hintingPreference
+
+                    && csmThicknessOffset == other.csmThicknessOffset
+                    && csmThicknessSlope == other.csmThicknessSlope
+                    && csmSharpnessOffset == other.csmSharpnessOffset
+                    && csmSharpnessSlope == other.csmSharpnessSlope
+
 #ifdef Q_WS_X11
                     && addStyle == other.addStyle
 #endif
@@ -128,6 +141,11 @@ struct QFontDef
         if (styleStrategy != other.styleStrategy) return styleStrategy < other.styleStrategy;
         if (family != other.family) return family < other.family;
         if (hintingPreference != other.hintingPreference) return hintingPreference < other.hintingPreference;
+
+        if (csmThicknessOffset != other.csmThicknessOffset) return csmThicknessOffset < other.csmThicknessOffset;
+        if (csmThicknessSlope != other.csmThicknessSlope) return csmThicknessSlope < other.csmThicknessSlope;
+        if (csmSharpnessOffset != other.csmSharpnessOffset) return csmSharpnessOffset < other.csmSharpnessOffset;
+        if (csmSharpnessSlope != other.csmSharpnessSlope) return csmSharpnessSlope < other.csmSharpnessSlope;
 
 #ifdef Q_WS_X11
         if (addStyle != other.addStyle) return addStyle < other.addStyle;

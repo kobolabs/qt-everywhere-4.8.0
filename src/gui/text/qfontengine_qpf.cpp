@@ -321,7 +321,9 @@ QFontEngineQPF::QFontEngineQPF(const QFontDef &def, int fileDescriptor, QFontEng
             return;
 
         fileName = fontDef.family.toLower() + QLatin1Char('_')
-                   + QString::number(fontDef.pixelSize)
+                   + QString::number(fontDef.pixelSize) + QLatin1Char('_')
+                   + QString::number(fontDef.csmThicknessOffset) + QLatin1Char('_')
+                   + QString::number(fontDef.csmSharpnessOffset)
                    + QLatin1Char('_') + QString::number(fontDef.weight)
                    + (fontDef.style != QFont::StyleNormal ?
                       QLatin1String("_italic") : QLatin1String(""))

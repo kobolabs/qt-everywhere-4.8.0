@@ -111,6 +111,12 @@ struct QFreetypeFace
     FT_CharMap unicode_map;
     FT_CharMap symbol_map;
 
+    FT_Fixed csmSharpnessOffset;
+    FT_Fixed csmSharpnessSlope;
+    FT_Fixed csmThicknessOffset;
+    FT_Fixed csmThicknessSlope;
+
+
     enum { cmapCacheSize = 0x200 };
     glyph_t cmapCache[cmapCacheSize];
 
@@ -364,6 +370,8 @@ private:
 
     int xsize;
     int ysize;
+    int thickness;
+    int sharpness;
 
     mutable QFixed lbearing;
     mutable QFixed rbearing;
