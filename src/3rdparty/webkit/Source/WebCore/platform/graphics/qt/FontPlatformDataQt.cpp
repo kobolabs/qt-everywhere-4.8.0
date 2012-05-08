@@ -74,6 +74,8 @@ FontPlatformData::FontPlatformData(const FontDescription& description, const Ato
     const bool smallCaps = description.smallCaps();
     font.setCapitalization(smallCaps ? QFont::SmallCaps : QFont::MixedCase);
     font.setStyleStrategy(QFont::ForceIntegerMetrics);
+    font.setCSMThicknessOffset(description.thickness());
+    font.setCSMSharpnessOffset(description.sharpness());
 
     m_data->bold = font.bold();
     // WebKit allows font size zero but QFont does not. We will return

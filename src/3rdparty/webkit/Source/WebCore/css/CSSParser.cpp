@@ -1797,6 +1797,12 @@ bool CSSParser::parseValue(int propId, bool important)
             validPrimitive = true;
         break;
 
+    case CSSPropertyKoboFontSharpness:
+    case CSSPropertyKoboFontThickness:
+        if (validUnit(value, FNumber, true))
+            validPrimitive = true;
+        break;
+
 #if ENABLE(DASHBOARD_SUPPORT)
     case CSSPropertyWebkitDashboardRegion: // <dashboard-region> | <dashboard-region>
         if (value->unit == CSSParserValue::Function || id == CSSValueNone)

@@ -3922,6 +3922,40 @@ void CSSStyleSelector::applyProperty(int id, CSSValue *value)
         return;
     }
 
+    case CSSPropertyKoboFontSharpness: {
+        FontDescription fontDescription = m_style->fontDescription();
+        if (isInherit) 
+            fontDescription.setSharpness(m_parentStyle->fontDescription().sharpness());
+        else if (isInitial)
+            fontDescription.setSharpness(0.0);
+        else {
+            if (!primitiveValue)
+                return;
+            float sharpness = primitiveValue->getFloatValue();
+            fontDescription.setSharpness(sharpness);
+        }
+        if (m_style->setFontDescription(fontDescription))
+            m_fontDirty = true;
+        return;
+    }
+
+    case CSSPropertyKoboFontThickness: {
+        FontDescription fontDescription = m_style->fontDescription();
+        if (isInherit) 
+            fontDescription.setThickness(m_parentStyle->fontDescription().thickness());
+        else if (isInitial)
+            fontDescription.setThickness(0.0);
+        else {
+            if (!primitiveValue)
+                return;
+            float thickness = primitiveValue->getFloatValue();
+            fontDescription.setThickness(thickness);
+        }
+        if (m_style->setFontDescription(fontDescription))
+            m_fontDirty = true;
+        return;
+    }
+
     case CSSPropertyLetterSpacing:
     case CSSPropertyWordSpacing:
     {

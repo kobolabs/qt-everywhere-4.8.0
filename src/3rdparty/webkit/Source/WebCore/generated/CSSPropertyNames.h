@@ -336,12 +336,14 @@ enum CSSPropertyID {
     CSSPropertyVectorEffect = 1325,
     CSSPropertyWritingMode = 1326,
     CSSPropertyWebkitSvgShadow = 1327,
+    CSSPropertyKoboFontSharpness = 1328,
+    CSSPropertyKoboFontThickness = 1329,
 };
 
 const int firstCSSProperty = 1001;
-const int numCSSProperties = 327;
+const int numCSSProperties = 329;
 const size_t maxCSSPropertyNameLength = 43;
-const char* const propertyNameStrings[327] = {
+const char* const propertyNameStrings[329] = {
 "color",
 "direction",
 "display",
@@ -669,6 +671,8 @@ const char* const propertyNameStrings[327] = {
 "vector-effect",
 "writing-mode",
 "-webkit-svg-shadow",
+"-kobo-font-sharpness",
+"-kobo-font-thickness",
 };
 
 const char* getPropertyName(CSSPropertyID);
