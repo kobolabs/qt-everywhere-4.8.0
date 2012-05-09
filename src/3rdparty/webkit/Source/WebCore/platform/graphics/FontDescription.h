@@ -140,10 +140,10 @@ public:
     void setTextOrientation(TextOrientation textOrientation) { m_textOrientation = textOrientation; }
     void setWidthVariant(FontWidthVariant widthVariant) { m_widthVariant = widthVariant; }
 
-    void setThickness(float s) { m_thickness = s; }
-    void setSharpness(float s) { m_sharpness = s; }
-    float thickness() const { return m_thickness; }
-    float sharpness() const { return m_sharpness; }
+    void setThickness(double s) { m_thickness = s; }
+    void setSharpness(double s) { m_sharpness = s; }
+    double thickness() const { return m_thickness; }
+    double sharpness() const { return m_sharpness; }
 
 private:
     FontFamily m_familyList; // The list of font families to be used.
@@ -175,8 +175,8 @@ private:
     unsigned m_textRendering : 2; // TextRenderingMode
     bool m_isSpecifiedFont : 1; // True if a web page specifies a non-generic font family as the first font family.
 
-    float m_thickness;
-    float m_sharpness;
+    double m_thickness;
+    double m_sharpness;
 };
 
 inline bool FontDescription::operator==(const FontDescription& other) const
