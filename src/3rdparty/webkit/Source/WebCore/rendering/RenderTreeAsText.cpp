@@ -875,7 +875,12 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 if (grandPaBlock && greatGrandPaBlock) {
                     FloatPoint greatGrandPaOrigin = greatGrandPaBlock->localToAbsolute(FloatPoint());
                     greatGrandPaOrigin.setX(greatGrandPaOrigin.x() + greatGrandPaBlock->width());
-                    origin.setX(greatGrandPaOrigin.x() - grandPaBlock->x());
+                    if (grandPaBlock->x() != greatGrandPaBlock->x()) {
+                        origin.setX(greatGrandPaOrigin.x() - grandPaBlock->x());
+                    }
+                    else {
+                        origin.setX(greatGrandPaOrigin.x() - paBlock->x());
+                    }
                     rubyRunBlockWidth = block->width();
                 }
             }
