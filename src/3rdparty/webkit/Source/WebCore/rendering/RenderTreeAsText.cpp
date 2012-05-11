@@ -884,9 +884,14 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     rubyRunBlockWidth = block->width();
                 }
             }
-            else if (o.isImage() && paBlock && imgRun) {
-                FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
-                out.append(QRect(paOrigin.x() + paBlock->width() - block->width() + 1, block->y(), block->width(), block->height()));
+            else if (o.isImage() && paBlock && grandPaBlock && imgRun) {
+                if ((grandPaBlock->x() == paBlock->x()) && ( grandPaBlock->y() == paBlock->y())) {
+                    FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
+                    out.append(QRect(paOrigin.x() + paBlock->width() - block->width() + 1, block->y(), block->width(), block->height()));
+                }
+                else {
+                    out.append(QRect(origin.x(), origin.y(), block->width(), block->height()));
+                }
                 return;
             }
             else if (linkRun && grandPa && grandPa->node() && grandPa->node()->hasTagName(aTag) && grandPaBlock && greatGrandPaBlock) {
