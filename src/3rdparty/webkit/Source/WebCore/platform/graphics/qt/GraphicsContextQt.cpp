@@ -272,6 +272,7 @@ void GraphicsContext::platformInit(PlatformGraphicsContext* painter)
     pen.setColor(strokeColor());
     pen.setJoinStyle(toQtLineJoin(MiterJoin));
     painter->setPen(pen);
+    setImageInterpolationQuality(InterpolationHigh);
 }
 
 void GraphicsContext::platformDestroy()
