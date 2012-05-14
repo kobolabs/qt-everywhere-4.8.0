@@ -890,7 +890,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     out.append(QRect(paOrigin.x() + paBlock->width() - block->width() + 1, block->y(), block->width(), block->height()));
                 }
                 else {
-                    out.append(QRect(origin.x(), origin.y(), block->width(), block->height()));
+                    out.append(QRect(origin.x() + 1, origin.y(), block->width(), block->height()));
                 }
                 return;
             }
