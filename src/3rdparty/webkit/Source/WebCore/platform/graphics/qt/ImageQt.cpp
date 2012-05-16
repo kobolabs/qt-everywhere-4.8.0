@@ -224,6 +224,12 @@ void BitmapImage::draw(GraphicsContext* ctxt, const FloatRect& dst,
     CompositeOperator previousOperator = ctxt->compositeOperation();
     ctxt->setCompositeOperation(!image->hasAlpha() && op == CompositeSourceOver ? CompositeCopy : op);
 
+    if (normalizedDst.size() != normalizedSrc.size()) {
+        *image = image->scaled(static_cast<int>(normalizedDst.width()), static_cast<int>(normalizedDst.height()),
+                               Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        normalizedSrc = QRectF(normalizedSrc.x(), normalizedSrc.y(), normalizedDst.width(), normalizedDst.height());
+    }
+
     ContextShadow* shadow = ctxt->contextShadow();
     if (shadow->m_type != ContextShadow::NoShadow) {
         QPainter* shadowPainter = shadow->beginShadowLayer(ctxt, normalizedDst);

@@ -102,6 +102,10 @@ void RenderCombineText::combineText()
     m_combinedTextWidth = originalFont().width(run);
     m_isCombined = m_combinedTextWidth <= emWidth;
 
+    // Backup FontSelector for style()->font().update()	
+    // because style()->font().fontSelector() is initialized by setFontDescription().	
+    RefPtr<FontSelector> backupSelector = style()->font().fontSelector();
+
     if (m_isCombined)
         shouldUpdateFont = style()->setFontDescription(description); // Need to change font orientation to horizontal.
     else {
@@ -127,7 +131,7 @@ void RenderCombineText::combineText()
         shouldUpdateFont = style()->setFontDescription(originalFont().fontDescription());
 
     if (shouldUpdateFont)
-        style()->font().update(style()->font().fontSelector());
+        style()->font().update(backupSelector);
 
     if (m_isCombined) {
         DEFINE_STATIC_LOCAL(String, objectReplacementCharacterString, (&objectReplacementCharacter, 1));

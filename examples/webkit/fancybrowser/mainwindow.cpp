@@ -141,9 +141,9 @@ void MainWindow::changeLocation()
 void MainWindow::adjustTitle()
 {
     if (progress <= 0 || progress >= 100)
-        setWindowTitle(view->title());
+        setWindowTitle(QString("%1 [%2]").arg(view->title()).arg(qWebKitEngineVersion()));
     else
-        setWindowTitle(QString("%1 (%2%)").arg(view->title()).arg(progress));
+        setWindowTitle(QString("%1 (%2%) [%3]").arg(view->title()).arg(progress).arg(qWebKitEngineVersion()));
 }
 
 void MainWindow::setProgress(int p)
