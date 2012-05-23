@@ -224,9 +224,15 @@ void BitmapImage::draw(GraphicsContext* ctxt, const FloatRect& dst,
     CompositeOperator previousOperator = ctxt->compositeOperation();
     ctxt->setCompositeOperation(!image->hasAlpha() && op == CompositeSourceOver ? CompositeCopy : op);
 
-    if (normalizedDst.size() != normalizedSrc.size()) {
-        *image = image->scaled(static_cast<int>(normalizedDst.width()), static_cast<int>(normalizedDst.height()),
-                               Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    QPixmap resizedImage;
+    const int maxResize = qMin(128 * 128, static_cast<int>(normalizedSrc.width()) * static_cast<int>(normalizedSrc.height()));
+    const int resizeWidth = static_cast<int>(normalizedDst.width());
+    const int resizeHeight = static_cast<int>(normalizedDst.height());
+    bool resize = resizeWidth * resizeHeight < maxResize;
+    if (resize) {
+        resizedImage = image->copy(image->rect());
+        resizedImage = resizedImage.scaled(resizeWidth, resizeHeight,
+                                           Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         normalizedSrc = QRectF(normalizedSrc.x(), normalizedSrc.y(), normalizedDst.width(), normalizedDst.height());
     }
 
@@ -235,12 +241,12 @@ void BitmapImage::draw(GraphicsContext* ctxt, const FloatRect& dst,
         QPainter* shadowPainter = shadow->beginShadowLayer(ctxt, normalizedDst);
         if (shadowPainter) {
             shadowPainter->setOpacity(static_cast<qreal>(shadow->m_color.alpha()) / 255);
-            shadowPainter->drawPixmap(normalizedDst, *image, normalizedSrc);
+            shadowPainter->drawPixmap(normalizedDst, resize ? resizedImage : *image, normalizedSrc);
             shadow->endShadowLayer(ctxt);
         }
     }
 
-    ctxt->platformContext()->drawPixmap(normalizedDst, *image, normalizedSrc);
+    ctxt->platformContext()->drawPixmap(normalizedDst, resize ? resizedImage : *image, normalizedSrc);
 
     ctxt->setCompositeOperation(previousOperator);
 
