@@ -198,6 +198,19 @@ static bool isEmptyOrUnstyledAppleStyleSpan(const Node* node)
     return (!inlineStyleDecl || inlineStyleDecl->length() == 0);
 }
 
+static bool containsOnlyUnicodeWhitespace(const RenderText& renderText)
+{
+    // Most common Unicode space is 0x3000 (Ideographic Space)
+    // Full list : {0x00a0, 0x1680, 0x180e, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000};
+    const UChar* text = renderText.characters();
+    for (unsigned k = 0; k < renderText.textLength(); k++) {
+        if (text[k] != 0x3000) {
+            return false;
+        }
+    }
+    return true;
+}
+
 String quoteAndEscapeNonPrintables(const String& s)
 {
     Vector<UChar> result;
@@ -956,7 +969,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
             }
             QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.width(), run.height());
-            if (flippedVertical) {
+            if (flippedVertical && (containsOnlyUnicodeWhitespace(text) == false)) {
                 if (isRubyBlock) {
                     r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
                 }
