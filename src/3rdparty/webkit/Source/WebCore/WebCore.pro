@@ -948,7 +948,7 @@ SOURCES += \
     platform/Arena.cpp \
     platform/text/Base64.cpp \
     platform/text/BidiContext.cpp \
-    platform/text/Hyphenation.cpp \
+    platform/text/qt/HyphenationQt.cpp \
     platform/text/LocalizedDateNone.cpp \
     platform/text/LocalizedNumberNone.cpp \
     platform/ContentType.cpp \

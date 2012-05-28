@@ -199,3 +199,5 @@ CONFIG(qt_minimal) {
 }
 
 contains(DEFINES, QT_NO_UITOOLS): CONFIG -= uitools
+
+linux*: LIBS += -lhyphen
