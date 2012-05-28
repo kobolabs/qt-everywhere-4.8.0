@@ -1,17 +1,32 @@
 #include "config.h"
 #include "Hyphenation.h"
 #if OS(LINUX)
+#include <wtf/text/AtomicString.h>
 #include <hyphen.h>
 #include <QRegExp>
 #include <QDebug>
+#include <QFile>
+#include <QHash>
 #endif
 
 namespace WebCore {
 
+static QHash<AtomicString, bool> availableDictionaries;
+
+static QByteArray dictionaryPathForLocale(const AtomicString& localeIdentifier)
+{
+    QString locale(reinterpret_cast<const QChar *>(localeIdentifier.characters()), localeIdentifier.length());
+    QByteArray dictionaryPath = QString("/usr/share/hyphen/hyph_%1.dic").arg(locale).toAscii();
+    return dictionaryPath;
+}
+
 bool canHyphenate(const AtomicString& localeIdentifier)
 {
 #if OS(LINUX)
-    return true;
+    if (!availableDictionaries.contains(localeIdentifier)) {
+        availableDictionaries[localeIdentifier] = QFile::exists(dictionaryPathForLocale(localeIdentifier));
+    }
+    return availableDictionaries[localeIdentifier];
 #else
     return false;
 #endif
@@ -21,8 +36,15 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
 {
 #if OS(LINUX)
     static HyphenDict *dict = NULL;
-    if (dict == NULL) {
-        dict = hnj_hyphen_load("/usr/share/hyphen/hyph_en_US.dic");
+    static AtomicString dictLocale;
+    if (dict == NULL || dictLocale != localeIdentifier) {
+        if (dict) {
+            hnj_hyphen_free(dict);
+            dict = NULL;
+        }
+        QByteArray dictionaryPath = dictionaryPathForLocale(localeIdentifier);
+        dict = hnj_hyphen_load(dictionaryPath.constData());
+        dictLocale = localeIdentifier;
         if (dict == NULL) {
             qWarning() << "Couldn't load a hyphenation dictionary!";
             return 0;
