@@ -1,13 +1,13 @@
 #include "config.h"
 #include "Hyphenation.h"
-#if OS(LINUX)
 #include <wtf/text/AtomicString.h>
+#if OS(LINUX)
 #include <hyphen.h>
+#endif
 #include <QRegExp>
 #include <QDebug>
 #include <QFile>
 #include <QHash>
-#endif
 
 namespace WebCore {
 
