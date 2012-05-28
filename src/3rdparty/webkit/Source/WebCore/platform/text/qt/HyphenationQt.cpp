@@ -3,6 +3,7 @@
 #include <wtf/text/AtomicString.h>
 #if OS(LINUX)
 #include <hyphen.h>
+#include <dlfcn.h>
 #endif
 #include <QRegExp>
 #include <QDebug>
@@ -35,6 +36,20 @@ bool canHyphenate(const AtomicString& localeIdentifier)
 size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeIndex, const AtomicString& localeIdentifier)
 {
 #if OS(LINUX)
+    static bool initialized = false;
+    static HyphenDict *(*hnj_hyphen_load)(const char *);
+    static void (*hnj_hyphen_free)(HyphenDict *);
+    static int (*hnj_hyphen_hyphenate2)(HyphenDict *, const char *, int, char *, char *, char ***, int **, int **);
+    if (!initialized) {
+        void *lib = dlopen("libhyphen.so", RTLD_LAZY);
+        if (lib == NULL) {
+            return 0;
+        }
+        initialized = true;
+        hnj_hyphen_load = (HyphenDict *(*)(const char *)) dlsym(lib, "hnj_hyphen_load");
+        hnj_hyphen_free = (void (*)(HyphenDict *)) dlsym(lib, "hnj_hyphen_free");
+        hnj_hyphen_hyphenate2 = (int (*)(HyphenDict *, const char *, int, char *, char *, char ***, int **, int **)) dlsym(lib, "hnj_hyphen_hyphenate2");
+    }
     static HyphenDict *dict = NULL;
     static AtomicString dictLocale;
     if (dict == NULL || dictLocale != localeIdentifier) {
