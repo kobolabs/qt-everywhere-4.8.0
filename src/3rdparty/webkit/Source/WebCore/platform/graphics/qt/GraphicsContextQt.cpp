@@ -64,7 +64,6 @@
 #include <QStack>
 #include <QVector>
 #include <wtf/MathExtras.h>
-#include <QDebug>
 
 namespace WebCore {
 
@@ -243,7 +242,6 @@ GraphicsContextPlatformPrivate::GraphicsContextPlatformPrivate(QPainter* p, cons
     // Used for default image interpolation quality.
     initialSmoothPixmapTransformHint = painter->testRenderHint(QPainter::SmoothPixmapTransform);
 
-    qDebug() << ">>>>>>>> GraphicsContextPlatformPrivate: painter->setRenderHint(QPainter::Antialiasing, true);";
     painter->setRenderHint(QPainter::Antialiasing, true);
 }
 
@@ -274,9 +272,6 @@ void GraphicsContext::platformInit(PlatformGraphicsContext* painter)
     pen.setColor(strokeColor());
     pen.setJoinStyle(toQtLineJoin(MiterJoin));
     painter->setPen(pen);
-    qDebug() << ">>>>>>>> platformInit: painter->setRenderHints";
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->setRenderHint(QPainter::HighQualityAntialiasing);
     setImageInterpolationQuality(InterpolationHigh);
 }
 
@@ -1376,7 +1371,6 @@ void GraphicsContext::releaseWindowsContext(HDC hdc, const IntRect& dstRect, boo
 
 void GraphicsContext::setImageInterpolationQuality(InterpolationQuality quality)
 {
-    qDebug() << ">>>>>> setImageInterpolationQuality: " << quality;
     m_data->imageInterpolationQuality = quality;
 
     switch (quality) {
