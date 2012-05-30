@@ -52,6 +52,9 @@
 
 QT_BEGIN_NAMESPACE
 
+static unsigned char ORDERED_DITHER_MATRIX3x3[] = {
+  3,7,4,6,1,9,2,8,5
+};
 
 #define MASK(src, a) src = BYTE_MUL(src, a)
 
@@ -1193,6 +1196,27 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
         }
     }
 
+#ifdef Q_OS_LINUX
+    // Do ordered dithering 3x3,16
+    // TODO: Implement an if-condition to run this block optionally
+    if (true)
+    {
+        uint *ditherBuffer = buffer;
+        for (int j = 0; j < length; j++) {
+            uchar threshold = ORDERED_DITHER_MATRIX3x3[(j & 0x3) + 0x3 * (y & 0x3)];
+            uchar r = ditherBuffer[0] & 0x000000FF;
+            uchar g = (ditherBuffer[0] & 0x0000FF00) >> 8;
+            uchar b = (ditherBuffer[0] & 0x00FF0000) >> 16;
+            int avg = ((r * 77) + (g * 151) + (b * 28)) >> 8;
+            uchar t = (( avg * 10 ) >> 4);
+            uchar l = t / 10;
+            t = t - l * 10;
+            avg = (l + (t >= threshold)) << 4;
+            avg = avg & 0x100 ? 0xff : avg;
+            *ditherBuffer++ = avg + (avg << 8) + (avg << 16) + 0xFF000000;;
+        }
+    }
+#endif
     return buffer;
 }
 
