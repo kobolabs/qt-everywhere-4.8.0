@@ -1214,7 +1214,7 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
         }
     }
 
-#ifdef Q_OS_LINUX
+#if defined(Q_WS_QWS)
     // Do ordered dithering 3x3,16
     // TODO: Implement an if-condition to run this block optionally
     if (true) {
@@ -3662,6 +3662,12 @@ Q_STATIC_TEMPLATE_FUNCTION void blend_untransformed_generic(int count, const QSp
                     if (spanMethod == RegularSpans) {
                         uint *dest = op.dest_fetch ? op.dest_fetch(buffer, data->rasterBuffer, x, spans->y, l) : buffer;
                         op.func(dest, src, l, coverage);
+#if defined(Q_WS_QWS)
+                        // TODO: Implement an if-condition to run this block optionally
+                        if (true) {
+                            ditherLine(dest, sy, l);
+                        }
+#endif
                         if (op.dest_store)
                             op.dest_store(data->rasterBuffer, x, spans->y, dest, l);
                     } else {
