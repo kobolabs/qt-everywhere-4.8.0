@@ -43,7 +43,6 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
     if (!initialized) {
         void *lib = dlopen("libhyphen.so", RTLD_LAZY);
         if (lib == NULL) {
-qDebug() << "NO LIBHYPHEN";
             return 0;
         }
         initialized = true;
