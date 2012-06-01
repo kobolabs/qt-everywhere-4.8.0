@@ -41,14 +41,14 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
     static void (*hnj_hyphen_free)(HyphenDict *);
     static int (*hnj_hyphen_hyphenate2)(HyphenDict *, const char *, int, char *, char *, char ***, int **, int **);
     if (!initialized) {
-        void *lib = dlopen("libhyphen.so", RTLD_LAZY);
-        if (lib == NULL) {
-            return 0;
-        }
-        initialized = true;
+        void *lib = dlopen(NULL, RTLD_LAZY);
         hnj_hyphen_load = (HyphenDict *(*)(const char *)) dlsym(lib, "hnj_hyphen_load");
         hnj_hyphen_free = (void (*)(HyphenDict *)) dlsym(lib, "hnj_hyphen_free");
         hnj_hyphen_hyphenate2 = (int (*)(HyphenDict *, const char *, int, char *, char *, char ***, int **, int **)) dlsym(lib, "hnj_hyphen_hyphenate2");
+        if (hnj_hyphen_load == NULL) {
+            return 0;
+        }
+        initialized = true;
     }
     static HyphenDict *dict = NULL;
     static AtomicString dictLocale;
