@@ -1,10 +1,11 @@
 #include "config.h"
 #include "Hyphenation.h"
 #include <wtf/text/AtomicString.h>
-#if OS(LINUX)
-#include <hyphen.h>
+#if OS(LINUX) || OS(DARWIN)
+#include "hyphen.h"
 #include <dlfcn.h>
 #endif
+#include <QCoreApplication>
 #include <QRegExp>
 #include <QDebug>
 #include <QFile>
@@ -18,14 +19,25 @@ static QByteArray dictionaryPathForLocale(const AtomicString& localeIdentifier)
 {
     QString locale(reinterpret_cast<const QChar *>(localeIdentifier.characters()), localeIdentifier.length());
     QByteArray dictionaryPath = QString("/usr/share/hyphen/hyph_%1.dic").arg(locale).toAscii();
-    return dictionaryPath;
+    if (QFile::exists(dictionaryPath)) {
+        return dictionaryPath;
+    }
+    dictionaryPath = QString("%1/hyphenDicts/hyph_%2.dic").arg(QCoreApplication::applicationDirPath()).arg(locale).toAscii();
+    if (QFile::exists(dictionaryPath)) {
+        return dictionaryPath;
+    }
+    dictionaryPath = QString("%1/hyphenDicts/hyph_%2.dic").arg(QCoreApplication::applicationDirPath()).arg(locale.left(2)).toAscii();
+    if (QFile::exists(dictionaryPath)) {
+        return dictionaryPath;
+    }
+    return QByteArray();
 }
 
 bool canHyphenate(const AtomicString& localeIdentifier)
 {
-#if OS(LINUX)
+#if OS(LINUX) || OS(DARWIN)
     if (!availableDictionaries.contains(localeIdentifier)) {
-        availableDictionaries[localeIdentifier] = QFile::exists(dictionaryPathForLocale(localeIdentifier));
+        availableDictionaries[localeIdentifier] = dictionaryPathForLocale(localeIdentifier).size() > 0;
     }
     return availableDictionaries[localeIdentifier];
 #else
@@ -35,7 +47,7 @@ bool canHyphenate(const AtomicString& localeIdentifier)
 
 size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeIndex, const AtomicString& localeIdentifier)
 {
-#if OS(LINUX)
+#if OS(LINUX) || OS(DARWIN)
     static bool initialized = false;
     static HyphenDict *(*hnj_hyphen_load)(const char *);
     static void (*hnj_hyphen_free)(HyphenDict *);
