@@ -77,12 +77,12 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
             return 0;
         }
     }
-    
-    if (length < 5) {
+
+    QByteArray c = QString(reinterpret_cast<const QChar *>(characters), length).replace(QRegExp("[^A-Z0-9]", Qt::CaseInsensitive), " ").remove(QRegExp("\\s+$")).toLower().toUtf8();
+
+    if (c.length() - c.lastIndexOf(" ") <= 5) {
         return 0;
     }
-
-    QByteArray c = QString(reinterpret_cast<const QChar *>(characters), length).replace(QRegExp("[^A-Z0-9]", Qt::CaseInsensitive), " ").toLower().toUtf8();
 
     char *hyphens = (char *) malloc(c.size() + 5);
     char *hword = (char *) malloc(c.size() * 2);
@@ -95,7 +95,7 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
     int index = 0;
 
     hnj_hyphen_hyphenate2(dict, c.constData(), c.size(), hyphens, hword, &rep, &pos, &cut);
-    
+
     for (int i = beforeIndex - 2; i >= 0; i--) {
         if (hyphens[i] & 1) {
             index = i + 1;
