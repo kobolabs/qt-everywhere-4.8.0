@@ -78,7 +78,9 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
         }
     }
 
-    QByteArray c = QString(reinterpret_cast<const QChar *>(characters), length).replace(QRegExp("[^A-Z0-9]", Qt::CaseInsensitive), " ").remove(QRegExp("\\s+$")).toLower().toUtf8();
+    QString s = QString(reinterpret_cast<const QChar *>(characters), length).replace(QRegExp("[^A-Z0-9]", Qt::CaseInsensitive), " ").remove(QRegExp("\\s+$")).toLower();
+    QByteArray c = s.simplified().toUtf8();
+    int leadingSpaces = length - c.length();
 
     if (c.length() - c.lastIndexOf(" ") <= 5) {
         return 0;
@@ -96,9 +98,9 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
 
     hnj_hyphen_hyphenate2(dict, c.constData(), c.size(), hyphens, hword, &rep, &pos, &cut);
 
-    for (int i = beforeIndex - 2; i >= 0; i--) {
+    for (int i = beforeIndex - 2 - leadingSpaces; i > 0; i--) {
         if (hyphens[i] & 1) {
-            index = i + 1;
+            index = i + 1 + leadingSpaces;
             break;
         }
     }
