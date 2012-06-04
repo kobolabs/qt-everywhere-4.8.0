@@ -1,5 +1,5 @@
 namespace WebCore {
-extern const char htmlUserAgentStyleSheet[14696];
+extern const char htmlUserAgentStyleSheet[14675];
 extern const char quirksUserAgentStyleSheet[351];
 extern const char mathmlUserAgentStyleSheet[4865];
 extern const char svgUserAgentStyleSheet[351];

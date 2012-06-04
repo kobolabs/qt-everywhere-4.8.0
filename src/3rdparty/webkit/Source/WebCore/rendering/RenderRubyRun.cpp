@@ -271,6 +271,15 @@ void RenderRubyRun::layout()
     computeOverflow(clientLogicalBottom());
 }
 
+int RenderRubyRun::minPreferredLogicalWidth() const
+{
+    // CSS3 Ruby 3.4 Ruby box and line breaking
+    // http://www.w3.org/TR/2011/WD-css3-ruby-20110630/#ruby-line-breaking
+    // RenderRubyRun don't make line breaking opprtunity.
+    // This make min preferred logical width same as max preferred logical width.
+    return maxPreferredLogicalWidth();
+}
+
 void RenderRubyRun::getOverhang(bool firstLine, RenderObject* startRenderer, RenderObject* endRenderer, int& startOverhang, int& endOverhang) const
 {
     ASSERT(!needsLayout());

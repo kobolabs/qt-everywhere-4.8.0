@@ -56,6 +56,8 @@ public:
     virtual RenderObject* layoutSpecialExcludedChild(bool relayoutChildren);
     virtual void layout();
 
+    virtual int minPreferredLogicalWidth() const;
+
     virtual bool isChildAllowed(RenderObject*, RenderStyle*) const;
     virtual void addChild(RenderObject* child, RenderObject* beforeChild = 0);
     virtual void removeChild(RenderObject* child);

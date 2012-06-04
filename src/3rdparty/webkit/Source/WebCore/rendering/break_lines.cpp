@@ -26,6 +26,7 @@
 #include "config.h"
 #include "break_lines.h"
 
+#include "Font.h"
 #include "TextBreakIterator.h"
 #include <wtf/StdLibExtras.h>
 #include <wtf/unicode/CharacterNames.h>
@@ -118,6 +119,75 @@ static const unsigned char asciiLineBreakTable[][(asciiLineBreakTableLastChar - 
 
 COMPILE_ASSERT(WTF_ARRAY_LENGTH(asciiLineBreakTable) == asciiLineBreakTableLastChar - asciiLineBreakTableFirstChar + 1, TestLineBreakTableConsistency);
 
+bool isNonStarterCharacter(UChar ch)
+{
+    // As we cannot use ubrk_following here. we check the line break property
+    // to guess if the line can be broken before this.
+    ULineBreak lineBreak = (ULineBreak)u_getIntPropertyValue(ch, UCHAR_LINE_BREAK);
+    // Using Table 2 Example Pair Table of
+    // http://www.unicode.org/reports/tr14/tr14-15.html
+    // (Unicode 4.0.1) for MacOS.
+    // http://www.unicode.org/reports/tr14/tr14-22.html
+    // (Unicode 5.1) for Android.
+    // And Requirements for Japanese Text Layout, 3.1.7 Characters Not Starting a Line
+    // http://www.w3.org/TR/2012/NOTE-jlreq-20120403/#characters_not_starting_a_line
+    switch (lineBreak) {
+    case U_LB_NONSTARTER:
+    case U_LB_CLOSE_PARENTHESIS:
+    case U_LB_CLOSE_PUNCTUATION:
+    case U_LB_EXCLAMATION:
+    case U_LB_BREAK_SYMBOLS:
+    case U_LB_INFIX_NUMERIC:
+    case U_LB_ZWSPACE:
+    case U_LB_WORD_JOINER:
+        return true;
+    default:
+        break;
+    }
+    // Special care for Requirements for Japanese Text Layout
+    switch (ch) {
+    case 0x2019: // RIGHT SINGLE QUOTATION MARK
+    case 0x201D: // RIGHT DOUBLE QUOTATION MARK
+    case 0x00BB: // RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    case 0x2010: // HYPHEN
+    case 0x2013: // EN DASH
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool isNonEndingCharacter(UChar ch)
+{
+    // As we cannot use ubrk_following here. we checks the line break property
+    // to guess if the line can be broken before this.
+    ULineBreak lineBreak = (ULineBreak)u_getIntPropertyValue(ch, UCHAR_LINE_BREAK);
+    // Using Table 2 Example Pair Table of
+    // http://www.unicode.org/reports/tr14/tr14-15.html
+    // (Unicode 4.0.1) for MacOS.
+    // http://www.unicode.org/reports/tr14/tr14-22.html
+    // (Unicode 5.1) for Android.
+    // And Requirements for Japanese Text Layout, 3.1.8 Characters Not Ending a Line
+    // http://www.w3.org/TR/2012/NOTE-jlreq-20120403/#characters_not_ending_a_line
+    switch (lineBreak) {
+    case U_LB_OPEN_PUNCTUATION:
+        return true;
+    default:
+        break;
+    }
+    // Special care for Requirements for Japanese Text Layout
+    switch (ch) {
+    case 0x2018: // LEFT SINGLE QUOTATION MARK
+    case 0x201C: // LEFT DOUBLE QUOTATION MARK
+    case 0x00AB: // LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+    
 static inline bool shouldBreakAfter(UChar ch, UChar nextCh)
 {
     switch (ch) {
@@ -126,19 +196,7 @@ static inline bool shouldBreakAfter(UChar ch, UChar nextCh)
         // FIXME: cases for ideographicComma and ideographicFullStop are a workaround for an issue in Unicode 5.0
         // which is likely to be resolved in Unicode 5.1 <http://bugs.webkit.org/show_bug.cgi?id=17411>.
         // We may want to remove or conditionalize this workaround at some point.
-
-        switch ((ULineBreak)u_getIntPropertyValue(nextCh, UCHAR_LINE_BREAK)) {
-        case U_LB_CLOSE_PUNCTUATION:
-        case U_LB_EXCLAMATION:
-        case U_LB_BREAK_SYMBOLS:
-        case U_LB_INFIX_NUMERIC:
-        case U_LB_ZWSPACE:
-        case U_LB_WORD_JOINER:
-            return false;
-        default:
-            break;
-        }
-        return true;
+        return !isNonStarterCharacter(nextCh);
     default:
         // If both ch and nextCh are ASCII characters, use a lookup table for enhanced speed and for compatibility
         // with other browsers (see comments for asciiLineBreakTable for details).
@@ -180,11 +238,8 @@ int nextBreakablePosition(LazyLineBreakIterator& lazyBreakIterator, int pos, boo
             // These characters are not kinsoku characters according to Unicode 6.0,
             // However, they are in JLreq (http://www.w3.org/TR/jlreq/). We need
             // special treatment here.
-            // 3033;ID # VERTICAL KANA REPEAT MARK UPPER HALF
-            // 3034;ID # VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
-            // 3035;ID # VERTICAL KANA REPEAT MARK LOWER HALF
-            if (i == nextBreak && !isBreakableSpace(lastCh, treatNoBreakSpaceAsBreak) &&
-                !((lastCh == 0x3033 || lastCh == 0x3034 || ch == 0x3035)))
+            if (i == nextBreak && !isBreakableSpace(lastCh, treatNoBreakSpaceAsBreak)
+                && !Font::isUnbreakableCharactersPair(lastCh, ch))
                 return i;
         }
 

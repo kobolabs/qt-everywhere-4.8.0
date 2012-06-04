@@ -28,7 +28,14 @@
 
 namespace WebCore {
 
-enum TextOrientation { TextOrientationVerticalRight, TextOrientationUpright, TextOrientationUprightRight, TextOrientationSidewaysRight,  TextOrientationSidewaysLeft, TextOrientationSideways };
+enum TextOrientation {
+    TextOrientationVerticalRight,
+    TextOrientationUpright,
+    TextOrientationUprightRight,
+    TextOrientationSidewaysRight,
+    TextOrientationSidewaysLeft,
+    TextOrientationSideways
+};
 
 }
 

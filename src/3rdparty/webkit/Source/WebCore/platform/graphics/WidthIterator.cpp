@@ -199,21 +199,19 @@ void WidthIterator::advance(int offset, GlyphBuffer* glyphBuffer)
                                     glyphBuffer->add(0, fontData, m_expansionPerOpportunity);
                                 else
                                     glyphBuffer->add(fontData->spaceGlyph(), fontData, m_expansionPerOpportunity);
-                            }
-                            else
+                            } else
                                 glyphBuffer->expandLastAdvance(m_expansionPerOpportunity);
                         }
                     }
 
                     if (m_run.allowsTrailingExpansion() || (m_run.ltr() && currentCharacter + clusterLength < static_cast<size_t>(m_run.length()))
-                        || (m_run.rtl() && currentCharacter)) {
+                                                        || (m_run.rtl() && currentCharacter)) {
                         if(!Font::isUnbreakableCharactersPair(c, next)){
                             m_expansion -= m_expansionPerOpportunity;
                             width += m_expansionPerOpportunity;
                             m_isAfterExpansion = true;
-                        } else {
+                        } else
                             m_isAfterExpansion = false;
-                        }
                     }
                 } else
                     m_isAfterExpansion = false;

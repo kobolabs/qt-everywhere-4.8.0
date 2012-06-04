@@ -27,6 +27,9 @@ namespace WebCore {
 
 class LazyLineBreakIterator;
 
+bool isNonStarterCharacter(UChar);
+bool isNonEndingCharacter(UChar);
+
 int nextBreakablePosition(LazyLineBreakIterator&, int pos, bool breakNBSP = false);
 
 inline bool isBreakable(LazyLineBreakIterator& lazyBreakIterator, int pos, int& nextBreakable, bool breakNBSP = false)
