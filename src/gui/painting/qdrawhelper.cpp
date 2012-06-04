@@ -134,21 +134,55 @@ static uint * QT_FASTCALL destFetchRGB16(uint *buffer, QRasterBuffer *rasterBuff
     return buffer;
 }
 
-static void QT_FASTCALL ditherLine(uint *buffer, int y, int length)
+#define FAST_DIV3(x, ret) { unsigned short temp1 = ((x) >> 2) + ((x) >> 4); unsigned short temp2 = (x) - temp1 * 3; ret = temp1 + (11 * temp2 >> 5); }
+
+static int QT_FASTCALL toGrayscale(uint *buffer)
 {
-    int yParam = 0x3 * (y % 0x3);
-    for (int j = 0; j < length; j++) {
-        uchar threshold = ORDERED_DITHER_MATRIX3x3[(j % 0x3) + yParam];
-        uchar r = buffer[0] & 0x000000FF;
-        uchar g = (buffer[0] & 0x0000FF00) >> 8;
-        uchar b = (buffer[0] & 0x00FF0000) >> 16;
-        int avg = ((r * 77) + (g * 151) + (b * 28)) >> 8;
-        uchar t = (( avg * 10 ) >> 4);
+    uchar r = buffer[0] & 0x000000FF;
+    uchar g = (buffer[0] & 0x0000FF00) >> 8;
+    uchar b = (buffer[0] & 0x00FF0000) >> 16;
+    return ((r * 77) + (g * 151) + (b * 28)) >> 8;
+}
+
+static void QT_FASTCALL ditherAndSharpenLine(uint *buffer, int row, int length)
+{
+    int diffs[3];
+    int pix;
+    int prevPix;
+    int average;
+
+    // initial setup for line.
+    pix = toGrayscale(buffer);
+    buffer++;
+
+    diffs[0] = diffs[1] = diffs[2] = pix;
+    prevPix = pix ;
+
+    int idxR = row % 0x3;
+    for (int col = 1; col < length - 1; ++col) {
+        int idxC = col % 0x3;
+        uchar threshold = ORDERED_DITHER_MATRIX3x3[idxC + (0x3 * idxR)];
+        pix = toGrayscale(buffer);
+
+        // update average of 3 pixels in col
+        diffs[ idxC ] = pix;
+
+        average = diffs[0] + diffs[1] + diffs[2];
+        FAST_DIV3( average, average);
+
+        // apply sharpness filter
+        int diff = prevPix - average;
+
+        prevPix += diff;
+        prevPix = qMax(prevPix, 0);
+
+        uchar t = (( prevPix * 10 ) >> 4);
         uchar l = t / 10;
         t = t - l * 10;
-        avg = (l + (t >= threshold)) << 4;
-        avg = avg & 0x100 ? 0xff : avg;
-        *buffer++ = avg + (avg << 8) + (avg << 16) + 0xFF000000;;
+        prevPix = (l + (t >= threshold)) << 4;
+        prevPix = prevPix & 0x100 ? 0xff : prevPix;
+        *buffer++ = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
+        prevPix = pix;
     }
 }
 
@@ -1218,7 +1252,7 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
     // Do ordered dithering 3x3,16
     // TODO: Implement an if-condition to run this block optionally
     if (true) {
-        ditherLine(buffer, y, length);
+        ditherAndSharpenLine(buffer, y, length);
     }
 #endif
     return buffer;
@@ -3665,7 +3699,7 @@ Q_STATIC_TEMPLATE_FUNCTION void blend_untransformed_generic(int count, const QSp
 #if defined(Q_WS_QWS)
                         // TODO: Implement an if-condition to run this block optionally
                         if (true) {
-                            ditherLine(dest, sy, l);
+                            ditherAndSharpenLine(dest, sy, l);
                         }
 #endif
                         if (op.dest_store)
