@@ -869,18 +869,13 @@ bool ContainerNode::getUpperLeftCorner(FloatPoint& point) const
         }
         ASSERT(o);
 
-        if (!o->isInline() || o->isReplaced()) {
-            point = o->localToAbsolute(FloatPoint(), false, true);
-            return true;
-        }
-
         if (p->node() && p->node() == this && o->isText() && !o->isBR() && !toRenderText(o)->firstTextBox()) {
                 // do nothing - skip unrendered whitespace that is a child or next sibling of the anchor
         } else if ((o->isText() && !o->isBR()) || o->isReplaced()) {
             point = FloatPoint();
             if (o->isText() && toRenderText(o)->firstTextBox()) {
                 point.move(toRenderText(o)->linesBoundingBox().x(),
-                           toRenderText(o)->firstTextBox()->root()->lineTop());
+                           toRenderText(o)->linesBoundingBox().y());
             } else if (o->isBox()) {
                 RenderBox* box = toRenderBox(o);
                 point.move(box->x(), box->y());
@@ -962,10 +957,19 @@ IntRect ContainerNode::getRect() const
             lowerRight = upperLeft;
         else
             upperLeft = lowerRight;
-    } 
+    }
 
-    lowerRight.setX(max(upperLeft.x(), lowerRight.x()));
-    lowerRight.setY(max(upperLeft.y(), lowerRight.y()));
+    using std::min;
+
+    const int left = min(upperLeft.x(), lowerRight.x());
+    const int right = max(upperLeft.x(), lowerRight.x());
+    upperLeft.setX(left);
+    lowerRight.setX(right);
+
+    const int upper = min(upperLeft.y(), lowerRight.y());
+    const int lower = max(upperLeft.y(), lowerRight.y());
+    upperLeft.setY(upper);
+    lowerRight.setY(lower);
     
     return enclosingIntRect(FloatRect(upperLeft, lowerRight - upperLeft));
 }

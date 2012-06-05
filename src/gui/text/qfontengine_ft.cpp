@@ -62,6 +62,7 @@
 #include FT_TRUETYPE_TABLES_H
 #include FT_TYPE1_TABLES_H
 #include FT_GLYPH_H
+#include FT_BITMAP_H
 
 #if defined(FT_LCD_FILTER_H)
 #include FT_LCD_FILTER_H
@@ -96,7 +97,7 @@ QT_BEGIN_NAMESPACE
 
 /* FreeType 2.1.10 starts to provide FT_GlyphSlot_Embolden */
 #if (FREETYPE_MAJOR*10000+FREETYPE_MINOR*100+FREETYPE_PATCH) >= 20110
-#define Q_FT_GLYPHSLOT_EMBOLDEN(slot)   FT_GlyphSlot_Embolden(slot)
+#define Q_FT_GLYPHSLOT_EMBOLDEN(slot)   GlyphSlot_Embolden(slot)
 #else
 #define Q_FT_GLYPHSLOT_EMBOLDEN(slot)
 #endif
@@ -105,6 +106,73 @@ QT_BEGIN_NAMESPACE
 #define CEIL(x)	    (((x)+63) & -64)
 #define TRUNC(x)    ((x) >> 6)
 #define ROUND(x)    (((x)+32) & -64)
+
+/* FreeType 2.1.10 starts to provide FT_GlyphSlot_Embolden */
+#if (FREETYPE_MAJOR*10000+FREETYPE_MINOR*100+FREETYPE_PATCH) >= 20110
+/* see FT_GlyphSlot_Embolden@freetype/src/base/ftsynth.c */
+static void
+GlyphSlot_Embolden(FT_GlyphSlot slot)
+{
+    FT_Library  library = slot->library;
+    FT_Face     face    = slot->face;
+    FT_Error    error;
+    FT_Pos      xstr, ystr;
+
+    if (slot->format != FT_GLYPH_FORMAT_OUTLINE
+        && slot->format != FT_GLYPH_FORMAT_BITMAP)
+        return;
+
+    /* some reasonable strength */
+    xstr = FT_MulFix(face->units_per_EM,
+                     face->size->metrics.y_scale) / 24;
+    ystr = xstr;
+
+    if (slot->format == FT_GLYPH_FORMAT_OUTLINE) {
+        error = FT_Outline_Embolden(&slot->outline, xstr);
+        /* ignore error */
+
+        /* this is more than enough for most glyphs; if you need accurate */
+        /* values, you have to call FT_Outline_Get_CBox                   */
+        xstr = xstr * 2;
+        ystr = xstr;
+    } else if (slot->format == FT_GLYPH_FORMAT_BITMAP) {
+        /* round to full pixels */
+        xstr &= ~63;
+        if (xstr == 0)
+            xstr = 1 << 6;
+        ystr &= ~63;
+
+        error = FT_GlyphSlot_Own_Bitmap(slot);
+        if (error)
+            return;
+
+        error = FT_Bitmap_Embolden(library, &slot->bitmap, xstr, ystr);
+        if (error)
+            return;
+    }
+
+    if (slot->advance.x)
+        slot->advance.x += xstr;
+    else
+        slot->advance.x = (face->glyph->linearHoriAdvance>>10) + xstr;
+
+    if (slot->advance.y)
+        slot->advance.y += ystr;
+    else
+        slot->advance.y = (face->glyph->linearVertAdvance>>10) + ystr;
+
+    slot->metrics.width        += xstr;
+    slot->metrics.height       += ystr;
+    slot->metrics.horiBearingY += ystr;
+    slot->metrics.horiAdvance  += xstr;
+    slot->metrics.vertBearingX -= xstr / 2;
+    slot->metrics.vertBearingY += ystr;
+    slot->metrics.vertAdvance  += ystr;
+
+    if (slot->format == FT_GLYPH_FORMAT_BITMAP)
+        slot->bitmap_top += ystr >> 6;
+}
+#endif
 
 static HB_Error hb_getSFntTable(void *font, HB_Tag tableTag, HB_Byte *buffer, HB_UInt *length)
 {
@@ -893,38 +961,14 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyphMetrics(QGlyphSet *set, uint glyph
 
 
     if (transform && slot->format != FT_GLYPH_FORMAT_BITMAP) { // freetype doesn't apply the transformation on the metrics
-        int l, r, t, b;
-        FT_Vector vector;
-        vector.x = left;
-        vector.y = top;
-        FT_Vector_Transform(&vector, &matrix);
-        l = r = vector.x;
-        t = b = vector.y;
-        vector.x = right;
-        vector.y = top;
-        FT_Vector_Transform(&vector, &matrix);
-        if (l > vector.x) l = vector.x;
-        if (r < vector.x) r = vector.x;
-        if (t < vector.y) t = vector.y;
-        if (b > vector.y) b = vector.y;
-        vector.x = right;
-        vector.y = bottom;
-        FT_Vector_Transform(&vector, &matrix);
-        if (l > vector.x) l = vector.x;
-        if (r < vector.x) r = vector.x;
-        if (t < vector.y) t = vector.y;
-        if (b > vector.y) b = vector.y;
-        vector.x = left;
-        vector.y = bottom;
-        FT_Vector_Transform(&vector, &matrix);
-        if (l > vector.x) l = vector.x;
-        if (r < vector.x) r = vector.x;
-        if (t < vector.y) t = vector.y;
-        if (b > vector.y) b = vector.y;
-        left = l;
-        right = r;
-        top = t;
-        bottom = b;
+        FT_BBox bbox;
+
+        FT_Outline_Get_CBox(&slot->outline, &bbox);
+
+        left   = bbox.xMin;
+        right  = bbox.xMax;
+        top    = bbox.yMax;
+        bottom = bbox.yMin;
     }
     left = FLOOR(left);
     right = CEIL(right);
@@ -935,8 +979,8 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyphMetrics(QGlyphSet *set, uint glyph
     g->height = TRUNC(top-bottom);
     g->x = TRUNC(left);
     g->y = TRUNC(top);
-    g->advanceX = TRUNC(ROUND(face->glyph->linearHoriAdvance >> 10));
-    g->advanceY = TRUNC(ROUND(face->glyph->linearVertAdvance >> 10));
+    g->advanceX = TRUNC(ROUND(slot->advance.x ? slot->advance.x : face->glyph->linearHoriAdvance>>10));
+    g->advanceY = TRUNC(ROUND(slot->advance.y ? slot->advance.y : face->glyph->linearVertAdvance>>10));
     g->format = Format_None;
 
     return g;
@@ -1043,8 +1087,8 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     if (embolden) Q_FT_GLYPHSLOT_EMBOLDEN(slot);
     FT_Library library = qt_getFreetype();
 
-    info.xOff = TRUNC(ROUND(slot->linearHoriAdvance >> 10));
-    info.yOff = TRUNC(ROUND(slot->linearVertAdvance >> 10));
+    info.xOff = TRUNC(ROUND(slot->advance.x ? slot->advance.x : face->glyph->linearHoriAdvance>>10));
+    info.yOff = TRUNC(ROUND(slot->advance.y ? slot->advance.y : face->glyph->linearVertAdvance>>10));
 
     uchar *glyph_buffer = 0;
     int glyph_buffer_size = 0;
@@ -1103,45 +1147,15 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
     }
 #endif
 
+   if(transform && slot->format != FT_GLYPH_FORMAT_BITMAP) {
+        FT_BBox bbox;
 
+        FT_Outline_Get_CBox(&slot->outline, &bbox);
 
-
-
-
-
-    if(transform && slot->format != FT_GLYPH_FORMAT_BITMAP) {
-        int l, r, t, b;
-        FT_Vector vector;
-        vector.x = left;
-        vector.y = top;
-        FT_Vector_Transform(&vector, &matrix);
-        l = r = vector.x;
-        t = b = vector.y;
-        vector.x = right;
-        vector.y = top;
-        FT_Vector_Transform(&vector, &matrix);
-        if (l > vector.x) l = vector.x;
-        if (r < vector.x) r = vector.x;
-        if (t < vector.y) t = vector.y;
-        if (b > vector.y) b = vector.y;
-        vector.x = right;
-        vector.y = bottom;
-        FT_Vector_Transform(&vector, &matrix);
-        if (l > vector.x) l = vector.x;
-        if (r < vector.x) r = vector.x;
-        if (t < vector.y) t = vector.y;
-        if (b > vector.y) b = vector.y;
-        vector.x = left;
-        vector.y = bottom;
-        FT_Vector_Transform(&vector, &matrix);
-        if (l > vector.x) l = vector.x;
-        if (r < vector.x) r = vector.x;
-        if (t < vector.y) t = vector.y;
-        if (b > vector.y) b = vector.y;
-        left = l;
-        right = r;
-        top = t;
-        bottom = b;
+        left   = bbox.xMin;
+        right  = bbox.xMax;
+        top    = bbox.yMax;
+        bottom = bbox.yMin;
     }
     left = FLOOR(left);
     right = CEIL(right);
@@ -1793,13 +1807,15 @@ void QFontEngineFT::recalcAdvances(QGlyphLayout *glyphs, QTextEngine::ShaperFlag
     QFixed advance;
     for (int i = 0; i < glyphs->numGlyphs; i++) {
         Glyph *g = defaultGlyphSet.getGlyph(glyphs->glyphs[i]);
+        if (!g) {
+            if (!face)
+                face = lockFace();
+            g = loadGlyph(glyphs->glyphs[i], 0, Format_None, true, vertical);
+        }
         if (g) {
             glyphs->advances_x[i] = QFixed(g->advanceX);
             glyphs->advances_y[i] = QFixed(g->advanceY);
         } else {
-            if (!face)
-                face = lockFace();
-            g = loadGlyph(glyphs->glyphs[i], 0, Format_None, true, vertical);
             advance = design ? QFixed::fromFixed(face->glyph->linearHoriAdvance >> 10)
                              : QFixed::fromFixed(face->glyph->metrics.horiAdvance).round();
             glyphs->advances_x[i] = advance;
