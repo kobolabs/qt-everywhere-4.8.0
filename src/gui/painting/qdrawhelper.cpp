@@ -173,7 +173,7 @@ static void QT_FASTCALL ditherAndSharpenLine(uint *buffer, int row, int length)
         // apply sharpness filter
         int diff = prevPix - average;
 
-        prevPix += diff;
+        prevPix += (diff >> 1);
         prevPix = qMax(prevPix, 0);
 
         uchar t = (( prevPix * 10 ) >> 4);
