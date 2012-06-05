@@ -917,6 +917,10 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 subRunWidth = false;
                 hasLinkParent = true;
             }
+            else if (linkRun && pa && pa->node() && pa->node()->hasTagName(aTag)) {
+                subRunWidth = false;
+                hasLinkParent = true;
+            }
             else  if(o.isText() && pa && paBlock && pa->isTableCell()) {
                 FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
                 origin.setX(paOrigin.x() + paBlock->width() - block->x());
@@ -949,6 +953,9 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                                 hasLinkParent = true;
                             }
                             else if (grandPa && grandPa->node() && grandPa->node()->hasTagName(aTag)) {
+                                hasLinkParent = true;
+                            }
+                            else if (pa && pa->node() && pa->node()->hasTagName(aTag)) {
                                 hasLinkParent = true;
                             }
                         }
