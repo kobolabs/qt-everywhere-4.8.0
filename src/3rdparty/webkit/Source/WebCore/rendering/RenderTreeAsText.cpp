@@ -843,15 +843,13 @@ String markerTextForListItem(Element* element)
     return toRenderListItem(renderer)->markerText();
 }
 
-static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, bool imgRun, bool linkRun, bool docVertical/*, int indent*/)
+static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, bool imgRun, bool docVertical/*, int indent*/)
 {
     /* Figure out what the runs' positions are relative to. */
     FloatPoint origin;
     bool flippedVertical = false;
     bool isRubyBlock = false;
     bool horizontalInVerticalDoc = false;
-    bool hasLinkParent = false;
-    bool subRunWidth = true;
     int rubyRunBlockWidth = 0;
     int verticalBlockLineHeight = 0;
 
@@ -907,20 +905,6 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 }
                 return;
             }
-            else if (linkRun && grandPa && grandPa->node() && grandPa->node()->hasTagName(aTag) && grandPaBlock && greatGrandPaBlock) {
-                FloatPoint greatGrandPaOrigin = greatGrandPaBlock->localToAbsolute(FloatPoint());
-                greatGrandPaOrigin.setX(greatGrandPaOrigin.x() + greatGrandPaBlock->width());
-                origin.setX(greatGrandPaOrigin.x() - grandPaBlock->x());
-                hasLinkParent = true;
-            }
-            else if (linkRun && greatGrandPa && greatGrandPa->node() && greatGrandPa->node()->hasTagName(aTag)) {
-                subRunWidth = false;
-                hasLinkParent = true;
-            }
-            else if (linkRun && pa && pa->node() && pa->node()->hasTagName(aTag)) {
-                subRunWidth = false;
-                hasLinkParent = true;
-            }
             else  if(o.isText() && pa && paBlock && pa->isTableCell()) {
                 FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
                 origin.setX(paOrigin.x() + paBlock->width() - block->x());
@@ -947,18 +931,6 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                 if (pa && paBlock) {
                     horizontalInVerticalDoc = !paBlock->style()->isHorizontalWritingMode() && paBlock->style()->isFlippedBlocksWritingMode();
                     if (horizontalInVerticalDoc) {
-                        // Need to check (great)grand parents
-                        if (linkRun) {
-                            if (greatGrandPa && greatGrandPa->node() && greatGrandPa->node()->hasTagName(aTag)) {
-                                hasLinkParent = true;
-                            }
-                            else if (grandPa && grandPa->node() && grandPa->node()->hasTagName(aTag)) {
-                                hasLinkParent = true;
-                            }
-                            else if (pa && pa->node() && pa->node()->hasTagName(aTag)) {
-                                hasLinkParent = true;
-                            }
-                        }
                         FloatPoint paOrigin = paBlock->localToAbsolute(FloatPoint());
                         origin.setX(paOrigin.x() + paBlock->width() - block->x() - block->width());
                     }
@@ -966,7 +938,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
             }
         }
     }
-    if (o.isText() && !o.isBR() && ((!imgRun && !linkRun) || (!imgRun && linkRun && hasLinkParent))) {
+    if (o.isText() && !o.isBR() && !imgRun) {
         const RenderText& text = *toRenderText(&o);
         for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox()) {
             InlineTextBox& run = *box;
@@ -985,20 +957,12 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                         // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
                         verticalBlockLineHeight = run.width() * 1.48f;
                     }
-                    r = QRect(origin.x() - (subRunWidth ? run.width() : 0) - run.m_x, run.m_y + origin.y(), verticalBlockLineHeight, run.height());
+                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), verticalBlockLineHeight, run.height());
 
                 }
             }
             else if (horizontalInVerticalDoc) {
-                if (hasLinkParent) {
-                    if (verticalBlockLineHeight < 1) {
-                        verticalBlockLineHeight = run.width() * 1.48f;
-                    }
-                    r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), verticalBlockLineHeight, run.height());
-                }
-                else {
-                    r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
-                }
+                r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
             }
             out.append(r);
         }
@@ -1008,7 +972,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
         if (child->hasLayer()) {
             continue;
         }
-        getRunRectsRecursively(out, *child, imgRun, linkRun, docVertical);
+        getRunRectsRecursively(out, *child, imgRun, docVertical);
     }
 }
 
@@ -1016,7 +980,6 @@ static void getRunRectsForAllLayers(
     QList<QRect>& out,
     RenderLayer* l,
     bool imgRun,
-    bool linkRun,
     bool docVertical)
 {
     /* heavily based on writeLayers, mostly without any understanding of what "layers" even are. */
@@ -1028,25 +991,25 @@ static void getRunRectsForAllLayers(
     Vector<RenderLayer*>* negList = l->negZOrderList();
     if (negList) {
         for (unsigned i = 0; i != negList->size(); ++i)
-        getRunRectsForAllLayers(out, negList->at(i), imgRun, linkRun, docVertical);
+            getRunRectsForAllLayers(out, negList->at(i), imgRun, docVertical);
     }
 
-    getRunRectsRecursively(out, *l->renderer(), imgRun, linkRun, docVertical);
+    getRunRectsRecursively(out, *l->renderer(), imgRun, docVertical);
 
     Vector<RenderLayer*>* normalFlowList = l->normalFlowList();
     if (normalFlowList) {
         for (unsigned i = 0; i != normalFlowList->size(); ++i)
-        getRunRectsForAllLayers(out, normalFlowList->at(i), imgRun, linkRun, docVertical);
+            getRunRectsForAllLayers(out, normalFlowList->at(i), imgRun, docVertical);
     }
 
     Vector<RenderLayer*>* posList = l->posZOrderList();
     if (posList) {
         for (unsigned i = 0; i != posList->size(); ++i)
-        getRunRectsForAllLayers(out, posList->at(i), imgRun, linkRun, docVertical);
+            getRunRectsForAllLayers(out, posList->at(i), imgRun, docVertical);
     }
 }
 
-QList<QRect> getRunRects(RenderObject* o, bool imgRun, bool linkRun, bool docVertical)
+QList<QRect> getRunRects(RenderObject* o, bool imgRun, bool docVertical)
 {
     if (o->view()->frameView())
         o->view()->frameView()->layout();
@@ -1054,7 +1017,7 @@ QList<QRect> getRunRects(RenderObject* o, bool imgRun, bool linkRun, bool docVer
     QList<QRect> ret;
     if (o->hasLayer()) {
         RenderLayer* l = toRenderBox(o)->layer();
-    getRunRectsForAllLayers(ret, l, imgRun, linkRun, docVertical);
+        getRunRectsForAllLayers(ret, l, imgRun, docVertical);
     }
 
     return ret;

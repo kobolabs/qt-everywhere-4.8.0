@@ -122,7 +122,7 @@ private:
 
 public:
     QWebPage *page() const;
-    QList<QRect> renderTreeRunRects(bool imgRun, bool linkRun);
+    QList<QRect> renderTreeRunRects(bool imgRun);
 
     void load(const QUrl &url);
     void load(const QNetworkRequest &request,
