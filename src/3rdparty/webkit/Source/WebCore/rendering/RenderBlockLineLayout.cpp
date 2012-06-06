@@ -1099,6 +1099,28 @@ void RenderBlock::layoutRunsAndFloats(bool fullLayout, bool hasInlineChild, Vect
     }
 }
 
+    
+bool RenderBlock::getFirstChar(UChar* c)
+{
+    if (!childrenInline())
+        return false;
+
+    if (!firstChild())
+        return false;
+
+    bool endOfInline = false;
+    RenderObject* o = bidiFirstNotSkippingInlines(this);
+    while (o) {
+        if (o->isText()) {
+            RenderText* t = toRenderText(o);
+            *c = t->characters()[0];
+            return true;
+        }
+        o = bidiNext(this, o, 0, false, &endOfInline);
+    }
+    return false;
+}
+
 void RenderBlock::layoutInlineChildren(bool relayoutChildren, int& repaintLogicalTop, int& repaintLogicalBottom)
 {
     m_overflow.clear();
@@ -1895,6 +1917,8 @@ InlineIterator RenderBlock::LineBreaker::nextLineBreak(InlineBidiResolver& resol
 
         bool collapseWhiteSpace = RenderStyle::collapseWhiteSpace(currWS);
 
+        bool canStart = true;
+
         if (current.m_obj->isBR()) {
             if (width.fitsOnLine()) {
                 lBreak.moveToStartOf(current.m_obj);
@@ -1985,9 +2009,16 @@ InlineIterator RenderBlock::LineBreaker::nextLineBreak(InlineBidiResolver& resol
         } else if (current.m_obj->isReplaced()) {
             RenderBox* replacedBox = toRenderBox(current.m_obj);
 
+            if (replacedBox->isInlineBlockOrInlineTable()) {
+                RenderBlock* block = toRenderBlock(replacedBox);
+                UChar c;
+                if (block->getFirstChar(&c))
+                    canStart = !isNonStarterCharacter(c);
+            }
+
             // Break on replaced elements if either has normal white-space.
             bool lastAutoWrap = isOverwriteAutoWrapByRubyRun ? false : RenderStyle::autoWrap(lastWS);
-            if ((autoWrap || lastAutoWrap) && (!current.m_obj->isImage() || allowImagesToBreak)) {
+            if (canStart && (autoWrap || lastAutoWrap) && (!current.m_obj->isImage() || allowImagesToBreak)) {
                 bool commit = true;
                 if (last->isText()) {
                     RenderText* lastText = toRenderText(last);
@@ -2313,9 +2344,15 @@ InlineIterator RenderBlock::LineBreaker::nextLineBreak(InlineBidiResolver& resol
                     lBreak.moveToStartOf(next);
                 }
             }
+        } else if (checkForBreak && next && next->isInlineBlockOrInlineTable()) {
+            // Check that the next block is able to become a line start.
+            RenderBlock* block = toRenderBlock(next);
+            UChar c;
+            if (block->getFirstChar(&c))
+                checkForBreak = !isNonStarterCharacter(c);
         }
 
-        if (checkForBreak && !width.fitsOnLine()) {
+        if (checkForBreak && canStart && !width.fitsOnLine()) {
             // if we have floats, try to get below them.
             if (currentCharacterIsSpace && !ignoringSpaces && current.m_obj->style()->collapseWhiteSpace())
                 trailingObjects.clear();
