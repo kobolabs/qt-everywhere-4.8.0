@@ -201,3 +201,5 @@ CONFIG(qt_minimal) {
 contains(DEFINES, QT_NO_UITOOLS): CONFIG -= uitools
 
 macx-g++|linux*: LIBS += -ldl
+win32*: DEFINES += PSAPI_VERSION=1
+win32*: LIBS += -lpsapi

@@ -1,9 +1,15 @@
 #include "config.h"
 #include "Hyphenation.h"
-#include <wtf/text/AtomicString.h>
-#if OS(LINUX) || OS(DARWIN)
 #include "hyphen.h"
+#include <wtf/text/AtomicString.h>
+#include <string.h>
+#if OS(LINUX) || OS(DARWIN)
 #include <dlfcn.h>
+#endif
+#if OS(WINDOWS)
+#include <windows.h>
+#include <psapi.h>
+#define dlsym(hnd, sym) GetProcAddress(hnd, sym)
 #endif
 #include <QCoreApplication>
 #include <QRegExp>
@@ -35,25 +41,39 @@ static QByteArray dictionaryPathForLocale(const AtomicString& localeIdentifier)
 
 bool canHyphenate(const AtomicString& localeIdentifier)
 {
-#if OS(LINUX) || OS(DARWIN)
     if (!availableDictionaries.contains(localeIdentifier)) {
         availableDictionaries[localeIdentifier] = dictionaryPathForLocale(localeIdentifier).size() > 0;
     }
     return availableDictionaries[localeIdentifier];
-#else
-    return false;
-#endif
 }
 
 size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeIndex, const AtomicString& localeIdentifier)
 {
-#if OS(LINUX) || OS(DARWIN)
     static bool initialized = false;
     static HyphenDict *(*hnj_hyphen_load)(const char *);
     static void (*hnj_hyphen_free)(HyphenDict *);
     static int (*hnj_hyphen_hyphenate2)(HyphenDict *, const char *, int, char *, char *, char ***, int **, int **);
     if (!initialized) {
+#if OS(LINUX) || OS(DARWIN)
         void *lib = dlopen(NULL, RTLD_LAZY);
+#endif
+#if OS(WINDOWS)
+        HMODULE modules[32];
+        DWORD count;
+        EnumProcessModules(GetCurrentProcess(), modules, sizeof(modules), &count);
+        HMODULE lib = 0;
+        for (int i = 0; i < count / sizeof(HMODULE); i++) {
+            HMODULE d  = modules[i];
+            if (dlsym(d, "hnj_hyphen_load") != NULL) {
+                lib = d;
+                break;
+            }
+        }
+#endif
+        if (lib == NULL) {
+            return 0;
+        }
+
         hnj_hyphen_load = (HyphenDict *(*)(const char *)) dlsym(lib, "hnj_hyphen_load");
         hnj_hyphen_free = (void (*)(HyphenDict *)) dlsym(lib, "hnj_hyphen_free");
         hnj_hyphen_hyphenate2 = (int (*)(HyphenDict *, const char *, int, char *, char *, char ***, int **, int **)) dlsym(lib, "hnj_hyphen_hyphenate2");
@@ -78,7 +98,9 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
         }
     }
 
-    QString s = QString(reinterpret_cast<const QChar *>(characters), length).replace(QRegExp("[^A-Z0-9]", Qt::CaseInsensitive), " ").remove(QRegExp("\\s+$")).toLower();
+    static QRegExp punctuation("[^A-Z0-9]", Qt::CaseInsensitive);
+    static QRegExp spaces("\\s+$");
+    QString s = QString(reinterpret_cast<const QChar *>(characters), length).replace(punctuation, " ").remove(spaces).toLower().toUtf8();
     QByteArray c = s.simplified().toUtf8();
     int leadingSpaces = length - c.length();
 
@@ -88,8 +110,8 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
 
     char *hyphens = (char *) malloc(c.size() + 5);
     char *hword = (char *) malloc(c.size() * 2);
-    bzero(hyphens, c.size() + 5);
-    bzero(hword, c.size() * 2);
+    memset(hyphens, 0, c.size() + 5);
+    memset(hword, 0, c.size() * 2);
 
     char **rep = NULL;
     int *pos = NULL;
@@ -113,9 +135,6 @@ size_t lastHyphenLocation(const UChar* characters, size_t length, size_t beforeI
     free(hword);
 
     return index;
-#else
-    return 0;
-#endif
 }
 
 }
