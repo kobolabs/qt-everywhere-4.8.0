@@ -38,6 +38,7 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
     QRawFont rawFont = fontData->platformData().rawFont();
     QString qstring = QString::fromRawData(reinterpret_cast<const QChar*>(buffer), static_cast<int>(bufferLength));
     QVector<quint32> indexes = rawFont.glyphIndexesForString(qstring);
+    quint32 *glyphs = indexes.data();
 
     bool haveGlyphs = false;
     bool lookVariants = false;
@@ -51,15 +52,15 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
         }
     }
 
+    if (lookVariants)
+        rawFont.substituteWithVerticalVariants(glyphs, indexes.size());
+
     for (unsigned i = 0; i < length; ++i) {
-        Glyph glyph = (i < indexes.size()) ? indexes.at(i) : 0;
+        Glyph glyph = (i < indexes.size()) ? glyphs[i] : 0;
         if (!glyph)
             setGlyphDataForIndex(offset + i, 0, 0);
         else {
             haveGlyphs = true;
-            if (lookVariants)
-                glyph = rawFont.glyphVerticalVariant(glyph);
-
             setGlyphDataForIndex(offset + i, glyph, fontData);
         }
     }
