@@ -119,7 +119,8 @@ public:
     QList<QFontDatabase::WritingSystem> supportedWritingSystems() const;
 
     QByteArray fontTable(const char *tagName) const;
-    quint32 glyphVerticalVariant(const quint32) const;
+
+    int substituteWithVerticalVariants(quint32* glyphs, const unsigned length) const;
     bool hasVerticalGlyphs() const;
 
     static QRawFont fromFont(const QFont &font,

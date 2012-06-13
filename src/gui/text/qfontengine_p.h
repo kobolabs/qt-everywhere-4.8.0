@@ -247,7 +247,7 @@ public:
     void setGlyphCache(void *key, QFontEngineGlyphCache *data);
     QFontEngineGlyphCache *glyphCache(void *key, QFontEngineGlyphCache::Type type, const QTransform &transform) const;
 
-    quint32 glyphVerticalVariant(const quint32 glyph) const;
+    int substituteWithVerticalVariants(quint32 *glyph, const unsigned buffer);
     bool hasVerticalGlyphs() const;
 
     static const uchar *getCMap(const uchar *table, uint tableSize, bool *isSymbolFont, int *cmapSize);

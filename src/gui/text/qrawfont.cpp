@@ -596,9 +596,9 @@ void QRawFont::setPixelSize(int pixelSize)
         delete oldFontEngine;
 }
 
-quint32 QRawFont::glyphVerticalVariant(const quint32 glyph) const
+int QRawFont::substituteWithVerticalVariants(quint32* glyphs, const unsigned length) const
 {
-    return d->fontEngine->glyphVerticalVariant(glyph);
+    return d->fontEngine->substituteWithVerticalVariants(glyphs, length);
 }
 
 bool QRawFont::hasVerticalGlyphs() const

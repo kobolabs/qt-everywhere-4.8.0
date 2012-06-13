@@ -462,9 +462,9 @@ void QFontEngine::addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyphs,
     addGlyphsToPath(positioned_glyphs.data(), positions.data(), positioned_glyphs.size(), path, flags);
 }
 
-quint32 QFontEngine::glyphVerticalVariant(const quint32 glyph) const
+int QFontEngine::substituteWithVerticalVariants(quint32* glyphs, const unsigned length)
 {
-    return qGlyphVerticalVariant(harfbuzzFace(), glyph);
+    return qSubstituteWithVerticalVariants(harfbuzzFace(), glyphs, length);
 }
 
 bool QFontEngine::hasVerticalGlyphs() const

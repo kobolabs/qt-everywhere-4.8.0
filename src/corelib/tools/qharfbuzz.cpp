@@ -137,37 +137,44 @@ void qGetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
     HB_GetCharAttributes(string, stringLength, items, numItems, attributes);
 }
 
-quint32 qGlyphVerticalVariant(HB_FaceRec_* hbFace, const quint32 glyph)
+int qSubstituteWithVerticalVariants(HB_FaceRec_* hbFace, quint32 *glyphs, const unsigned length)
 {
-    if(!hbFace)
-        return glyph;
+    if(!hbFace) {
+        return 0xffff;
+    }
 
-    quint32 subbed = glyph;
     HB_Buffer buffer;
     hb_buffer_new(&buffer);
-    hb_buffer_add_glyph(buffer, glyph, 0, 0);
+    for (unsigned i = 0; i < length; ++i) {
+        hb_buffer_add_glyph(buffer, glyphs[i], 0, i);
+    }
+
     HB_UShort scriptIndex;
     HB_UShort featureIndex;
-
     if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('D', 'F', 'L', 'T'), &scriptIndex) != HB_Err_Ok ){
         if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('h', 'a', 'n', 'i'), &scriptIndex) != HB_Err_Ok ){
-            HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex);
+            int error = HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex);
+            if (error != HB_Err_Ok)
+                return error;
         }
     }
 
-    if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok){
-        if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok){
-            return glyph;
-        }
+    if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok) {
+        int error = HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok;
+        if (error != HB_Err_Ok)
+            return error;
     }
+
     HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1);
 
     int error = HB_GSUB_Apply_String(hbFace->gsub, buffer);
     if (!error){
-        subbed = static_cast<uint>(buffer->out_string[0].gindex);
+        for (unsigned i = 0; i < length; ++i) {
+            glyphs[i] = buffer->out_string[i].gindex;
+        }
     }
     HB_GSUB_Clear_Features(hbFace->gsub);
-    return subbed;
+    return error;
 }
 
 bool qHasVerticalGlyphs(HB_FaceRec_* hbFace)
