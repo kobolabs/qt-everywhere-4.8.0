@@ -166,6 +166,7 @@ quint32 qGlyphVerticalVariant(HB_FaceRec_* hbFace, const quint32 glyph)
     if (!error){
         subbed = static_cast<uint>(buffer->out_string[0].gindex);
     }
+    HB_GSUB_Clear_Features(hbFace->gsub);
     return subbed;
 }
 
