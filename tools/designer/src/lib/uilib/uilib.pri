@@ -30,3 +30,5 @@ SOURCES += \
     HEADERS += $$PWD/formscriptrunner_p.h
     SOURCES += $$PWD/formscriptrunner.cpp
 }
+
+INCLUDEPATH += ../../../../src/3rdparty/harfbuzz/src ../../../../src/3rdparty/accessplugin
