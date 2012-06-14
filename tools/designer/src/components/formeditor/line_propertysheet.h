@@ -55,7 +55,7 @@ class LinePropertySheet: public QDesignerPropertySheet
     Q_OBJECT
     Q_INTERFACES(QDesignerPropertySheetExtension)
 public:
-    explicit LinePropertySheet(Line *object, QObject *parent = 0);
+    explicit LinePropertySheet(QDesignerLine *object, QObject *parent = 0);
     virtual ~LinePropertySheet();
 
     virtual void setProperty(int index, const QVariant &value);
@@ -63,7 +63,7 @@ public:
     virtual QString propertyGroup(int index) const;
 };
 
-typedef QDesignerPropertySheetFactory<Line, LinePropertySheet> LinePropertySheetFactory;
+typedef QDesignerPropertySheetFactory<QDesignerLine, LinePropertySheet> LinePropertySheetFactory;
 }  // namespace qdesigner_internal
 
 QT_END_NAMESPACE

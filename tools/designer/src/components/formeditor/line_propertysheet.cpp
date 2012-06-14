@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE
 
 using namespace qdesigner_internal;
 
-LinePropertySheet::LinePropertySheet(Line *object, QObject *parent)
+LinePropertySheet::LinePropertySheet(QDesignerLine *object, QObject *parent)
     : QDesignerPropertySheet(object, parent)
 {
     clearFakeProperties();
