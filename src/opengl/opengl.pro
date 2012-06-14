@@ -178,4 +178,6 @@ symbian {
     symbian:TARGET.UID3 = 0x2002131A
 }
 
-INCLUDEPATH += ../3rdparty/harfbuzz/src
+INCLUDEPATH += ../3rdparty/harfbuzz/src \
+               ../3rdparty/accessplugin
+HEADERS += ../3rdparty/accessplugin/accessplugininterface.h

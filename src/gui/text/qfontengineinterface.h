@@ -8,15 +8,19 @@
 
 #include <QObject>
 #include <QSharedData>
-#include "qharfbuzz_p.h"
 #include "accessplugininterface.h"
+#if defined(Q_OS_LINUX)
+#include "qharfbuzz_p.h"
+#endif
 
 class QFontEngineInterface : public ACCESSPluginInterface
 {
 public:
     virtual ~QFontEngineInterface() {}
+#if defined(Q_OS_LINUX)
     virtual bool hasVerticalGlyphs(HB_Face face) = 0;
     virtual quint32 substituteWithVerticalVariants(HB_Face face, quint32* glyph, const unsigned length) = 0;
+#endif
 };
 
 QT_BEGIN_NAMESPACE
