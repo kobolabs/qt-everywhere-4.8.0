@@ -223,4 +223,7 @@ embedded {
                 HEADERS += embedded/qmouseintegrity_qws.h
                 SOURCES += embedded/qmouseintegrity_qws.cpp
         }
+
+	HEADERS += ../3rdparty/accessplugin/accessplugininterface.h
+	INCLUDEPATH += ../3rdparty/accessplugin
 }
