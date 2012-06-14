@@ -3,12 +3,16 @@
 ** All rights reserved.
 ****************************************************************************/
 
+#ifndef QACCESSPLUGININTERFACE_H
+#define QACCESSPLUGININTERFACE_H
+
+/* undef for X11 */
+#undef Unsorted
+#undef Bool
+
 #include <QPluginLoader>
 #include <QDir>
 #include <QApplication>
-
-#ifndef QACCESSPLUGININTERFACE_H
-#define QACCESSPLUGININTERFACE_H
 
 class ACCESSPluginInterface
 {
