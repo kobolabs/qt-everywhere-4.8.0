@@ -1753,10 +1753,10 @@ bool QFontEngine::loadPlugin()
     ACCESSPlugin p;
     for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
         if (plugin) {
-            QFontEngineInterface *interface = qobject_cast<QFontEngineInterface *>(plugin);
-            if (interface) {
+            QFontEngineInterface *i = qobject_cast<QFontEngineInterface *>(plugin);
+            if (i) {
                 qDebug("loadPlugin: loaded plugin for QFontEngine");
-                pluginInterface = interface;
+                pluginInterface = i;
                 return true;
             }
         }

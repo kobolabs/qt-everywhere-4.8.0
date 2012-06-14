@@ -657,10 +657,10 @@ bool QRawFontPrivate::loadPlugin()
     ACCESSPlugin p;
     for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
         if (plugin) {
-            QRawFontInterface *interface = qobject_cast<QRawFontInterface *>(plugin);
-            if (interface) {
+            QRawFontInterface *i = qobject_cast<QRawFontInterface *>(plugin);
+            if (i) {
                 qDebug("loadPlugin: loaded plugin for QRawFont");
-                pluginInterface = interface;
+                pluginInterface = i;
                 return true;
             }
         }

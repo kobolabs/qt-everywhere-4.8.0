@@ -3898,10 +3898,10 @@ bool QRasterPaintEnginePrivate::loadPlugin()
     ACCESSPlugin p;
     for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
         if (plugin) {
-            QRasterPaintEngineInterface *interface = qobject_cast<QRasterPaintEngineInterface *>(plugin);
-            if (interface) {
+            QRasterPaintEngineInterface *i = qobject_cast<QRasterPaintEngineInterface *>(plugin);
+            if (i) {
                 qDebug("loadPlugin: loaded plugin for QRasterPaintEngine");
-                pluginInterface = interface;
+                pluginInterface = i;
                 return true;
             }
         }
