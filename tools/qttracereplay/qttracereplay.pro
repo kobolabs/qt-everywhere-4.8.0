@@ -3,7 +3,8 @@ TEMPLATE = app
 DESTDIR     = ../../bin
 
 DEPENDPATH += .
-INCLUDEPATH += . ../../src/3rdparty/harfbuzz/src
+INCLUDEPATH += . ../../src/3rdparty/harfbuzz/src \
+                 ../../src/3rdparty/accessplugin
 TARGET = qttracereplay
 
 # Input
