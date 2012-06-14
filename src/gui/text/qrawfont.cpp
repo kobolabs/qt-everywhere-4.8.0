@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglobal.h"
+#include <qdebug.h>
 
 #if !defined(QT_NO_RAWFONT)
 
@@ -48,6 +49,10 @@
 
 #include <QtCore/qthread.h>
 #include <QtCore/qendian.h>
+
+#include <QPluginLoader>
+#include <QDir>
+#include "qrawfontinterface.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -129,6 +134,7 @@ QT_BEGIN_NAMESPACE
 QRawFont::QRawFont()
     : d(new QRawFontPrivate)
 {
+    d->loadPlugin();
 }
 
 /*!
@@ -142,6 +148,7 @@ QRawFont::QRawFont(const QString &fileName,
                    QFont::HintingPreference hintingPreference)
     : d(new QRawFontPrivate)
 {
+    d->loadPlugin();
     loadFromFile(fileName, pixelSize, hintingPreference);
 }
 
@@ -155,6 +162,7 @@ QRawFont::QRawFont(const QByteArray &fontData,
                    QFont::HintingPreference hintingPreference)
     : d(new QRawFontPrivate)
 {
+    d->loadPlugin();
     loadFromData(fontData, pixelSize, hintingPreference);
 }
 
@@ -163,6 +171,7 @@ QRawFont::QRawFont(const QByteArray &fontData,
 */
 QRawFont::QRawFont(const QRawFont &other)
 {
+    d->loadPlugin();
     d = other.d;
 }
 
@@ -598,12 +607,17 @@ void QRawFont::setPixelSize(int pixelSize)
 
 int QRawFont::substituteWithVerticalVariants(quint32* glyphs, const unsigned length) const
 {
-    return d->fontEngine->substituteWithVerticalVariants(glyphs, length);
+    if (d->pluginInterface != NULL) 
+        return d->pluginInterface->substituteWithVerticalVariants(d, glyphs, length);
+    return glyphs[0];
 }
 
 bool QRawFont::hasVerticalGlyphs() const
 {
-    return d->fontEngine->hasVerticalGlyphs();
+    if (d->pluginInterface != NULL) {
+        return d->pluginInterface->hasVerticalGlyphs(d);
+    }
+    return false;
 }
 
 /*!
@@ -629,6 +643,32 @@ void QRawFontPrivate::cleanUp()
     }
     hintingPreference = QFont::PreferDefaultHinting;
 }
+
+
+/*!
+    \internal
+*/
+QRawFontInterface *QRawFontPrivate::pluginInterface = NULL;
+bool QRawFontPrivate::loadPlugin()
+{
+    if (pluginInterface != NULL)
+        return true;
+
+    ACCESSPlugin p;
+    for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
+        if (plugin) {
+            QRawFontInterface *interface = qobject_cast<QRawFontInterface *>(plugin);
+            if (interface) {
+                qDebug("loadPlugin: loaded plugin for QRawFont");
+                pluginInterface = interface;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 
 #endif // QT_NO_RAWFONT
 

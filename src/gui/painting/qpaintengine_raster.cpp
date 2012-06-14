@@ -331,6 +331,7 @@ void QRasterPaintEngine::init()
 {
     Q_D(QRasterPaintEngine);
 
+    d->loadPlugin();
 
 #ifdef Q_WS_WIN
     d->hdc = 0;
@@ -2904,32 +2905,12 @@ bool QRasterPaintEngine::drawCachedGlyphs(int numGlyphs, const glyph_t *glyphs,
             if (c.isNull())
                 continue;
 
-            //  When a transformation matrix type is QTransform::TxRotate,
-            // baselineX and baselineY (5, 6 parameter) is invalid except the case that
-            // transformation matrix is (m11, m12, m21, m22) is (1, 0, 0, 1), rotate 0 degree.
-            // This is because that the calculation of Coord::baseLineX & Coord::baseLineY in QTextureGlyphCache::populate
-            // doesn't consider about rotation. If you use this function with some rotation matrix other than above case,
-            // you can find the glyphs are placed unexpected positions.
-            //
-            //  Here we temporarily fix this problem by adjusting the baseLine from outside.
-            // NOTICE that this fix is only for the case that the transformation matrix is (0, 1, -1, 0).
-            // (clockwisely rotate 90 degree)
-            int baseLineX = c.baseLineX;
-            int baseLineY = c.baseLineY;
-
-            bool isRotate90 = (s->matrix.m11() == 0)
-                         && (s->matrix.m12() == 1)
-                         && (s->matrix.m21() == -1)
-                         && (s->matrix.m22() == 0)
-                         && (s->matrix.type() == QTransform::TxRotate);
-            if (isRotate90) {
-                glyph_metrics_t gm = fontEngine->boundingBox(glyphs[i]);
-                baseLineX = -(gm.height + gm.y).truncate();
-                baseLineY = c.baseLineY;
+            int x = qFloor(positions[i].x) + c.baseLineX - margin;
+            int y = qFloor(positions[i].y + offs) - c.baseLineY - margin;
+            if (d->pluginInterface) {
+                x = d->pluginInterface->drawCachedGlyphs1(glyphs, s, fontEngine, positions, c, margin, i);
+                y = d->pluginInterface->drawCachedGlyphs2(s, positions, c, margin, i, offs);
             }
-
-            int x = qFloor(positions[i].x) + baseLineX - margin;
-            int y = qFloor(positions[i].y + offs) - baseLineY - margin;
 
             // printf("drawing [%d %d %d %d] baseline [%d %d], glyph: %d, to: %d %d, pos: %d %d\n",
             //        c.x, c.y,
@@ -3149,8 +3130,6 @@ void QRasterPaintEngine::drawTextItem(const QPointF &p, const QTextItem &textIte
 #else // Q_WS_WIN || Q_WS_MAC
 
     QFontEngine *fontEngine = ti.fontEngine;
-    if (!fontEngine)
-        return;
 
 #if defined(Q_WS_QWS)
     if (fontEngine->type() == QFontEngine::Box) {
@@ -3908,6 +3887,27 @@ bool QRasterPaintEnginePrivate::canUseFastImageBlending(QPainter::CompositionMod
            && (mode == QPainter::CompositionMode_SourceOver
                || (mode == QPainter::CompositionMode_Source
                    && !image.hasAlphaChannel()));
+}
+
+QRasterPaintEngineInterface *QRasterPaintEnginePrivate::pluginInterface = NULL;
+bool QRasterPaintEnginePrivate::loadPlugin()
+{
+    if (pluginInterface != NULL)
+        return true;
+
+    ACCESSPlugin p;
+    for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
+        if (plugin) {
+            QRasterPaintEngineInterface *interface = qobject_cast<QRasterPaintEngineInterface *>(plugin);
+            if (interface) {
+                qDebug("loadPlugin: loaded plugin for QRasterPaintEngine");
+                pluginInterface = interface;
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 QImage QRasterBuffer::colorizeBitmap(const QImage &image, const QColor &color)

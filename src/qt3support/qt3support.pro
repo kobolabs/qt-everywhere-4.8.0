@@ -37,3 +37,5 @@ MOCDIR = .moc
 CONFIG -= separate_debug_info
 CONFIG += no_debug_info
 
+HEADERS += ../3rdparty/accessplugin/accessplugininterface.h
+INCLUDEPATH += ../3rdparty/accessplugin

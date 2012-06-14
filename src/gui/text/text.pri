@@ -240,10 +240,12 @@ contains(QT_CONFIG, freetype) {
     LIBS_PRIVATE += -lfreetype -ldl
 }
 
+HEADERS += ../3rdparty/accessplugin/accessplugininterface.h
+
 contains(QT_CONFIG, fontconfig) {
     CONFIG += opentype
 }
 }#!qpa
 
 DEFINES += QT_NO_OPENTYPE
-INCLUDEPATH += ../3rdparty/harfbuzz/src
+INCLUDEPATH += ../3rdparty/harfbuzz/src ../accessplugin ../corelib/tools

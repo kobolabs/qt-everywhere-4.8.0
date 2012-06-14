@@ -28,3 +28,6 @@ symbian:{
 }
 
 INSTALLS += target qmldir
+
+HEADERS += ../../3rdparty/accessplugin/accessplugininterface.h
+INCLUDEPATH += ../../3rdparty/accessplugin

@@ -134,5 +134,4 @@ QString QFont::lastResortFont() const
     return QString();
 }
 
-
 QT_END_NAMESPACE

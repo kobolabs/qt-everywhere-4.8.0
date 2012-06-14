@@ -5,7 +5,7 @@
 #ifndef qwebkitengineversion_h
 #define qwebkitengineversion_h
 
-#define WEBKIT_ENGINE_VERSION "20120606"
+#define WEBKIT_ENGINE_VERSION "20120613"
 
 #endif // qwebkitengineversion_h
 

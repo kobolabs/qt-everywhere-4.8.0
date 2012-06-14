@@ -39,5 +39,5 @@ symbian: {
 linux-g++-maemo:DEFINES += QDECLARATIVEVIEW_NOBACKGROUND
 
 DEFINES += QT_NO_OPENTYPE
-INCLUDEPATH += ../3rdparty/harfbuzz/src
+INCLUDEPATH += ../3rdparty/harfbuzz/src ../3rdparty/accessplugin ../corelib/tools
 

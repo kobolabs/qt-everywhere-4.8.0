@@ -56,12 +56,16 @@
 #include "qrawfont.h"
 #include "qfontengine_p.h"
 #include <QtCore/qthreadstorage.h>
+#include "qrawfontinterface.h"
 
 #if !defined(QT_NO_RAWFONT)
 
 QT_BEGIN_NAMESPACE
 
 namespace { class CustomFontFileLoader; }
+
+class QRawFontInterface;
+
 class Q_AUTOTEST_EXPORT QRawFontPrivate
 {
 public:
@@ -119,6 +123,9 @@ public:
     PtrRemoveFontMemResourceEx ptrRemoveFontMemResourceEx;
 
 #endif // Q_WS_WIN
+
+    bool loadPlugin();
+    static QRawFontInterface *pluginInterface;
 };
 
 QT_END_NAMESPACE

@@ -63,6 +63,7 @@
 #include "private/qpainter_p.h"
 #include "private/qtextureglyphcache_p.h"
 #include "private/qoutlinemapper_p.h"
+#include "qpaintengine_raster_interface.h"
 
 #include <stdlib.h>
 
@@ -295,6 +296,8 @@ private:
 /*******************************************************************************
  * QRasterPaintEnginePrivate
  */
+class QRasterPaintEngineInterface;
+
 class
 #ifdef Q_WS_QWS
 Q_GUI_EXPORT
@@ -379,6 +382,9 @@ public:
 #endif
 
     QScopedPointer<QRasterizer> rasterizer;
+
+    bool loadPlugin();
+    static QRasterPaintEngineInterface *pluginInterface;
 };
 
 

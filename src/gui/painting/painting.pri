@@ -275,4 +275,7 @@ NEON_SOURCES += painting/qdrawhelper_neon.cpp
 NEON_HEADERS += painting/qdrawhelper_neon_p.h
 NEON_ASM += ../3rdparty/pixman/pixman-arm-neon-asm.S painting/qdrawhelper_neon_asm.S
 
+HEADERS += ../3rdparty/accessplugin/accessplugininterface.h
+INCLUDEPATH += ../3rdparty/harfbuzz/src ../3rdparty/accessplugin ../corelib/tools
+
 include($$PWD/../../3rdparty/zlib_dependency.pri)

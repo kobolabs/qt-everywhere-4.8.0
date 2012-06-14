@@ -57,6 +57,7 @@
 #include "QtCore/qatomic.h"
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/QLinkedList>
+#include "qfontengineinterface.h"
 #include "private/qtextengine_p.h"
 #include "private/qfont_p.h"
 
@@ -84,6 +85,8 @@ class QPainterPath;
 class QTextEngine;
 struct QGlyphLayout;
 
+class QFontEngineInterface ;
+
 #define MAKE_TAG(ch1, ch2, ch3, ch4) (\
     (((quint32)(ch1)) << 24) | \
     (((quint32)(ch2)) << 16) | \
@@ -91,9 +94,11 @@ struct QGlyphLayout;
     ((quint32)(ch4)) \
    )
 
-
 class Q_GUI_EXPORT QFontEngine : public QObject
 {
+private:
+    bool loadPlugin();
+    static QFontEngineInterface *pluginInterface;
 public:
     enum Type {
         Box,

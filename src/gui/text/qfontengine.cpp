@@ -177,6 +177,7 @@ static HB_Error hb_getSFntTable(void *font, HB_Tag tableTag, HB_Byte *buffer, HB
 QFontEngine::QFontEngine()
     : QObject()
 {
+    loadPlugin();
     ref = 0;
     cache_count = 0;
     fsType = 0;
@@ -464,12 +465,16 @@ void QFontEngine::addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyphs,
 
 int QFontEngine::substituteWithVerticalVariants(quint32* glyphs, const unsigned length)
 {
-    return qSubstituteWithVerticalVariants(harfbuzzFace(), glyphs, length);
+    if (pluginInterface != NULL)
+        return pluginInterface->substituteWithVerticalVariants(harfbuzzFace(), glyphs, length);
+    return glyphs[0];
 }
 
 bool QFontEngine::hasVerticalGlyphs() const
 {
-    return qHasVerticalGlyphs(harfbuzzFace());
+    if (pluginInterface != NULL)
+        return pluginInterface->hasVerticalGlyphs(harfbuzzFace());
+    return false;
 }
 
 #define GRID(x, y) grid[(y)*(w+1) + (x)]
@@ -1735,5 +1740,25 @@ QImage QFontEngineMulti::alphaMapForGlyph(glyph_t)
     return QImage();
 }
 
+QFontEngineInterface *QFontEngine::pluginInterface = NULL;
+bool QFontEngine::loadPlugin()
+{
+    if (pluginInterface != NULL)
+        return true;
+
+    ACCESSPlugin p;
+    for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
+        if (plugin) {
+            QFontEngineInterface *interface = qobject_cast<QFontEngineInterface *>(plugin);
+            if (interface) {
+                qDebug("loadPlugin: loaded plugin for QFontEngine");
+                pluginInterface = interface;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 QT_END_NAMESPACE

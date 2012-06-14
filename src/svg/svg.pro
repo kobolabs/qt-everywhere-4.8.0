@@ -38,7 +38,9 @@ SOURCES += \
         qgraphicssvgitem.cpp    \
         qsvggenerator.cpp
 
-INCLUDEPATH += ../3rdparty/harfbuzz/src
+INCLUDEPATH += ../3rdparty/harfbuzz/src \
+               ../3rdparty/accessplugin
+HEADERS += ../3rdparty/accessplugin/accessplugininterface.h
 
 symbian:TARGET.UID3=0x2001B2E2
 
