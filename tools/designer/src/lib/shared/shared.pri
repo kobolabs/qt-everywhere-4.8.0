@@ -197,3 +197,5 @@ SOURCES += \
     $$PWD/plugindialog.cpp
 
 RESOURCES += $$PWD/shared.qrc
+
+INCLUDEPATH += ../../../../src/3rdparty/harfbuzz/src ../../../../src/3rdparty/accessplugin
