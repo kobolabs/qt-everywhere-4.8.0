@@ -6,9 +6,6 @@
 #ifndef QRASTERPAINTENGINEINTERFACE_H
 #define QRASTERPAINTENGINEINTERFACE_H
 
-#include <QObject>
-#include <QSharedData>
-#include <QtCore>
 #include "accessplugininterface.h"
 #include "private/qfixed_p.h"
 #include "qtextureglyphcache_p.h"

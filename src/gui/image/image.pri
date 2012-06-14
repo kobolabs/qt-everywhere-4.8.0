@@ -113,3 +113,6 @@ contains(QT_CONFIG, gif):include($$PWD/qgifhandler.pri)
 NEON_SOURCES += image/qimage_neon.cpp
 SSE2_SOURCES += image/qimage_sse2.cpp
 SSSE3_SOURCES += image/qimage_ssse3.cpp
+
+HEADERS += ../3rdparty/accessplugin/accessplugininterface.h
+INCLUDEPATH += ../3rdparty/accessplugin
