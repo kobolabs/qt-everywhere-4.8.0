@@ -91,6 +91,7 @@ extern QPixmap qt_toX11Pixmap(const QPixmap &pixmap);
 // use the same rounding as in qrasterizer.cpp (6 bit fixed point)
 static const qreal aliasedCoordinateDelta = 0.5 - 0.015625;
 
+#define Unsorted 0
 #undef X11 // defined in qt_x11_p.h
 /*!
     Returns the X11 specific pen GC for the painter \a p. Note that
