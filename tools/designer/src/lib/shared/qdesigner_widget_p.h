@@ -102,12 +102,12 @@ private:
     qdesigner_internal::FormWindowBase* m_formWindow;
 };
 
-class QDESIGNER_SHARED_EXPORT Line : public QFrame
+class QDESIGNER_SHARED_EXPORT QDesignerLine : public QFrame
 {
     Q_OBJECT
     Q_PROPERTY(Qt::Orientation orientation READ orientation WRITE setOrientation)
 public:
-    explicit Line(QWidget *parent) : QFrame(parent)
+    explicit QDesignerLine(QWidget *parent) : QFrame(parent)
     { setAttribute(Qt::WA_MouseNoMask); setFrameStyle(HLine | Sunken); }
 
     inline void setOrientation(Qt::Orientation orient)

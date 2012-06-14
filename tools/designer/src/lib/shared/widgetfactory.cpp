@@ -336,7 +336,7 @@ QWidget *WidgetFactory::createWidget(const QString &widgetName, QWidget *parentW
 
         // 2) Special widgets
         if (widgetName == m_strings.m_line) {
-            w = new Line(parentWidget);
+            w = new QDesignerLine(parentWidget);
         } else if (widgetName == m_strings.m_qDockWidget) {
             w = new QDesignerDockWidget(parentWidget);
         } else if (widgetName == m_strings.m_qMenuBar) {
