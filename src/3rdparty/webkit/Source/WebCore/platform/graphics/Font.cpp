@@ -664,7 +664,7 @@ unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length,
                 if (!isUnbreakableCharactersPair(character, next)) {
                     count++;
                     isAfterExpansion = true;
-                }
+                } else
                     isAfterExpansion = false;
                 prev = character;
                 continue;
