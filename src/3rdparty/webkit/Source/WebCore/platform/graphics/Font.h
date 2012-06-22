@@ -145,6 +145,11 @@ public:
     static bool isCJKIdeograph(UChar32);
     static bool isCJKIdeographOrSymbol(UChar32);
     static bool isInterIdeographExpansionTarget(UChar32);
+#if ENABLE(EPUB)
+    static unsigned int searchOrientation(unsigned int c, unsigned int *boundaries, size_t length);
+    static bool isUprightOrientation(UChar32 target);
+#endif
+
     static bool isUnbreakableCharactersPair(UChar32, UChar32);
 
     static unsigned expansionOpportunityCount(const UChar*, size_t length, TextDirection, bool& isAfterExpansion);

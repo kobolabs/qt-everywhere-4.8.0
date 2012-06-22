@@ -459,6 +459,10 @@ bool Font::isUnbreakableCharactersPair(UChar32 current, UChar32 next)
 
 bool Font::isCJKIdeograph(UChar32 c)
 {
+#if ENABLE(EPUB)
+    return !isUprightOrientation(c);
+#endif
+
     // The basic CJK Unified Ideographs block.
     if (c >= 0x4E00 && c <= 0x9FFF)
         return true;
@@ -504,6 +508,9 @@ bool Font::isCJKIdeograph(UChar32 c)
 
 bool Font::isCJKIdeographOrSymbol(UChar32 c)
 {
+#if ENABLE(EPUB)
+    return isUprightOrientation(c);
+#endif
     // 0x2C7 Caron, Mandarin Chinese 3rd Tone
     // 0x2CA Modifier Letter Acute Accent, Mandarin Chinese 2nd Tone
     // 0x2CB Modifier Letter Grave Access, Mandarin Chinese 4th Tone 
@@ -632,6 +639,47 @@ bool Font::isInterIdeographExpansionTarget(UChar32 c)
 #endif
     return isCJKIdeographOrSymbol(c);
 }
+
+#if ENABLE(EPUB)
+unsigned int Font::searchOrientation(unsigned int c, unsigned int *boundaries, size_t length) {
+    unsigned int from = 0;
+    unsigned int to = length - 1;
+
+    // This case should be handle out of this function.
+    ASSERT(c <= boundaries[to]);
+
+    // binary search
+    while(to - from > 1) {
+        unsigned int middle = (from + to) / 2;
+        if (c < boundaries[middle])
+            to = middle;
+        else
+            from = middle;
+    }
+    return from;
+}
+
+bool Font::isUprightOrientation(UChar32 target) {
+    const unsigned int SIDEWAYS = 0;
+    const unsigned int UPRIGHT = 1;
+    unsigned int startsFrom = SIDEWAYS; // U+0000 is SIDEWAYS
+    bool isOddMeansUpright = startsFrom == SIDEWAYS;
+
+    //  Each number of this array is an of the unicode orientation table, and the index is same with the value of codepoint of unicode.
+    // The index means the place where orientation property "switches" UPRIGHT to SIDEWAYS, and vice versa.
+    // ex. If table is [RRUURRRU], it means 0x0000 is sideways, 0x0001 is sideways, 0x0002 is upright, 0x0003 is upright 0x0004 is sideways and so on.
+    //    From this table, boundaries is expressed as [0, 2, 4, 7, 8].
+    unsigned int boundaries[] = {
+        #include "orientation.csv"
+    };
+    unsigned int length = sizeof(boundaries) / sizeof(boundaries[0]);
+    unsigned int rotateType = UPRIGHT;
+    if (static_cast<unsigned int>(target) < boundaries[length-1])
+        rotateType = searchOrientation(target, boundaries, length) % 2; // odd number is UPRIGHT, even is SIDEWAYS
+
+    return isOddMeansUpright ? rotateType == UPRIGHT : rotateType == SIDEWAYS;
+}
+#endif
 
 unsigned Font::expansionOpportunityCount(const UChar* characters, size_t length, TextDirection direction, bool& isAfterExpansion)
 {
