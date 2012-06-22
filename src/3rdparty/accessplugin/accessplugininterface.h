@@ -14,11 +14,18 @@
 #include <QDir>
 #include <QApplication>
 
+class QRawFontInterface;
+class QRasterPaintEngineInterface;
+class QFontEngineInterface;
+
 class ACCESSPluginInterface
 {
 
 public:
-    virtual ~ACCESSPluginInterface() {}
+    virtual ~ACCESSPluginInterface() = 0;
+    virtual QRawFontInterface * rawFontPlugin() = 0;
+    virtual QRasterPaintEngineInterface * rasterFontPlugin() = 0;
+    virtual QFontEngineInterface * fontEnginePlugin() = 0;
 };
 
 

@@ -49,6 +49,7 @@
 #include <qmath.h>
 #include <qendian.h>
 #include <private/qharfbuzz_p.h>
+#include "accessplugininterface.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -1753,10 +1754,10 @@ bool QFontEngine::loadPlugin()
     ACCESSPlugin p;
     for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
         if (plugin) {
-            QFontEngineInterface *i = qobject_cast<QFontEngineInterface *>(plugin);
+            ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
             if (i) {
                 qDebug("loadPlugin: loaded plugin for QFontEngine");
-                pluginInterface = i;
+                pluginInterface = i->fontEnginePlugin();
                 return true;
             }
         }

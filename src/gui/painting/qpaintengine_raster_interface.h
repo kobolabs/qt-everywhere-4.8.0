@@ -6,12 +6,11 @@
 #ifndef QRASTERPAINTENGINEINTERFACE_H
 #define QRASTERPAINTENGINEINTERFACE_H
 
-#include "accessplugininterface.h"
 #include "private/qfixed_p.h"
 #include "qtextureglyphcache_p.h"
 #include "qpaintengine_raster_p.h"
 
-class QRasterPaintEngineInterface : public ACCESSPluginInterface
+class QRasterPaintEngineInterface
 {
 public:
     virtual ~QRasterPaintEngineInterface() {}

@@ -130,6 +130,22 @@ void qHBFreeFace(HB_Face face)
     HB_FreeFace(face);
 }
 
+HB_Error qHB_GSUB_Select_Script(HB_GSUBHeader*  gsub,
+				 HB_UInt         script_tag,
+				 HB_UShort*       script_index)
+{
+    return HB_GSUB_Select_Script(gsub, script_tag, script_index);
+}
+
+HB_Error qHB_GSUB_Select_Feature(HB_GSUBHeader*  gsub,
+				  HB_UInt         feature_tag,
+				  HB_UShort        script_index,
+				  HB_UShort        language_index,
+				  HB_UShort*       feature_index)
+{
+    return HB_GSUB_Select_Feature(gsub, feature_tag, script_index, language_index, feature_index);
+}
+
 void qGetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
                         const HB_ScriptItem *items, hb_uint32 numItems,
                         HB_CharAttributes *attributes)
@@ -137,63 +153,35 @@ void qGetCharAttributes(const HB_UChar16 *string, hb_uint32 stringLength,
     HB_GetCharAttributes(string, stringLength, items, numItems, attributes);
 }
 
-int qSubstituteWithVerticalVariants(HB_FaceRec_* hbFace, quint32 *glyphs, const unsigned length)
+
+HB_Error qHBBufferNew(HB_Buffer *buffer)
 {
-    if(!hbFace) {
-        return 0xffff;
-    }
-
-    HB_Buffer buffer;
-    hb_buffer_new(&buffer);
-    for (unsigned i = 0; i < length; ++i) {
-        hb_buffer_add_glyph(buffer, glyphs[i], 0, i);
-    }
-
-    HB_UShort scriptIndex;
-    HB_UShort featureIndex;
-    if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('D', 'F', 'L', 'T'), &scriptIndex) != HB_Err_Ok ){
-        if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('h', 'a', 'n', 'i'), &scriptIndex) != HB_Err_Ok ){
-            int error = HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex);
-            if (error != HB_Err_Ok)
-                return error;
-        }
-    }
-
-    if (HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok) {
-        int error = HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) != HB_Err_Ok;
-        if (error != HB_Err_Ok)
-            return error;
-    }
-
-    HB_GSUB_Add_Feature(hbFace->gsub, featureIndex, 1);
-
-    int error = HB_GSUB_Apply_String(hbFace->gsub, buffer);
-    if (!error){
-        for (unsigned i = 0; i < length; ++i) {
-            glyphs[i] = buffer->out_string[i].gindex;
-        }
-    }
-    HB_GSUB_Clear_Features(hbFace->gsub);
-    return error;
+    return hb_buffer_new(buffer);
 }
 
-bool qHasVerticalGlyphs(HB_FaceRec_* hbFace)
+HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
+                           HB_UInt glyph_index,
+                           HB_UInt properties,
+                           HB_UInt cluster )
 {
-    if(!hbFace)
-        return false;
-
-    HB_UShort scriptIndex;
-    HB_UShort featureIndex;
-
-    if (HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('D', 'F', 'L', 'T'), &scriptIndex) == HB_Err_Ok
-        || HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('h', 'a', 'n', 'i'), &scriptIndex) == HB_Err_Ok
-        || HB_GSUB_Select_Script(hbFace->gsub, HB_MAKE_TAG('k', 'a', 'n', 'a'), &scriptIndex) == HB_Err_Ok )
-    {
-        return HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'e', 'r', 't'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok
-                || HB_GSUB_Select_Feature(hbFace->gsub, HB_MAKE_TAG('v', 'r', 't', '2'), scriptIndex, 0xffff, &featureIndex) == HB_Err_Ok;
-    }
-    return false;
+    return hb_buffer_add_glyph(buffer, glyph_index, properties, cluster);
 }
 
+HB_Error qHB_GSUB_Add_Feature(HB_GSUBHeader* gsub,
+                               HB_UShort feature_index,
+                               HB_UInt property)
+{
+    return HB_GSUB_Add_Feature(gsub, feature_index, property);
+}
+
+HB_Error qHB_GSUB_Clear_Features(HB_GSUBHeader* gsub)
+{
+ return HB_GSUB_Clear_Features(gsub);
+}
+
+HB_Error qHB_GSUB_Apply_String(HB_GSUBHeader* gsub, HB_Buffer buffer)
+{
+    return HB_GSUB_Apply_String(gsub, buffer);
+}
 
 QT_END_NAMESPACE

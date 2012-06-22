@@ -69,6 +69,30 @@ Q_CORE_EXPORT HB_Bool qShapeItem(HB_ShaperItem *item);
 Q_CORE_EXPORT HB_Face qHBNewFace(void *font, HB_GetFontTableFunc tableFunc);
 Q_CORE_EXPORT void qHBFreeFace(HB_Face);
 
+Q_CORE_EXPORT HB_Error qHB_GSUB_Select_Script(HB_GSUBHeader*  gsub,
+				 HB_UInt         script_tag,
+				 HB_UShort*       script_index);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Select_Feature(HB_GSUBHeader* gsub,
+				                               HB_UInt feature_tag,
+				                               HB_UShort script_index,
+				                               HB_UShort language_index,
+				                               HB_UShort* feature_index);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Add_Feature(HB_GSUBHeader* gsub,
+                                            HB_UShort feature_index,
+                                            HB_UInt property);
+
+Q_CORE_EXPORT HB_Error qHBBufferNew(HB_Buffer *buffer);
+Q_CORE_EXPORT HB_Error qHBBufferAddGlyph(HB_Buffer buffer,
+                                         HB_UInt glyph_index,
+                                         HB_UInt properties,
+                                         HB_UInt cluster );
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Clear_Features(HB_GSUBHeader* gsub);
+
+Q_CORE_EXPORT HB_Error qHB_GSUB_Apply_String(HB_GSUBHeader* gsub, HB_Buffer buffer);
+
 Q_DECLARE_TYPEINFO(HB_GlyphAttributes, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(HB_FixedPoint, Q_PRIMITIVE_TYPE);
 

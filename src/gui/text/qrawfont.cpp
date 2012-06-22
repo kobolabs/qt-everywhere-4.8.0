@@ -53,6 +53,7 @@
 #include <QPluginLoader>
 #include <QDir>
 #include "qrawfontinterface.h"
+#include "accessplugininterface.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -576,8 +577,6 @@ QRawFont QRawFont::fromFont(const QFont &font, QFontDatabase::WritingSystem writ
         rawFont.d.data()->fontEngine = fe;
         rawFont.d.data()->fontEngine->ref.ref();
         rawFont.d.data()->hintingPreference = font.hintingPreference();
-        rawFont.d.data()->fontEngine->fontDef.csmThicknessOffset = font.csmThicknessOffset();
-        rawFont.d.data()->fontEngine->fontDef.csmSharpnessOffset = font.csmSharpnessOffset();
         return rawFont;
     } else {
         return QRawFont();
@@ -657,10 +656,10 @@ bool QRawFontPrivate::loadPlugin()
     ACCESSPlugin p;
     for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
         if (plugin) {
-            QRawFontInterface *i = qobject_cast<QRawFontInterface *>(plugin);
+            ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
             if (i) {
                 qDebug("loadPlugin: loaded plugin for QRawFont");
-                pluginInterface = i;
+                pluginInterface = i->rawFontPlugin();
                 return true;
             }
         }
@@ -668,7 +667,6 @@ bool QRawFontPrivate::loadPlugin()
 
     return false;
 }
-
 
 #endif // QT_NO_RAWFONT
 

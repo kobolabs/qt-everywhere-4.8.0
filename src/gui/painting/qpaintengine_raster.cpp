@@ -101,6 +101,8 @@
 #  include <private/qfontengine_ft_p.h>
 #endif
 
+#include "accessplugininterface.h"
+
 #if defined(Q_WS_WIN64)
 #  include <malloc.h>
 #endif
@@ -3898,10 +3900,10 @@ bool QRasterPaintEnginePrivate::loadPlugin()
     ACCESSPlugin p;
     for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
         if (plugin) {
-            QRasterPaintEngineInterface *i = qobject_cast<QRasterPaintEngineInterface *>(plugin);
+            ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
             if (i) {
                 qDebug("loadPlugin: loaded plugin for QRasterPaintEngine");
-                pluginInterface = i;
+                pluginInterface = i->rasterFontPlugin();
                 return true;
             }
         }

@@ -13,7 +13,7 @@
 #include "qharfbuzz_p.h"
 #endif
 
-class QFontEngineInterface : public ACCESSPluginInterface
+class QFontEngineInterface
 {
 public:
     virtual ~QFontEngineInterface() {}
