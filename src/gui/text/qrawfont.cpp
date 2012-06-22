@@ -655,16 +655,20 @@ bool QRawFontPrivate::loadPlugin()
     if (pluginInterface != NULL)
         return true;
 
-    ACCESSPlugin p;
-    for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
-        if (plugin) {
-            ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
-            if (i) {
-                qDebug("loadPlugin: loaded plugin for QRawFont");
-                pluginInterface = i->rawFontPlugin();
-                return true;
+    static bool checked = false;
+    if (!checked) {
+        ACCESSPlugin p;
+        for (QObject *plugin = p.next(); plugin; plugin = p.next()) {
+            if (plugin) {
+                ACCESSPluginInterface *i = qobject_cast<ACCESSPluginInterface *>(plugin);
+                if (i) {
+                    qDebug("loadPlugin: loaded plugin for QRawFont");
+                    pluginInterface = i->rawFontPlugin();
+                    return true;
+                }
             }
         }
+        checked = true;
     }
 
     return false;
