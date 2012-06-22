@@ -2429,13 +2429,14 @@ void QX11PaintEngine::drawFreetype(const QPointF &p, const QTextItemInt &ti)
             }
             QFontEngineFT::Glyph *g = ft->cachedGlyph(glyphs[i - 1]);
             if (g
-                && positions[i].x == xp + g->advance
-                && positions[i].y == yp
+                && positions[i].x == xp + g->advanceX
+                && positions[i].y == yp + g->advanceY
                 && elt.nchars < 253 // don't draw more than 253 characters as some X servers
                                     // hang with it
                 ) {
                 elt.nchars++;
-                xp += g->advance;
+                xp += g->advanceX;
+                yp += g->advanceY;
             } else {
                 xp = positions[i].x;
                 yp = positions[i].y;
