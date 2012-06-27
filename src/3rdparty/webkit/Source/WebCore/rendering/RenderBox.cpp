@@ -1220,7 +1220,7 @@ int RenderBox::perpendicularContainingBlockLogicalHeight() const
     return cb->computeContentBoxLogicalHeight(logicalHeightLength.value());
 }
 
-void RenderBox::mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool fixed, bool useTransforms, TransformState& transformState) const
+void RenderBox::mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool fixed, bool useTransforms, TransformState& transformState, ApplyContainerFlipOrNot) const
 {
     if (repaintContainer == this)
         return;
@@ -1269,7 +1269,7 @@ void RenderBox::mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool
         return;
     }
     
-    o->mapLocalToContainer(repaintContainer, fixed, useTransforms, transformState);
+    o->mapLocalToContainer(repaintContainer, fixed, useTransforms, transformState, DoNotApplyContainerFlip);
 }
 
 void RenderBox::mapAbsoluteToLocalPoint(bool fixed, bool useTransforms, TransformState& transformState) const

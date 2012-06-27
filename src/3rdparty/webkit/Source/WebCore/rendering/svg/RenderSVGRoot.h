@@ -78,7 +78,7 @@ private:
     virtual IntRect clippedOverflowRectForRepaint(RenderBoxModelObject* repaintContainer);
     virtual void computeRectForRepaint(RenderBoxModelObject* repaintContainer, IntRect& repaintRect, bool fixed);
 
-    virtual void mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool useTransforms, bool fixed, TransformState&) const;
+    virtual void mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool useTransforms, bool fixed, TransformState&, ApplyContainerFlipOrNot = ApplyContainerFlip) const;
 
     void calcViewport();
 

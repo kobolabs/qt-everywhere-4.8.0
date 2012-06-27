@@ -690,7 +690,15 @@ void InlineTextBox::paint(PaintInfo& paintInfo, int tx, int ty, int /*lineTop*/,
         if (!emphasisMark.isEmpty()) {
             updateGraphicsContext(context, emphasisMarkColor, textStrokeColor, textStrokeWidth, styleToUse->colorSpace());
 
+#if ENABLE(EPUB) && PLATFORM(QT)
+            UChar tmpObjectReplacementCharacter = objectReplacementCharacter;
+            GlyphData data = font.glyphDataForCharacter(objectReplacementCharacter, textRun.rtl());
+            if (data.glyph == 0) // missing glyph data
+                tmpObjectReplacementCharacter = 'X';
+            TextRun objectReplacementCharacterTextRun(&tmpObjectReplacementCharacter, 1);
+#else
             static TextRun objectReplacementCharacterTextRun(&objectReplacementCharacter, 1);
+#endif
             TextRun& emphasisMarkTextRun = combinedText ? objectReplacementCharacterTextRun : textRun;
             FloatPoint emphasisMarkTextOrigin = combinedText ? FloatPoint(boxOrigin.x() + boxRect.width() / 2, boxOrigin.y() + font.fontMetrics().ascent()) : textOrigin;
             if (combinedText)
@@ -716,7 +724,15 @@ void InlineTextBox::paint(PaintInfo& paintInfo, int tx, int ty, int /*lineTop*/,
         if (!emphasisMark.isEmpty()) {
             updateGraphicsContext(context, selectionEmphasisMarkColor, textStrokeColor, textStrokeWidth, styleToUse->colorSpace());
 
+#if ENABLE(EPUB) && PLATFORM(QT)
+            UChar tmpObjectReplacementCharacter = objectReplacementCharacter;
+            GlyphData data = font.glyphDataForCharacter(objectReplacementCharacter, textRun.rtl());
+            if (data.glyph == 0) // missing glyph data
+                tmpObjectReplacementCharacter = 'X';
+            TextRun objectReplacementCharacterTextRun(&tmpObjectReplacementCharacter, 1);
+#else
             static TextRun objectReplacementCharacterTextRun(&objectReplacementCharacter, 1);
+#endif
             TextRun& emphasisMarkTextRun = combinedText ? objectReplacementCharacterTextRun : textRun;
             FloatPoint emphasisMarkTextOrigin = combinedText ? FloatPoint(boxOrigin.x() + boxRect.width() / 2, boxOrigin.y() + font.fontMetrics().ascent()) : textOrigin;
             if (combinedText)

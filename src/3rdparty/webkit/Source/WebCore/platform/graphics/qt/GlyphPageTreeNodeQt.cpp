@@ -43,13 +43,27 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
     bool haveGlyphs = false;
     bool lookVariants = false;
 
-    if (fontData->hasVerticalGlyphs()) {
+    if (fontData->platformData().rawFont().hasVerticalGlyphs()) {
+#if ENABLE(EPUB)
+        TextOrientation textOrientation = fontData->platformData().textOrientation();
+        if (textOrientation == TextOrientationUpright)
+            lookVariants = true;
+        else if (textOrientation == TextOrientationVerticalRight) {
+            for (unsigned i = 0; i < length; ++i) {
+                if (Font::isUprightOrientation(buffer[i])) {
+                    lookVariants = true;
+                    break;
+                }
+            }
+        }
+#else
         for (unsigned i = 0; i < length; ++i) {
             if (!Font::isCJKIdeograph(buffer[i])) {
                 lookVariants = true;
                 break;
             }
         }
+#endif
     }
 
     if (lookVariants)

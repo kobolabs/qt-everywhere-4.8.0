@@ -80,7 +80,7 @@ const SimpleFontData* FontCache::getFontDataForCharacters(const Font& font, cons
     QRawFont computedFont = rawFontForCharacters(qstring, font.font());
     if (!computedFont.isValid())
         return 0;
-    FontPlatformData alternateFont(computedFont, font.fontDescription().orientation());
+    FontPlatformData alternateFont(computedFont, font.fontDescription().orientation(), font.fontDescription().textOrientation());
     return getCachedFontData(&alternateFont);
 #else
     Q_UNUSED(font);

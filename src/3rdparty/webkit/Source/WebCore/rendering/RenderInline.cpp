@@ -1111,7 +1111,7 @@ IntSize RenderInline::offsetFromContainer(RenderObject* container, const IntPoin
     return offset;
 }
 
-void RenderInline::mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool fixed, bool useTransforms, TransformState& transformState) const
+void RenderInline::mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool fixed, bool useTransforms, TransformState& transformState, ApplyContainerFlipOrNot applyContainerFlip) const
 {
     if (repaintContainer == this)
         return;
@@ -1132,9 +1132,11 @@ void RenderInline::mapLocalToContainer(RenderBoxModelObject* repaintContainer, b
     if (!o)
         return;
 
-    IntPoint centerPoint = roundedIntPoint(transformState.mappedPoint());
-    if (o->isBox() && o->style()->isFlippedBlocksWritingMode())
-        transformState.move(toRenderBox(o)->flipForWritingModeIncludingColumns(roundedIntPoint(transformState.mappedPoint())) - centerPoint);
+    if (applyContainerFlip && o->isBox() && o->style()->isFlippedBlocksWritingMode()) {
+        IntPoint centerPoint = roundedIntPoint(transformState.mappedPoint());
+        transformState.move(toRenderBox(o)->flipForWritingModeIncludingColumns(centerPoint) - centerPoint);
+        applyContainerFlip = DoNotApplyContainerFlip;
+    }
 
     IntSize containerOffset = offsetFromContainer(o, roundedIntPoint(transformState.mappedPoint()));
 
@@ -1154,7 +1156,7 @@ void RenderInline::mapLocalToContainer(RenderBoxModelObject* repaintContainer, b
         return;
     }
 
-    o->mapLocalToContainer(repaintContainer, fixed, useTransforms, transformState);
+    o->mapLocalToContainer(repaintContainer, fixed, useTransforms, transformState, applyContainerFlip);
 }
 
 void RenderInline::mapAbsoluteToLocalPoint(bool fixed, bool useTransforms, TransformState& transformState) const
