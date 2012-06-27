@@ -134,7 +134,8 @@ QString QFont::defaultFamily() const
 {
     switch(d->request.styleHint) {
         case QFont::Times:
-            return QString::fromLatin1("Times New Roman");
+            //return QString::fromLatin1("Times New Roman");
+            return QString::fromLatin1("Hiragino Mincho Pro");
         case QFont::Courier:
             return QString::fromLatin1("Courier New");
         case QFont::Monospace:
@@ -148,13 +149,15 @@ QString QFont::defaultFamily() const
         case QFont::Helvetica:
         case QFont::System:
         default:
-            return QString::fromLatin1("Helvetica");
+            //return QString::fromLatin1("Helvetica");
+            return QString::fromLatin1("Hiragino Kaku Gothic Pro");
     }
 }
 
 QString QFont::lastResortFamily() const
 {
-    return QString::fromLatin1("Helvetica");
+    //return QString::fromLatin1("Helvetica");
+    return QString::fromLatin1("Hiragino Kaku Gothic Pro");
 }
 
 QString QFont::lastResortFont() const
