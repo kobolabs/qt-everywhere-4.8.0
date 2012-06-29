@@ -65,7 +65,7 @@ private:
     virtual IntRect clippedOverflowRectForRepaint(RenderBoxModelObject* repaintContainer);
     virtual void computeRectForRepaint(RenderBoxModelObject* repaintContainer, IntRect&, bool fixed = false);
 
-    virtual void mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool useTransfoms, bool fixed, TransformState&, ApplyContainerFlipOrNot = ApplyContainerFlip) const;
+    virtual void mapLocalToContainer(RenderBoxModelObject* repaintContainer, bool useTransforms, bool fixed, TransformState&) const;
 
     virtual FloatRect objectBoundingBox() const { return frameRect(); }
     virtual FloatRect strokeBoundingBox() const;
