@@ -795,7 +795,7 @@ bool QFontEngineFT::init(FaceId faceId, bool antialias, GlyphFormat format,
         if (fake_oblique)
             transform = true;
         // fake bold
-        if ((fontDef.weight == QFont::Bold) && !(face->style_flags & FT_STYLE_FLAG_BOLD) && !FT_IS_FIXED_WIDTH(face))
+        if ((fontDef.weight >= QFont::Bold) && !(face->style_flags & FT_STYLE_FLAG_BOLD) && !FT_IS_FIXED_WIDTH(face))
             embolden = true;
         // underline metrics
         line_thickness =  QFixed::fromFixed(FT_MulFix(face->underline_thickness, face->size->metrics.y_scale));
