@@ -147,7 +147,8 @@ QString QFont::defaultFamily() const
         case QFont::Fantasy:
             return QString::fromLatin1("Impact");
         case QFont::Helvetica:
-            return QString::fromLatin1("Arial");
+            //return QString::fromLatin1("Arial");
+            return QString::fromLatin1("MS PGothic");
         case QFont::System:
         default:
             //return QString::fromLatin1("MS Sans Serif");
