@@ -28,6 +28,7 @@ public:
     virtual QFontEngineInterface * fontEnginePlugin() = 0;
 };
 
+inline ACCESSPluginInterface::~ACCESSPluginInterface() { }
 
 QT_BEGIN_NAMESPACE
 

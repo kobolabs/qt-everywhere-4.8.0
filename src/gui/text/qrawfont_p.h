@@ -97,7 +97,7 @@ public:
     ~QRawFontPrivate()
     {
         Q_ASSERT(ref == 0);
-        cleanUp();
+        //cleanUp();
     }
 
     void cleanUp();

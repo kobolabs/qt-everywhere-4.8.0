@@ -322,9 +322,9 @@ String DefaultLocalizationStrategy::contextMenuItemTagLookUpInDictionary(const S
 #else
 #if USE(CF)
     RetainPtr<CFStringRef> selectedCFString(AdoptCF, truncatedStringForLookupMenuItem(selectedString).createCFString());
-    return formatLocalizedString(WEB_UI_STRING("Look Up ‚Äú%@‚Äù", "Look Up context menu item with selected word"), selectedCFString.get());
+    return formatLocalizedString(WEB_UI_STRING("Look Up Åg%@Åh", "Look Up context menu item with selected word"), selectedCFString.get());
 #else
-    return WEB_UI_STRING("Look Up ‚Äú<selection>‚Äù", "Look Up context menu item with selected word").replace("<selection>", truncatedStringForLookupMenuItem(selectedString));
+    return WEB_UI_STRING("Look Up Åg<selection>Åh", "Look Up context menu item with selected word").replace("<selection>", truncatedStringForLookupMenuItem(selectedString));
 #endif
 #endif
 }
@@ -748,13 +748,13 @@ String DefaultLocalizationStrategy::imageTitle(const String& filename, const Int
     RetainPtr<CFNumberRef> height(AdoptCF, CFNumberCreate(0, kCFNumberIntType, &heightInt));
     RetainPtr<CFStringRef> heightString(AdoptCF, CFNumberFormatterCreateStringWithNumber(0, formatter.get(), height.get()));
 
-    return formatLocalizedString(WEB_UI_STRING("%@ %@√ó%@ pixels", "window title for a standalone image (uses multiplication symbol, not x)"), filenameCFString.get(), widthString.get(), heightString.get());
+    return formatLocalizedString(WEB_UI_STRING("%@ %@Å~%@ pixels", "window title for a standalone image (uses multiplication symbol, not x)"), filenameCFString.get(), widthString.get(), heightString.get());
 #else
     RetainPtr<CFStringRef> filenameCFString(AdoptCF, filename.createCFString());
-    return formatLocalizedString(WEB_UI_STRING("%@ %d√ó%d pixels", "window title for a standalone image (uses multiplication symbol, not x)"), filenameCFString.get(), size.width(), size.height());
+    return formatLocalizedString(WEB_UI_STRING("%@ %dÅ~%d pixels", "window title for a standalone image (uses multiplication symbol, not x)"), filenameCFString.get(), size.width(), size.height());
 #endif
 #else
-    return formatLocalizedString(WEB_UI_STRING("<filename> %d√ó%d pixels", "window title for a standalone image (uses multiplication symbol, not x)"), size.width(), size.height()).replace("<filename>", filename);
+    return formatLocalizedString(WEB_UI_STRING("<filename> %dÅ~%d pixels", "window title for a standalone image (uses multiplication symbol, not x)"), size.width(), size.height()).replace("<filename>", filename);
 #endif
 }
 

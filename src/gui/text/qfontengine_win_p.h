@@ -139,9 +139,9 @@ public:
 
     mutable int synthesized_flags;
     mutable QFixed lineWidth;
-    mutable unsigned char *widthCache;
-    mutable uint widthCacheSize;
-    mutable QFixed *designAdvances;
+    mutable QPoint *advanceCache;
+    mutable uint advanceCacheSize;
+    mutable QPointF *designAdvances;
     mutable int designAdvancesSize;
 
 private:

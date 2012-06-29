@@ -9,7 +9,7 @@
 #include <QObject>
 #include <QSharedData>
 #include "accessplugininterface.h"
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
 #include "qharfbuzz_p.h"
 #endif
 
@@ -17,7 +17,7 @@ class QFontEngineInterface
 {
 public:
     virtual ~QFontEngineInterface() {}
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     virtual bool hasVerticalGlyphs(HB_Face face) = 0;
     virtual quint32 substituteWithVerticalVariants(HB_Face face, quint32* glyph, const unsigned length) = 0;
 #endif

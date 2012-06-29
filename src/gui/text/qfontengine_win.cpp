@@ -341,8 +341,8 @@ QFontEngineWin::QFontEngineWin(const QString &name, HFONT _hfont, bool stockFont
     cache_cost = tm.tmHeight * tm.tmAveCharWidth * 2000;
     getCMap();
 
-    widthCache = 0;
-    widthCacheSize = 0;
+    advanceCache = 0;
+    advanceCacheSize = 0;
     designAdvances = 0;
     designAdvancesSize = 0;
 
@@ -357,8 +357,8 @@ QFontEngineWin::~QFontEngineWin()
     if (designAdvances)
         free(designAdvances);
 
-    if (widthCache)
-        free(widthCache);
+    if (advanceCache)
+        free(advanceCache);
 
     // make sure we aren't by accident still selected
     SelectObject(shared_dc(), (HFONT)GetStockObject(SYSTEM_FONT));
@@ -412,22 +412,36 @@ void QFontEngineWin::recalcAdvances(QGlyphLayout *glyphs, QTextEngine::ShaperFla
             unsigned int glyph = glyphs->glyphs[i];
             if(int(glyph) >= designAdvancesSize) {
                 int newSize = (glyph + 256) >> 8 << 8;
-                designAdvances = q_check_ptr((QFixed *)realloc(designAdvances,
-                            newSize*sizeof(QFixed)));
-                for(int i = designAdvancesSize; i < newSize; ++i)
-                    designAdvances[i] = -1000000;
+                designAdvances = q_check_ptr((QPointF *)realloc(designAdvances,
+                            newSize*sizeof(QPointF)));
+                for(int i = designAdvancesSize; i < newSize; ++i) {
+                    designAdvances[i].setX(-1000000);
+                    designAdvances[i].setY(-1000000);
+                }
                 designAdvancesSize = newSize;
             }
-            if (designAdvances[glyph] < -999999) {
+            if (designAdvances[glyph].x() < -999999) {
                 if (!oldFont)
                     oldFont = selectDesignFont();
 
                 int width = 0;
                 calculateTTFGlyphWidth(hdc, glyph, width);
-                designAdvances[glyph] = QFixed(width) / designToDevice;
+                designAdvances[glyph].setX((QFixed(width) / designToDevice).toReal());
             }
-            glyphs->advances_x[i] = designAdvances[glyph];
-            glyphs->advances_y[i] = 0;
+            if (designAdvances[glyph].y() < -999999) {
+                QChar ch[2] = { ushort(glyph), 0 };
+                int chrLen = 1;
+                if (glyph > 0xffff) {
+                    ch[0] = QChar::highSurrogate(glyph);
+                    ch[1] = QChar::lowSurrogate(glyph);
+                    ++chrLen;
+                }
+                SIZE size = {0, 0};
+                GetTextExtentPoint32(hdc, (wchar_t *)ch, chrLen, &size);
+                designAdvances[glyph].setY((QFixed(size.cy) / designToDevice).toReal());
+            }
+            glyphs->advances_x[i] = QFixed::fromReal(designAdvances[glyph].x());
+            glyphs->advances_y[i] = QFixed::fromReal(designAdvances[glyph].y());
         }
         if(oldFont)
             DeleteObject(SelectObject(hdc, oldFont));
@@ -435,40 +449,42 @@ void QFontEngineWin::recalcAdvances(QGlyphLayout *glyphs, QTextEngine::ShaperFla
         for(int i = 0; i < glyphs->numGlyphs; i++) {
             unsigned int glyph = glyphs->glyphs[i];
 
-            glyphs->advances_y[i] = 0;
-
-            if (glyph >= widthCacheSize) {
+            if (glyph >= advanceCacheSize) {
                 int newSize = (glyph + 256) >> 8 << 8;
-                widthCache = q_check_ptr((unsigned char *)realloc(widthCache,
-                            newSize*sizeof(QFixed)));
-                memset(widthCache + widthCacheSize, 0, newSize - widthCacheSize);
-                widthCacheSize = newSize;
+                advanceCache = q_check_ptr((QPoint *)realloc(advanceCache,
+                            newSize*sizeof(QPoint)));
+                memset(advanceCache + advanceCacheSize, 0, (newSize - advanceCacheSize) * sizeof(QPoint));
+                advanceCacheSize = newSize;
             }
-            glyphs->advances_x[i] = widthCache[glyph];
+            glyphs->advances_x[i] = advanceCache[glyph].x();
+            glyphs->advances_y[i] = advanceCache[glyph].y();
             // font-width cache failed
-            if (glyphs->advances_x[i] == 0) {
+            if (glyphs->advances_x[i] == 0 || glyphs->advances_y[i] == 0) {
                 int width = 0;
+                int height = 0;
                 if (!oldFont)
                     oldFont = SelectObject(hdc, hfont);
 
-                if (!ttf) {
-                    QChar ch[2] = { ushort(glyph), 0 };
-                    int chrLen = 1;
-                    if (glyph > 0xffff) {
-                        ch[0] = QChar::highSurrogate(glyph);
-                        ch[1] = QChar::lowSurrogate(glyph);
-                        ++chrLen;
-                    }
-                    SIZE size = {0, 0};
-                    GetTextExtentPoint32(hdc, (wchar_t *)ch, chrLen, &size);
-                    width = size.cx;
-                } else {
+                QChar ch[2] = { ushort(glyph), 0 };
+                int chrLen = 1;
+                if (glyph > 0xffff) {
+                    ch[0] = QChar::highSurrogate(glyph);
+                    ch[1] = QChar::lowSurrogate(glyph);
+                    ++chrLen;
+                }
+                SIZE size = {0, 0};
+                GetTextExtentPoint32(hdc, (wchar_t *)ch, chrLen, &size);
+                width = size.cx;
+                height = size.cy;
+                if (ttf) {
                     calculateTTFGlyphWidth(hdc, glyph, width);
                 }
                 glyphs->advances_x[i] = width;
+                glyphs->advances_y[i] = height;
                 // if glyph's within cache range, store it for later
                 if (width > 0 && width < 0x100)
-                    widthCache[glyph] = width;
+                    advanceCache[glyph].setX(width);
+                    advanceCache[glyph].setY(height);
             }
         }
 
