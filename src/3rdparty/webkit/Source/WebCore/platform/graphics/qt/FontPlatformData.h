@@ -45,18 +45,16 @@ public:
         , bold(font.bold())
         , oblique(false)
         , orientation(Horizontal)
-        , textOrientation(TextOrientationVerticalRight)
         , isDeletedValue(false)
     { }
-    FontPlatformDataPrivate(const float size, const bool bold, const bool oblique, FontOrientation orientation = Horizontal, TextOrientation textOrientation = TextOrientationVerticalRight)
+    FontPlatformDataPrivate(const float size, const bool bold, const bool oblique, FontOrientation orientation = Horizontal)
         : size(size)
         , bold(bold)
         , oblique(oblique)
         , orientation(orientation)
-        , textOrientation(textOrientation)
         , isDeletedValue(false)
     { }
-    FontPlatformDataPrivate(const QFont& font, FontOrientation orientation, TextOrientation textOrientation)
+    FontPlatformDataPrivate(const QFont& font, FontOrientation orientation)
         : font(font)
 #if HAVE(QRAWFONT)
         , rawFont(QRawFont::fromFont(font, QFontDatabase::Any))
@@ -65,7 +63,6 @@ public:
         , bold(font.bold())
         , oblique(false)
         , orientation(orientation)
-        , textOrientation(textOrientation)
         , isDeletedValue(false)
     { }
 #if HAVE(QRAWFONT)
@@ -76,7 +73,6 @@ public:
         , bold(rawFont.weight() >= QFont::Bold)
         , oblique(false)
         , orientation(Horizontal)
-        , textOrientation(TextOrientationVerticalRight)
         , isDeletedValue(false)
     { }
 #endif
@@ -92,26 +88,24 @@ public:
     bool bold : 1;
     bool oblique : 1;
     FontOrientation orientation;
-    TextOrientation textOrientation;
     bool isDeletedValue : 1;
 };
 
 class FontPlatformData {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    FontPlatformData(float size, bool bold, bool oblique, FontOrientation = Horizontal, TextOrientation textOrientation = TextOrientationVerticalRight);
+    FontPlatformData(float size, bool bold, bool oblique, FontOrientation = Horizontal);
     FontPlatformData(const FontDescription&, const AtomicString& familyName, int wordSpacing = 0, int letterSpacing = 0);
-    FontPlatformData(const QFont& font, FontOrientation orientation, TextOrientation textOrientation)
-        : m_data(adoptRef(new FontPlatformDataPrivate(font, orientation, textOrientation)))
+    FontPlatformData(const QFont& font, FontOrientation orientation)
+        : m_data(adoptRef(new FontPlatformDataPrivate(font, orientation)))
     { }
 #if HAVE(QRAWFONT)
     FontPlatformData(const FontPlatformData& src);
     FontPlatformData(const FontPlatformData&, float size);
-    FontPlatformData(const QRawFont& rawFont, FontOrientation orientation, TextOrientation textOrientation)
+    FontPlatformData(const QRawFont& rawFont, FontOrientation orientation)
         : m_data(adoptRef(new FontPlatformDataPrivate(rawFont)))
     {
         m_data->orientation = orientation;
-        m_data->textOrientation = textOrientation;
     }
 #endif
     FontPlatformData(WTF::HashTableDeletedValueType)
@@ -185,21 +179,9 @@ public:
             return m_data->orientation;
         return Horizontal;
     }
-    TextOrientation textOrientation() const
-    {
-        Q_ASSERT(m_data != reinterpret_cast<FontPlatformDataPrivate*>(-1));
-        if (m_data)
-            return m_data->textOrientation;
-        return TextOrientationVerticalRight;
-    }
     void setOrientation(FontOrientation orientation)
     {
         m_data->orientation = orientation;
-    }
-
-    void setTextOrientation(TextOrientation textOrientation)
-    {
-        m_data->textOrientation = textOrientation;
     }
     unsigned hash() const;
 

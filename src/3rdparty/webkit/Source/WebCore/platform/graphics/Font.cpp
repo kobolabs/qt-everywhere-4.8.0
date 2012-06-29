@@ -459,6 +459,9 @@ bool Font::isUnbreakableCharactersPair(UChar32 current, UChar32 next)
 
 bool Font::isCJKIdeograph(UChar32 c)
 {
+#if ENABLE(EPUB)
+    return !isUprightOrientation(c);
+#endif
 
     // The basic CJK Unified Ideographs block.
     if (c >= 0x4E00 && c <= 0x9FFF)
