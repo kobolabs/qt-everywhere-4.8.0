@@ -964,6 +964,10 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
             else if (horizontalInVerticalDoc) {
                 r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
             }
+            else if (isRubyBlock) {
+                int newHeight = run.height() * 1.48;
+                r = QRect(r.x(), r.y() - (newHeight - run.height()), run.width(), newHeight);
+            }
             out.append(r);
         }
     }
