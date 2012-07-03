@@ -175,8 +175,12 @@ GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant va
                     const GlyphPage* variantPage = variantNode->page();
                     if (variantPage) {
                         GlyphData data = variantPage->glyphDataForCharacter(c);
-                        if (data.fontData)
-                            return changeGlyphDataFromGlyphDataByTextOrientation(page, data, c, pageNumber);
+                        if (data.fontData) {
+                            if (variant == SmallCapsVariant)
+                                return changeGlyphDataFromGlyphDataByTextOrientation(page, data, c, pageNumber);
+                            else
+                                return data;
+                        }
                     }
 
                     // Do not attempt system fallback off the variantFontData. This is the very unlikely case that
