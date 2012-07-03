@@ -938,37 +938,39 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
             }
         }
     }
+
     if (o.isText() && !o.isBR() && !imgRun) {
         const RenderText& text = *toRenderText(&o);
-        for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox()) {
-            InlineTextBox& run = *box;
-
-            int dy = 0;
-            if (o.containingBlock()->isTableCell()) {
-                dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
-            }
-            QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.width(), run.height());
-            if (flippedVertical && (containsOnlyUnicodeWhitespace(text) == false)) {
-                if (isRubyBlock) {
-                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
+        bool isVerticalWhitespaceText = (flippedVertical && containsOnlyUnicodeWhitespace(text));
+        if (!isVerticalWhitespaceText) {
+            for (InlineTextBox* box = text.firstTextBox(); box; box = box->nextTextBox()) {
+                InlineTextBox& run = *box;
+                int dy = 0;
+                if (o.containingBlock()->isTableCell()) {
+                    dy = toRenderTableCell(o.containingBlock())->intrinsicPaddingBefore();
                 }
-                else {
-                    if (verticalBlockLineHeight < 1) {
-                        // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
-                        verticalBlockLineHeight = run.width() * 1.48f;
+                QRect r(run.m_x+origin.x(), run.m_y+origin.y(), run.width(), run.height());
+                if (flippedVertical) {
+                    if (isRubyBlock) {
+                        r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), rubyRunBlockWidth, run.height());
                     }
-                    r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), verticalBlockLineHeight, run.height());
-
+                    else {
+                        if (verticalBlockLineHeight < 1) {
+                            // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
+                            verticalBlockLineHeight = run.width() * 1.48f;
+                        }
+                        r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), verticalBlockLineHeight, run.height());
+                    }
                 }
+                else if (horizontalInVerticalDoc) {
+                    r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
+                }
+                else if (isRubyBlock) {
+                    int newHeight = run.height() * 1.48;
+                    r = QRect(r.x(), r.y() - (newHeight - run.height()), run.width(), newHeight);
+                }
+                out.append(r);
             }
-            else if (horizontalInVerticalDoc) {
-                r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
-            }
-            else if (isRubyBlock) {
-                int newHeight = run.height() * 1.48;
-                r = QRect(r.x(), r.y() - (newHeight - run.height()), run.width(), newHeight);
-            }
-            out.append(r);
         }
     }
 
