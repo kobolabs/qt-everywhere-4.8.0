@@ -873,9 +873,13 @@ void GraphicsContext::drawLineForText(const FloatPoint& origin, float width, boo
 
     // If paintengine type is X11 to avoid artifacts
     // like bug https://bugs.webkit.org/show_bug.cgi?id=42248
-#if defined(Q_WS_X11)
+#if defined(Q_WS_X11) || defined(Q_OS_WIN)
     QPainter* p = m_data->p();
-    if (p->paintEngine()->type() == QPaintEngine::X11) {
+    if (p->paintEngine()->type() == QPaintEngine::X11
+#if defined(Q_OS_WIN)
+        || p->paintEngine()->type() == QPaintEngine::Raster
+#endif
+        ) {
         // If stroke thickness is odd we need decrease Y coordinate by 1 pixel,
         // because inside method adjustLineToPixelBoundaries(...), which
         // called from drawLine(...), Y coordinate will be increased by 0.5f
