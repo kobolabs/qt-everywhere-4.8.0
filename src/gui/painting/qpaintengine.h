@@ -233,10 +233,11 @@ public:
     void syncState();
     inline bool isExtended() const { return extended; }
 
+// ACSTODO: It moved from protected. No better way?
+    QPaintEngineState *state;
+
 protected:
     QPaintEngine(QPaintEnginePrivate &data, PaintEngineFeatures devcaps=0);
-
-    QPaintEngineState *state;
     PaintEngineFeatures gccaps;
 
     uint active : 1;

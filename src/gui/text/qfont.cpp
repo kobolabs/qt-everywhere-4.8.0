@@ -91,9 +91,20 @@
 
 QT_BEGIN_NAMESPACE
 
-#ifdef Q_WS_WIN
-extern HDC shared_dc();
-#endif
+#ifdef QT_ENABLE_FREETYPE_FOR_WIN
+#ifndef QT_NO_THREAD
+HDC shared_dc()
+{
+    // ACSTODO: Is it ok? Please refer to qfontengine_win.cpp
+    return 0;
+}
+#else
+HDC shared_dc()
+{
+    return 0;
+}
+#endif // QT_NO_THREAD
+#endif // QT_ENABLE_FREETYPE_FOR_WIN
 
 #ifdef Q_WS_X11
 extern const QX11Info *qt_x11Info(const QPaintDevice *pd);

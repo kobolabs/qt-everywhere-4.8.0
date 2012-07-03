@@ -61,6 +61,11 @@
 #include "private/qtextengine_p.h"
 #include "private/qfont_p.h"
 
+#ifdef QT_ENABLE_FREETYPE_FOR_WIN
+// ACSTODO: no better way?
+#   undef QT_NO_FREETYPE
+#endif
+
 #ifdef Q_WS_WIN
 #   include "QtCore/qt_windows.h"
 #endif

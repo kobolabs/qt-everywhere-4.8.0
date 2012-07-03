@@ -152,6 +152,11 @@ public:
 
     static bool supportsThreadedFontRendering();
 
+    // ACSTODO: It was moved from private. No better way?
+#if defined(Q_WS_QWS) || defined(Q_WS_QPA) || defined(Q_OS_SYMBIAN) || defined(QT_ENABLE_FREETYPE_FOR_WIN)
+    static QFontEngine *findFont(int script, const QFontPrivate *fp, const QFontDef &request);
+#endif
+
     typedef QByteArray (*decryptor)(QFile &font);
     static decryptor decryptFontData;
 
@@ -159,9 +164,6 @@ private:
     static void createDatabase();
     static void parseFontName(const QString &name, QString &foundry, QString &family);
     static QString resolveFontFamilyAlias(const QString &family);
-#if defined(Q_WS_QWS) || defined(Q_WS_QPA) || defined(Q_OS_SYMBIAN)
-    static QFontEngine *findFont(int script, const QFontPrivate *fp, const QFontDef &request);
-#endif
     static void load(const QFontPrivate *d, int script);
 #ifdef Q_WS_X11
     static QFontEngine *loadXlfd(int screen, int script, const QFontDef &request, int force_encoding_id = -1);

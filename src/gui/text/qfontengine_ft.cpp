@@ -44,7 +44,9 @@
 #include "qtextstream.h"
 #include "qvariant.h"
 #include "qfontengine_ft_p.h"
+#ifndef Q_WS_WIN
 #include <dlfcn.h>
+#endif
 
 #ifndef QT_NO_FREETYPE
 
@@ -1053,12 +1055,14 @@ QFontEngineFT::Glyph *QFontEngineFT::loadGlyph(QGlyphSet *set, uint glyph,
 
     static bool initialized = false;
     static FT_Error (*FT_Set_CSM_Adjustments)(FT_Face, FT_Fixed, FT_Fixed, FT_Fixed, FT_Fixed) = NULL;
+#ifndef Q_WS_WIN
     if (!initialized) {
         initialized = true;
         void *ft = dlopen("libfreetype.so", RTLD_LAZY);
         FT_Set_CSM_Adjustments = (FT_Error (*)(FT_Face, FT_Fixed, FT_Fixed, FT_Fixed, FT_Fixed)) dlsym(ft, "FT_Set_CSM_Adjustments");
         qDebug() << "Loading iType.. " << (FT_Set_CSM_Adjustments ? "YES" : "NO");
     }
+#endif
 
     if (FT_Set_CSM_Adjustments) {
         FT_Set_CSM_Adjustments(freetype->face, (QFixed::fromReal(fontDef.csmSharpnessOffset).value()),
@@ -2237,6 +2241,35 @@ QFontEngine *QFontEngineFT::cloneWithSize(qreal pixelSize) const
         return fe;
     }
 }
+
+#ifdef QT_ENABLE_FREETYPE_FOR_WIN
+// -------------------------------------- Multi font engine
+
+QFontEngineMultiFT::QFontEngineMultiFT(QFontEngine *fe, int _script, const QStringList &fallbacks)
+    : QFontEngineMulti(fallbacks.size() + 1),
+      fallbackFamilies(fallbacks), script(_script)
+{
+    engines[0] = fe;
+    fe->ref.ref();
+    fontDef = engines[0]->fontDef;
+}
+
+void QFontEngineMultiFT::loadEngine(int at)
+{
+    Q_ASSERT(at < engines.size());
+    Q_ASSERT(engines.at(at) == 0);
+
+    QFontDef request = fontDef;
+    request.styleStrategy |= QFont::NoFontMerging;
+    request.family = fallbackFamilies.at(at-1);
+    engines[at] = QFontDatabase::findFont(script,
+                                          /*fontprivate*/0,
+                                          request);
+    Q_ASSERT(engines[at]);
+    engines[at]->ref.ref();
+    engines[at]->fontDef = request;
+}
+#endif // QT_ENABLE_FREETYPE_FOR_WIN
 
 QT_END_NAMESPACE
 

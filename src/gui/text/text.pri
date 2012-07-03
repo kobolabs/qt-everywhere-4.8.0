@@ -79,10 +79,27 @@ SOURCES += \
 
 win32 {
 	SOURCES += \
-		text/qfont_win.cpp \
-                text/qfontengine_win.cpp \
-                text/qrawfont_win.cpp
-	HEADERS += text/qfontengine_win_p.h
+		text/qfont_win.cpp
+	contains(QT_CONFIG, freetype) {
+		SOURCES += \
+                	text/qabstractfontengine_qws.cpp \
+                        text/qfontengine_ft.cpp \
+                        text/qrawfont_ft.cpp
+		HEADERS += \
+			text/qabstractfontengine_qws.h \
+			text/qabstractfontengine_p.h \
+			text/qfontengine_ft_p.h
+		DEFINES += \
+			QT_NO_FONTCONFIG \
+			QT_ENABLE_FREETYPE_FOR_WIN
+	} else {
+		SOURCES += \
+                	text/qfontengine_win.cpp \
+                	text/qrawfont_win.cpp \
+                	text/qrawfont_win.cpp \
+                	text/qfontengine_win.cpp
+		HEADERS += text/qfontengine_win_p.h
+	}
 }
 
 contains(QT_CONFIG, directwrite) {

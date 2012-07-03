@@ -53,6 +53,10 @@
 
 #include "qfontengine_p.h"
 
+#ifdef QT_ENABLE_FREETYPE_FOR_WIN
+// ACSTODO: no better way?
+#   undef QT_NO_FREETYPE
+#endif
 #ifndef QT_NO_FREETYPE
 
 #include <ft2build.h>
@@ -62,7 +66,9 @@
 #include <private/qt_x11_p.h>
 #endif
 
+#ifndef Q_WS_WIN
 #include <unistd.h>
+#endif
 
 #ifndef QT_NO_FONTCONFIG
 #include <fontconfig/fontconfig.h>
@@ -381,6 +387,19 @@ private:
     FT_Size_Metrics metrics;
     mutable bool kerning_pairs_loaded;
 };
+
+#ifdef QT_ENABLE_FREETYPE_FOR_WIN
+class QFontEngineMultiFT : public QFontEngineMulti
+{
+public:
+    QFontEngineMultiFT(QFontEngine *fe, int _script, const QStringList &fallbacks);
+    void loadEngine(int at);
+
+private:
+    QStringList fallbackFamilies;
+    int script;
+};
+#endif /* QT_ENABLE_FREETYPE_FOR_WIN */
 
 inline uint qHash(const QFontEngineFT::GlyphAndSubPixelPosition &g)
 {
