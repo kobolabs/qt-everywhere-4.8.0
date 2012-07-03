@@ -2199,9 +2199,27 @@ void QWebPage::expandSelectionDown(QRect bounds) {
 	expandSelection(d, DirectionBackward, LineGranularity, bounds);
 }
 
+void QWebPage::selectCharacterAtPoint(QPoint docPoint) {
+	d->createMainFrame();
+	Frame *frame = d->page->focusController()->focusedOrMainFrame();
+	IntPoint point(docPoint.x(),docPoint.y());
+	HitTestRequest request(HitTestRequest::ReadOnly | HitTestRequest::Active);
+	HitTestResult result(point);
+	frame->document()->renderView()->layer()->hitTest(request, result);
+	Node* innerNode = result.innerNode();
+	if (innerNode && innerNode->renderer()) {
+		VisiblePosition pos(innerNode->renderer()->positionForPoint(result.localPoint()));
+
+		if (pos.isNotNull()) {
+			VisibleSelection newSelection(pos, pos.next());
+			frame->selection()->setSelection(newSelection);
+		}
+	}
+}
+
 //If selectOnlyLetters == true the selection will be modified to discard non letters.
 //This causes a performance hit though, so it should only be used for the final selecting
-void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds, bool selectOnlyLetters) {
+void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds, bool selectOnlyLetters, bool expandToWordBoundaries) {
 	d->createMainFrame();
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
 	IntPoint point(docPoint.x(),docPoint.y());
@@ -2214,7 +2232,9 @@ void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds, bool selectOnlyL
 		VisibleSelection newSelection(selectOnlyLetters);
 		if (pos.isNotNull()) {
 			newSelection = VisibleSelection(pos, selectOnlyLetters);
-			newSelection.expandUsingGranularity(WordGranularity);
+			if(expandToWordBoundaries) {
+				newSelection.expandUsingGranularity(WordGranularity);
+			}
 		}
 		if (newSelection.isRange()) {
 			frame->selection()->setSelection(newSelection, WordGranularity);
@@ -2256,6 +2276,8 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoun
 		}
 		if (expandToWordBoundaries) {
 			newSelection.expandUsingGranularity(WordGranularity);
+		} else {
+			newSelection.expandUsingGranularity(CharacterGranularity);
 		}
 		// don't stomp on a good selection with a bogus one
 		QString oldText = selectedText();

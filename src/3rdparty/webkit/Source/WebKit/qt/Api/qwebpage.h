@@ -255,16 +255,17 @@ public:
     QWebHistory *history() const;
     QWebSettings *settings() const;
     
-    void selectWordAtPoint(QPoint point, QRect bounds, bool selectLettersOnly);
+    void selectCharacterAtPoint(QPoint point);
+    void selectWordAtPoint(QPoint point, QRect bounds, bool selectLettersOnly, bool expandToWordBoundaries = true);
     void clearSelection();
 
-	void expandSelectionRight(QRect bounds);
-	void expandSelectionLeft(QRect bounds);
-	void expandSelectionUp(QRect bounds);
-	void expandSelectionDown(QRect bounds);
-	
-	void selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries);
-	QPair<QRect, QRect> selectionEndPoints();
+    void expandSelectionRight(QRect bounds);
+    void expandSelectionLeft(QRect bounds);
+    void expandSelectionUp(QRect bounds);
+    void expandSelectionDown(QRect bounds);
+
+    void selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries);
+    QPair<QRect, QRect> selectionEndPoints();
 
     void setView(QWidget *view);
     QWidget *view() const;
