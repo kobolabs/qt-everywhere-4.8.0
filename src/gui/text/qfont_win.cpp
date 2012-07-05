@@ -55,6 +55,8 @@
 #include <private/qunicodetables_p.h>
 #include <qfontdatabase.h>
 
+#include <windows.h>
+
 QT_BEGIN_NAMESPACE
         
 extern HDC   shared_dc();                // common dc for all fonts
@@ -64,6 +66,37 @@ extern QFont::Weight weightFromInteger(int weight); // qfontdatabase.cpp
 QFont qt_LOGFONTtoQFont(LOGFONT& lf, bool /*scale*/)
 {
     QString family = QString::fromWCharArray(lf.lfFaceName);
+#ifdef QT_ENABLE_FREETYPE_FOR_WIN
+    // Substitute font by myself.
+    // Windows return font family name which should be substituted from SystemParametersInfo().
+    // If we use GDI's font engine, Windows substitute font family.
+    // If we use FreeType, FreeType don't do that, and we need to substitute font by myself.
+
+    //std::cout << "family: " << family.toUtf8().data() << std::endl;
+    {
+        HKEY key;
+        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes"), 0, KEY_READ, &key) == ERROR_SUCCESS) {
+            int i = 0;
+            TCHAR buff[MAX_PATH];
+            DWORD size = sizeof(buff) / sizeof(buff[0]);
+            BYTE data[1024*4];
+            DWORD dataSize = sizeof(data)/sizeof(data[0]);
+            DWORD type;
+            
+            while (RegEnumValue(key, i++, buff, &size, NULL, &type, data, &dataSize) == ERROR_SUCCESS) {
+                QString subFamily = QString::fromWCharArray(buff);
+                if (family.compare(subFamily) == 0) {
+                    if (type == REG_SZ)
+                        family = QString::fromWCharArray((WCHAR *)data);
+                    break;
+                }
+                size = sizeof(buff) / sizeof(buff[0]);
+                dataSize = sizeof(data)/sizeof(data[0]);
+            }
+        }
+    }
+    //std::cout << "use family: " << family.toUtf8().data() << std::endl;
+#endif
     QFont qf(family);
     qf.setItalic(lf.lfItalic);
     if (lf.lfWeight != FW_DONTCARE)
