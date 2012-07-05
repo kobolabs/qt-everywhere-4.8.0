@@ -44,12 +44,16 @@ bool GlyphPage::fill(unsigned offset, unsigned length, UChar* buffer, unsigned b
     bool lookVariants = false;
 
     if (fontData->hasVerticalGlyphs()) {
+#if ENABLE(EPUB)
+        lookVariants = true;
+#else
         for (unsigned i = 0; i < length; ++i) {
             if (!Font::isCJKIdeograph(buffer[i])) {
                 lookVariants = true;
                 break;
             }
         }
+#endif
     }
 
     if (lookVariants)
