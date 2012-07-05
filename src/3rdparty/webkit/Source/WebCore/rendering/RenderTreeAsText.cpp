@@ -852,6 +852,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
     bool horizontalInVerticalDoc = false;
     int rubyRunBlockWidth = 0;
     int verticalBlockLineHeight = 0;
+    static float EXPANSION_SCALE = 1.48f;
 
     if (RenderBlock* block = o.containingBlock()) {
         if (dynamic_cast< RenderRubyText* > (block) ) {
@@ -859,7 +860,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
              return;
         }
         else if (dynamic_cast< RenderRubyBase* > (block) ) {
-             isRubyBlock = true;
+            isRubyBlock = true;
         }
         origin = block->localToAbsolute(FloatPoint());
         flippedVertical = !block->style()->isHorizontalWritingMode() && block->style()->isFlippedBlocksWritingMode();
@@ -957,7 +958,10 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     else {
                         if (verticalBlockLineHeight < 1) {
                             // Assume there is always a ruby block and scale up the original width (add padding), so that first text block of each page has roughly the same right-side margin
-                            verticalBlockLineHeight = run.width() * 1.48f;
+                            verticalBlockLineHeight = run.width() * EXPANSION_SCALE;
+                        }
+                        else {
+                            verticalBlockLineHeight = qMin(verticalBlockLineHeight, int(run.width() * EXPANSION_SCALE));
                         }
                         r = QRect(origin.x() - run.width() - run.m_x, run.m_y + origin.y(), verticalBlockLineHeight, run.height());
                     }
@@ -966,7 +970,7 @@ static void getRunRectsRecursively(QList<QRect>& out, const RenderObject& o, boo
                     r = QRect(run.m_x + origin.x(), run.m_y + origin.y(), run.width(), run.height());
                 }
                 else if (isRubyBlock) {
-                    int newHeight = run.height() * 1.48;
+                    int newHeight = run.height() * EXPANSION_SCALE;
                     r = QRect(r.x(), r.y() - (newHeight - run.height()), run.width(), newHeight);
                 }
                 out.append(r);
