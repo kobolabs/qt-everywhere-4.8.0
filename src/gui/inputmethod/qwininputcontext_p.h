@@ -100,7 +100,7 @@ public:
     static void updateImeStatus(QWidget *w, bool hasFocus);
     static void enablePopupChild(QWidget *w, bool e);
     static void enable(QWidget *w, bool e);
-
+    virtual QTextFormat standardFormat(StandardFormat s) const;
 private:
     void init();
     bool recursionGuard;

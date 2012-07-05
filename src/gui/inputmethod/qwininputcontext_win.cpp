@@ -844,4 +844,18 @@ int QWinInputContext::reconvertString(RECONVERTSTRING *reconv)
     return memSize;
 }
 
+QTextFormat QWinInputContext::standardFormat(StandardFormat s) const
+{
+    QTextCharFormat fmt;
+    switch (s) {
+	case QInputContext::PreeditFormat:
+	fmt.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
+	break;
+    case QInputContext::SelectionFormat:
+	fmt.setUnderlineStyle(QTextCharFormat::SingleUnderline);
+	break;
+    }
+    return fmt;
+}
+
 QT_END_NAMESPACE

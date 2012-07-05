@@ -118,7 +118,7 @@ public:
         PreeditFormat,
         SelectionFormat
     };
-    QTextFormat standardFormat(StandardFormat s) const;
+    virtual QTextFormat standardFormat(StandardFormat s) const;
 private:
     friend class QWidget;
     friend class QWidgetPrivate;
