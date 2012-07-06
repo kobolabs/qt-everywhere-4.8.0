@@ -135,8 +135,7 @@ QString QFont::defaultFamily() const
 {
     switch(d->request.styleHint) {
         case QFont::Times:
-            //return QString::fromLatin1("Times New Roman");
-            return QString::fromLatin1("MS PMincho");
+            return QString::fromLatin1("Times New Roman");
         case QFont::Courier:
         case QFont::Monospace:
             return QString::fromLatin1("Courier New");
@@ -147,19 +146,16 @@ QString QFont::defaultFamily() const
         case QFont::Fantasy:
             return QString::fromLatin1("Impact");
         case QFont::Helvetica:
-            //return QString::fromLatin1("Arial");
-            return QString::fromLatin1("MS PGothic");
+            return QString::fromLatin1("Arial");
         case QFont::System:
         default:
-            //return QString::fromLatin1("MS Sans Serif");
-            return QString::fromLatin1("MS PGothic");
+            return QString::fromLatin1("MS Sans Serif");
     }
 }
 
 QString QFont::lastResortFamily() const
 {
-    //return QString::fromLatin1("helvetica");
-    return QString::fromLatin1("MS PGothic");
+    return QString::fromLatin1("helvetica");
 }
 
 QString QFont::lastResortFont() const
