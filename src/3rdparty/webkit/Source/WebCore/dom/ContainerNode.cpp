@@ -946,6 +946,10 @@ bool ContainerNode::getLowerRightCorner(FloatPoint& point) const
 
 IntRect ContainerNode::getRect() const
 {
+    const bool isSVGRenderer = isSVGElement() && renderer() && !renderer()->isSVGRoot();
+    if (isSVGRenderer)
+        return renderer()->absoluteBoundingBoxRect(true);
+
     FloatPoint  upperLeft, lowerRight;
     bool foundUpperLeft = getUpperLeftCorner(upperLeft);
     bool foundLowerRight = getLowerRightCorner(lowerRight);
