@@ -413,12 +413,10 @@ void Font::drawGlyphBuffer(GraphicsContext* context, const GlyphBuffer& glyphBuf
 
 inline static float offsetToMiddleOfGlyph(const SimpleFontData* fontData, Glyph glyph)
 {
-#if !(PLATFORM(QT) && HAVE(QRAWFONT)) // qt port is not implement SimpleFontData::platformBoundsForGlyph()
     if (fontData->platformData().orientation() == Horizontal) {
         FloatRect bounds = fontData->boundsForGlyph(glyph);
         return bounds.x() + bounds.width() / 2;
     }
-#endif
     // FIXME: Use glyph bounds once they make sense for vertical fonts.
     return fontData->widthForGlyph(glyph) / 2;
 }
