@@ -1250,10 +1250,7 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
 
 #if defined(Q_WS_QWS)
     // Do ordered dithering 3x3,16
-    // TODO: Implement an if-condition to run this block optionally
-    if (true) {
-        ditherAndSharpenLine(buffer, y, length);
-    }
+    ditherAndSharpenLine(buffer, y, length);
 #endif
     return buffer;
 }
@@ -3698,7 +3695,7 @@ Q_STATIC_TEMPLATE_FUNCTION void blend_untransformed_generic(int count, const QSp
                         op.func(dest, src, l, coverage);
 #if defined(Q_WS_QWS)
                         // TODO: Implement an if-condition to run this block optionally
-                        if (true) {
+                        if (data->bilinear) {
                             ditherAndSharpenLine(dest, sy, l);
                         }
 #endif

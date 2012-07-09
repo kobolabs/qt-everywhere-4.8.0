@@ -2358,7 +2358,7 @@ void QRasterPaintEngine::drawImage(const QRectF &r, const QImage &img, const QRe
         }
     }
 
-    if (s->matrix.type() > QTransform::TxTranslate || stretch_sr) {
+    if (s->matrix.type() > QTransform::TxTranslate || stretch_sr || s->flags.bilinear) {
 
         QRectF targetBounds = s->matrix.mapRect(r);
         bool exceedsPrecision = targetBounds.width() > 0xffff
