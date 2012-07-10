@@ -603,7 +603,7 @@ void InlineTextBox::paint(PaintInfo& paintInfo, int tx, int ty, int /*lineTop*/,
     if (haveSelection) {
         // If we're underlining, force the foreground text to be black
         QSettings settings;
-        paintInfo.forceBlackText = paintInfo.forceBlackText || settings.value("selectionStyle", "underline") == "underline";	
+		paintInfo.forceBlackText = paintInfo.forceBlackText || settings.value("selectionStyle", "underline") == "underline" || settings.value("selectionStyle", "underline") == "overline";
 
         // Check foreground color first.
         Color foreground = paintInfo.forceBlackText ? Color::black : renderer()->selectionForegroundColor();
