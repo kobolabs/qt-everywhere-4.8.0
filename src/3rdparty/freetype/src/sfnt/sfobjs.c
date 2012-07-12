@@ -716,36 +716,15 @@
 
     face->root.num_glyphs = face->max_profile.numGlyphs;
 
-    /* Bit 8 of the `fsSelection' field in the `OS/2' table denotes  */
-    /* a WWS-only font face.  `WWS' stands for `weight', width', and */
-    /* `slope', a term used by Microsoft's Windows Presentation      */
-    /* Foundation (WPF).  This flag has been introduced in version   */
-    /* 1.5 of the OpenType specification (May 2008).                 */
-
-    if ( face->os2.version != 0xFFFFU && face->os2.fsSelection & 256 )
-    {
-      GET_NAME( PREFERRED_FAMILY, &face->root.family_name );
-      if ( !face->root.family_name )
-        GET_NAME( FONT_FAMILY, &face->root.family_name );
-
-      GET_NAME( PREFERRED_SUBFAMILY, &face->root.style_name );
-      if ( !face->root.style_name )
-        GET_NAME( FONT_SUBFAMILY, &face->root.style_name );
-    }
-    else
-    {
-      GET_NAME( WWS_FAMILY, &face->root.family_name );
-      if ( !face->root.family_name )
-        GET_NAME( PREFERRED_FAMILY, &face->root.family_name );
-      if ( !face->root.family_name )
-        GET_NAME( FONT_FAMILY, &face->root.family_name );
-
-      GET_NAME( WWS_SUBFAMILY, &face->root.style_name );
-      if ( !face->root.style_name )
-        GET_NAME( PREFERRED_SUBFAMILY, &face->root.style_name );
-      if ( !face->root.style_name )
-        GET_NAME( FONT_SUBFAMILY, &face->root.style_name );
-    }
+    /* FreeType don't have generalized method which distinguish Arial Black from Arial.       */
+    /* In our QtWebKit for Windows FreeType edition, the problem cause using Arial Black font */
+    /* when a content have "font-family: Arial".                                              */
+    /* The Arial problem due to Arial and Arial Black return "Arial" as preferred family.     */
+    /* We read font family, not preferred family, for the workaround.                         */
+    /* The newer freetype have ignore preferred option.                                       */
+    /* The optiom may fix this bug, but you should consider WWS family.                       */
+    GET_NAME( FONT_FAMILY, &face->root.family_name );
+    GET_NAME( FONT_SUBFAMILY, &face->root.style_name );
 
     /* now set up root fields */
     {
