@@ -447,7 +447,7 @@ void GraphicsContext::drawHighlightForText(const Font& font, const TextRun& run,
 	fillRect(rect, color, colorSpace);    
 	} else if (settings.value("selectionStyle", "underline") == "overline") {
 		FloatRect rect(font.selectionRectForText(run, point, h, from, to));
-		rect.setY(rect.y() + 3);
+		rect.setY(rect.y());
 		rect.setHeight(3);
 		rect.setWidth(rect.width() - 1);
 		Color color(0,0,0);
