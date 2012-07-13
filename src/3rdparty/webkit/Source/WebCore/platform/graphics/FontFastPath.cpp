@@ -40,16 +40,62 @@ using namespace Unicode;
 
 namespace WebCore {
 
-GlyphData Font::changeGlyphDataFromGlyphDataByTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber) const
+#if ENABLE(EPUB)
+GlyphData Font::glyphDataForTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber, TextOrientation textOrientation) const
 {
-    TextOrientation textOrientation = m_fontDescription.textOrientation();
-    if (textOrientation == TextOrientationSidewaysLeft
-        || textOrientation == TextOrientationSideways) {
-        // FIXME: For now just support TextOrientationSidewaysRight.
-        textOrientation = TextOrientationSidewaysRight;
+    if (data.fontData->platformData().orientation() == Horizontal || data.fontData->isTextOrientationFallback())
+        return data;
+
+    if (textOrientation == TextOrientationSidewaysRight) {
+        const SimpleFontData* verticalRightFontData = data.fontData->verticalRightOrientationFontData();
+        GlyphPageTreeNode* verticalRightNode = GlyphPageTreeNode::getRootChild(verticalRightFontData, pageNumber);
+        const GlyphPage* verticalRightPage = verticalRightNode->page();
+        if (verticalRightPage) {
+            GlyphData verticalRightData = verticalRightPage->glyphDataForCharacter(c);
+            // We should just use the horizontal glyph.
+            if (verticalRightData.fontData)
+                return verticalRightData;
+        }
+        // Shouldn't be possible to even reach this point.
+        ASSERT_NOT_REACHED();
+    } else if (textOrientation == TextOrientationUpright || isCJKIdeographOrSymbol(c)) {
+        if (!data.fontData->hasVerticalGlyphs()) {
+            // Use the broken ideograph font data. The broken ideograph font will use the horizontal width of glyphs
+            // to make sure you get a square (even for broken glyphs like symbols used for punctuation).
+            const SimpleFontData* brokenIdeographFontData = data.fontData->brokenIdeographFontData();
+            GlyphPageTreeNode* brokenIdeographNode = GlyphPageTreeNode::getRootChild(brokenIdeographFontData, pageNumber);
+            const GlyphPage* brokenIdeographPage = brokenIdeographNode->page();
+            if (brokenIdeographPage) {
+                GlyphData brokenIdeographData = brokenIdeographPage->glyphDataForCharacter(c);
+                if (brokenIdeographData.fontData)
+                    return brokenIdeographData;
+            }
+
+            // Shouldn't be possible to even reach this point.
+            ASSERT_NOT_REACHED();
+        }
+    } else {
+        const SimpleFontData* verticalRightFontData = data.fontData->verticalRightOrientationFontData();
+        GlyphPageTreeNode* verticalRightNode = GlyphPageTreeNode::getRootChild(verticalRightFontData, pageNumber);
+        const GlyphPage* verticalRightPage = verticalRightNode->page();
+        if (verticalRightPage) {
+            GlyphData verticalRightData = verticalRightPage->glyphDataForCharacter(c);
+            // We should just use the horizontal glyph.
+            if (verticalRightData.fontData)
+                return verticalRightData;
+        }
+        // Shouldn't be possible to even reach this point.
+        ASSERT_NOT_REACHED();
     }
+    return data;
+}
+#else
+GlyphData Font::glyphDataForTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber, TextOrientation textOrientation) const
+{
+    if (data.fontData->platformData().orientation() == Horizontal || data.fontData->isTextOrientationFallback())
+        return data;
+
     if (textOrientation != TextOrientationSidewaysRight
-        && textOrientation != TextOrientationSidewaysLeft
         && isCJKIdeographOrSymbol(c)) {
         if (!data.fontData->hasVerticalGlyphs()) {
             // Use the broken ideograph font data. The broken ideograph font will use the horizontal width of glyphs
@@ -104,6 +150,7 @@ GlyphData Font::changeGlyphDataFromGlyphDataByTextOrientation(GlyphPage* page, G
     }
     return data;    
 }
+#endif
 
 GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant variant) const
 {
@@ -135,6 +182,12 @@ GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant va
             m_fontList->m_pageZero = node;
     }
 
+    TextOrientation textOrientation = m_fontDescription.textOrientation();
+    if (textOrientation == TextOrientationSidewaysLeft
+        || textOrientation == TextOrientationSideways) {
+        // FIXME: For now just support TextOrientationSidewaysRight.
+        textOrientation = TextOrientationSidewaysRight;
+    }
     GlyphPage* page;
     if (variant == NormalVariant) {
         // Fastest loop, for the common case (normal variant).
@@ -142,11 +195,9 @@ GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant va
             page = node->page();
             if (page) {
                 GlyphData data = page->glyphDataForCharacter(c);
-                if (data.fontData && (data.fontData->platformData().orientation() == Horizontal || data.fontData->isTextOrientationFallback()))
-                    return data;
-                
+
                 if (data.fontData)
-                    return changeGlyphDataFromGlyphDataByTextOrientation(page, data, c, pageNumber);
+                    return glyphDataForTextOrientation(page, data, c, pageNumber, textOrientation);
 
                 if (node->isSystemFallback())
                     break;
@@ -177,7 +228,7 @@ GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant va
                         GlyphData data = variantPage->glyphDataForCharacter(c);
                         if (data.fontData) {
                             if (variant == SmallCapsVariant)
-                                return changeGlyphDataFromGlyphDataByTextOrientation(page, data, c, pageNumber);
+                                return glyphDataForTextOrientation(page, data, c, pageNumber, textOrientation);
                             else
                                 return data;
                         }

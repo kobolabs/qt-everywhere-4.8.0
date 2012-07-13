@@ -140,7 +140,7 @@ public:
     const SimpleFontData* primaryFont() const;
     const FontData* fontDataAt(unsigned) const;
     GlyphData glyphDataForCharacter(UChar32, bool mirror, FontDataVariant = AutoVariant) const;
-    GlyphData changeGlyphDataFromGlyphDataByTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber) const;
+    GlyphData glyphDataForTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber, TextOrientation textOrientation) const;
     bool primaryFontHasGlyphForCharacter(UChar32) const;
 
     static bool isCJKIdeograph(UChar32);
