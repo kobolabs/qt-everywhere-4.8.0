@@ -2250,8 +2250,9 @@ void QWebPage::clearSelection() {
 }
 
 void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries) {
-	if (one.y() > two.y() || (one.y() == two.y() && one.x() >= two.x()))// || (two-one).manhattanLength() < 10)
+	if (one == two) {
 		return;
+	}
 	d->createMainFrame();
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
 
@@ -2264,7 +2265,7 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoun
 	HitTestRequest tworequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
 	HitTestResult twoResult(twopoint);
 	frame->document()->renderView()->layer()->hitTest(tworequest, twoResult);
-	
+
 	Node *oneNode = oneResult.innerNode();
 	Node *twoNode = twoResult.innerNode();
 	if (oneNode && twoNode && oneNode->renderer() && twoNode->renderer()) {
