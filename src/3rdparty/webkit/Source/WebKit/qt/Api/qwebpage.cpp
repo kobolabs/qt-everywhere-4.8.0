@@ -2269,6 +2269,10 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoun
 	Node *oneNode = oneResult.innerNode();
 	Node *twoNode = twoResult.innerNode();
 	if (oneNode && twoNode && oneNode->renderer() && twoNode->renderer()) {
+		if ((qMax(oneNode->getRect().width(), twoNode->getRect().width()) > viewportSize().width()) ||
+		    (qMax(oneNode->getRect().height(), twoNode->getRect().height()) > viewportSize().height())) {
+			return;
+		}
 		VisiblePosition onepos(oneNode->renderer()->positionForPoint(oneResult.localPoint()));
 		VisiblePosition twopos(twoNode->renderer()->positionForPoint(twoResult.localPoint()));
 		VisibleSelection newSelection;
