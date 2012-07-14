@@ -352,6 +352,9 @@ void RenderText::absoluteRectsForRange(Vector<IntRect>& rects, unsigned start, u
                         r.setX(box->x());
                     }
                 }
+                if (!box->isHorizontal()) {
+                    r.setX(box->renderer()->containingBlock()->width() - r.x() - box->selectionHeight() + box->width());
+                }
                 rects.append(localToAbsoluteQuad(FloatQuad(r)).enclosingBoundingBox());
             }
         }

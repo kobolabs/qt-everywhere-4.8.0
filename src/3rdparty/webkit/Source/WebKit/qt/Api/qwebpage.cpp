@@ -2302,27 +2302,35 @@ QPair<QRect, QRect> QWebPage::selectionEndPoints() {
 	}
 	IntRect startRect = rects.first();
 	IntRect endRect = rects.last();
-	QRect startQRect(startRect.x(), startRect.y(), 1, startRect.height());
-	QRect endQRect(endRect.x() + endRect.width(), endRect.y(), 1, endRect.height());
+	QString writingMode = mainFrame()->documentElement().styleProperty("-epub-writing-mode", QWebElement::ComputedStyle);
+	if (writingMode == "vertical-rl" || writingMode == "tb-rl") {
+		QRect startQRect(startRect.x(), startRect.y(), startRect.width(), startRect.height());
+		QRect endQRect(endRect.x(), endRect.y(), qMax(endRect.width(), 1), qMax(endRect.height(), 1));
+		return QPair<QRect, QRect>(startQRect, endQRect);
+	}
+	else {
+		QRect startQRect(startRect.x(), startRect.y(), 1, startRect.height());
+		QRect endQRect(endRect.x() + endRect.width(), endRect.y(), 1, endRect.height());
 
-	// this is a bit awkward...
-	// The rects returned by the Range are taller than what we want, but the
-	// rects returned by absoluteCaretBounds are sometimes totally wrong
-	// (specifically, on selecting a single word at the end of certain lines,
-	// it gives an end rect that's at the end of the current DOM node).
-	// So we take the height of the caretBounds rects and the position of the
-	// Range rects, and mash them together into something reasonable.
-	VisiblePosition start = selection.visibleStart();
-	VisiblePosition end = selection.visibleEnd();
-	IntRect startRect2 = start.absoluteCaretBounds();
-	IntRect endRect2 = end.absoluteCaretBounds();
-	QRect startQRect2(startRect2.x(), startRect2.y(), startRect2.width(), startRect2.height());
-	QRect endQRect2(endRect2.x(), endRect2.y(), endRect2.width(), endRect2.height());
-	
-	QRect startQRect3(startQRect.x(), startQRect.y() + (startQRect.height() - startQRect2.height()), 1, startQRect2.height());
-	QRect endQRect3(endQRect.x(), endQRect.y() + (endQRect.height() - endQRect2.height()), 1, endQRect2.height());
-	
-	return QPair<QRect, QRect>(startQRect3,endQRect3);
+		// this is a bit awkward...
+		// The rects returned by the Range are taller than what we want, but the
+		// rects returned by absoluteCaretBounds are sometimes totally wrong
+		// (specifically, on selecting a single word at the end of certain lines,
+		// it gives an end rect that's at the end of the current DOM node).
+		// So we take the height of the caretBounds rects and the position of the
+		// Range rects, and mash them together into something reasonable.
+		VisiblePosition start = selection.visibleStart();
+		VisiblePosition end = selection.visibleEnd();
+		IntRect startRect2 = start.absoluteCaretBounds();
+		IntRect endRect2 = end.absoluteCaretBounds();
+		QRect startQRect2(startRect2.x(), startRect2.y(), startRect2.width(), startRect2.height());
+		QRect endQRect2(endRect2.x(), endRect2.y(), endRect2.width(), endRect2.height());
+
+		QRect startQRect3(startQRect.x(), startQRect.y() + (startQRect.height() - startQRect2.height()), 1, startQRect2.height());
+		QRect endQRect3(endQRect.x(), endQRect.y() + (endQRect.height() - endQRect2.height()), 1, endQRect2.height());
+
+		return QPair<QRect, QRect>(startQRect3,endQRect3);
+	}
 }
 
 /*!

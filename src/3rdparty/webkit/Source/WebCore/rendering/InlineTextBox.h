@@ -96,9 +96,10 @@ public:
 private:
     int selectionTop();
     int selectionBottom();
-    int selectionHeight();
+
 
 public:
+    int selectionHeight();
     virtual IntRect calculateBoundaries() const { return IntRect(x(), y(), width(), height()); }
 
     virtual IntRect selectionRect(int absx, int absy, int startPos, int endPos);
