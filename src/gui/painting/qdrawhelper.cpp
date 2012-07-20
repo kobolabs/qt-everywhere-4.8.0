@@ -3694,8 +3694,7 @@ Q_STATIC_TEMPLATE_FUNCTION void blend_untransformed_generic(int count, const QSp
                         uint *dest = op.dest_fetch ? op.dest_fetch(buffer, data->rasterBuffer, x, spans->y, l) : buffer;
                         op.func(dest, src, l, coverage);
 #if defined(Q_WS_QWS)
-                        // TODO: Implement an if-condition to run this block optionally
-                        if (data->bilinear) {
+                        if (data->dither) {
                             ditherAndSharpenLine(dest, sy, l);
                         }
 #endif

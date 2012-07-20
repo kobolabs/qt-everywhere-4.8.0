@@ -6652,6 +6652,7 @@ QImage QImage::transformed(const QTransform &matrix, Qt::TransformationMode mode
         if (mode == Qt::SmoothTransformation) {
             p.setRenderHint(QPainter::Antialiasing);
             p.setRenderHint(QPainter::SmoothPixmapTransform);
+            p.setRenderHint(QPainter::Dithering);
         }
         p.setTransform(mat);
         p.drawImage(QPoint(0, 0), *this);

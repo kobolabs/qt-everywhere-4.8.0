@@ -1482,6 +1482,8 @@ void QPainterReplayer::process(const QPaintBufferCommand &cmd)
             painter->setRenderHint(QPainter::SmoothPixmapTransform, nh & QPainter::SmoothPixmapTransform);
         if (xored & QPainter::NonCosmeticDefaultPen)
             painter->setRenderHint(QPainter::NonCosmeticDefaultPen, nh & QPainter::NonCosmeticDefaultPen);
+        if (xored & QPainter::Dithering)
+            painter->setRenderHint(QPainter::Dithering, nh & QPainter::Dithering);
         break; }
 
     case QPaintBufferPrivate::Cmd_SetOpacity: {

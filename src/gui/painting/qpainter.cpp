@@ -474,6 +474,7 @@ void QPainterPrivate::draw_helper(const QPainterPath &originalPath, DrawOperatio
     p.setRenderHint(QPainter::Antialiasing, state->renderHints & QPainter::Antialiasing);
     p.setRenderHint(QPainter::SmoothPixmapTransform,
                     state->renderHints & QPainter::SmoothPixmapTransform);
+    p.setRenderHint(QPainter::Dithering, state->renderHints & QPainter::Dithering);
 
     p.drawPath(originalPath);
 
@@ -1456,6 +1457,8 @@ void QPainterPrivate::updateState(QPainterState *newState)
     \value NonCosmeticDefaultPen The engine should interpret pens with a width
     of 0 (which otherwise enables QPen::isCosmetic()) as being a non-cosmetic
     pen with a width of 1.
+
+    \value Dithering Enables 3x3 ordered dithering
 
     \sa renderHints(), setRenderHint(), {QPainter#Rendering
     Quality}{Rendering Quality}, {Concentric Circles Example}

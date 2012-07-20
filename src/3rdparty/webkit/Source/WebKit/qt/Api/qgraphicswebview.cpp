@@ -56,7 +56,7 @@ public:
         : q(parent)
         , page(0)
         , resizesToContents(false)
-        , renderHints(QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform) {}
+        , renderHints(QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform | QPainter::Dithering) {}
 
     virtual ~QGraphicsWebViewPrivate();
 

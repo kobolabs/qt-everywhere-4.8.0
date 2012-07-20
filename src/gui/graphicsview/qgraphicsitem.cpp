@@ -9740,6 +9740,9 @@ void QGraphicsPixmapItem::paint(QPainter *painter, const QStyleOptionGraphicsIte
     painter->setRenderHint(QPainter::SmoothPixmapTransform,
                            (d->transformationMode == Qt::SmoothTransformation));
 
+    painter->setRenderHint(QPainter::Dithering,
+                           (d->transformationMode == Qt::SmoothTransformation));
+
     painter->drawPixmap(d->offset, d->pixmap);
 
     if (option->state & QStyle::State_Selected)

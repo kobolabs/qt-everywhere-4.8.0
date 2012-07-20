@@ -39,7 +39,7 @@ public:
     QWebViewPrivate(QWebView *view)
         : view(view)
         , page(0)
-        , renderHints(QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform)
+        , renderHints(QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform | QPainter::Dithering)
     {
         Q_ASSERT(view);
     }

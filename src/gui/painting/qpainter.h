@@ -95,7 +95,8 @@ public:
         TextAntialiasing = 0x02,
         SmoothPixmapTransform = 0x04,
         HighQualityAntialiasing = 0x08,
-        NonCosmeticDefaultPen = 0x10
+        NonCosmeticDefaultPen = 0x10,
+        Dithering = 0x20
     };
 
     Q_DECLARE_FLAGS(RenderHints, RenderHint)

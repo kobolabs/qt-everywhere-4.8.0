@@ -272,7 +272,7 @@ void GraphicsContext::platformInit(PlatformGraphicsContext* painter)
     pen.setColor(strokeColor());
     pen.setJoinStyle(toQtLineJoin(MiterJoin));
     painter->setPen(pen);
-    setImageInterpolationQuality(InterpolationHigh);
+    setImageInterpolationQuality(InterpolationHighWithDither);
 }
 
 void GraphicsContext::platformDestroy()
@@ -1384,6 +1384,13 @@ void GraphicsContext::setImageInterpolationQuality(InterpolationQuality quality)
     case InterpolationHigh:
         // use the filter
         m_data->p()->setRenderHint(QPainter::SmoothPixmapTransform, true);
+        break;
+    case InterpolationHighWithDither:
+        // use the filter and do ordered dither
+        m_data->p()->setRenderHint(QPainter::SmoothPixmapTransform, true);
+        m_data->p()->setRenderHint(QPainter::Dithering, true);
+        // Treat as InterpolationHigh, for the rest of the rendering code
+        m_data->imageInterpolationQuality = InterpolationHigh;
         break;
 
     case InterpolationDefault:
