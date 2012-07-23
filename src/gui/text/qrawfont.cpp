@@ -437,6 +437,16 @@ QVector<QPointF> QRawFont::advancesForGlyphIndexes(const QVector<quint32> &glyph
     return advances;
 }
 
+QRectF QRawFont::boundsForGlyph(const quint32 glyph) const
+{
+    if (!isValid())
+        return QRectF();
+
+    glyph_metrics_t metrics = d->fontEngine->boundingBox(glyph);
+
+    return QRectF(metrics.x.toReal(), metrics.y.toReal(), metrics.width.toReal(), metrics.height.toReal());
+}
+
 /*!
    Returns the hinting preference used to construct this QRawFont.
 

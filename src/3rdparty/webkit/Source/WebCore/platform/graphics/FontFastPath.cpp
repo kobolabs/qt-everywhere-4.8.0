@@ -40,6 +40,12 @@ using namespace Unicode;
 
 namespace WebCore {
 
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+// This is ugly workaround for emphasis mark of combined text.
+// Do not use this variable for other purpose.
+static SimpleFontData fallbackFontData;
+#endif
+
 #if ENABLE(EPUB)
 GlyphData Font::glyphDataForTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber, TextOrientation textOrientation) const
 {
@@ -291,6 +297,15 @@ GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant va
         return data;
     }
 
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    if (c == objectReplacementCharacter) {
+        fallbackFontData.setPlatformData(primaryFont()->missingGlyphData().fontData->platformData());
+        fallbackFontData.setSpecialCharacter(c);
+        GlyphData data(0, &fallbackFontData);
+        page->setGlyphDataForCharacter(c, data.glyph, data.fontData);
+        return data;
+    }
+#endif
     // Even system fallback can fail; use the missing glyph in that case.
     // FIXME: It would be nicer to use the missing glyph from the last resort font instead.
     GlyphData data = primaryFont()->missingGlyphData();
@@ -473,6 +488,10 @@ void Font::drawGlyphBuffer(GraphicsContext* context, const GlyphBuffer& glyphBuf
 
 inline static float offsetToMiddleOfGlyph(const SimpleFontData* fontData, Glyph glyph)
 {
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    if (fontData->specialCharacter() == objectReplacementCharacter)
+        return 0;
+#endif
     if (fontData->platformData().orientation() == Horizontal) {
         FloatRect bounds = fontData->boundsForGlyph(glyph);
         return bounds.x() + bounds.width() / 2;
@@ -507,10 +526,18 @@ void Font::drawEmphasisMarks(GraphicsContext* context, const GlyphBuffer& glyphB
     for (int i = 0; i + 1 < glyphBuffer.size(); ++i) {
         float middleOfNextGlyph = offsetToMiddleOfGlyphAtIndex(glyphBuffer, i + 1);
         float advance = glyphBuffer.advanceAt(i) - middleOfLastGlyph + middleOfNextGlyph;
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+        markBuffer.add((glyphBuffer.glyphAt(i) || glyphBuffer.fontDataAt(i)->specialCharacter() == objectReplacementCharacter) ? markGlyph : spaceGlyph, markFontData, advance);
+#else
         markBuffer.add(glyphBuffer.glyphAt(i) ? markGlyph : spaceGlyph, markFontData, advance);
+#endif
         middleOfLastGlyph = middleOfNextGlyph;
     }
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    markBuffer.add((glyphBuffer.glyphAt(glyphBuffer.size() - 1) || glyphBuffer.fontDataAt(glyphBuffer.size() - 1)->specialCharacter() == objectReplacementCharacter) ? markGlyph : spaceGlyph, markFontData, 0);
+#else
     markBuffer.add(glyphBuffer.glyphAt(glyphBuffer.size() - 1) ? markGlyph : spaceGlyph, markFontData, 0);
+#endif
 
     drawGlyphBuffer(context, markBuffer, startPoint);
 }

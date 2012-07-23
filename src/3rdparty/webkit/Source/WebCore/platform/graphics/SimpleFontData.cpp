@@ -119,6 +119,26 @@ SimpleFontData::SimpleFontData(PassOwnPtr<SVGFontData> svgFontData, int size, bo
     determinePitch();
     m_missingGlyphData.fontData = this;
     m_missingGlyphData.glyph = 0;
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    m_specialCharacter = 0;
+#endif
+}
+#endif
+
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+SimpleFontData::SimpleFontData()
+    : m_maxCharWidth(-1)
+    , m_avgCharWidth(-1)
+    , m_treatAsFixedPitch(false)
+    , m_isCustomFont(false)
+    , m_isLoading(false)
+    , m_isTextOrientationFallback(false)
+    , m_isBrokenIdeographFallback(false)
+    , m_hasVerticalGlyphs(false)
+{
+    platformInit();
+    platformGlyphInit();
+    platformCharWidthInit();
 }
 #endif
 
@@ -155,6 +175,9 @@ void SimpleFontData::platformGlyphInit()
         m_zeroWidthSpaceGlyph = 0;
         m_missingGlyphData.fontData = this;
         m_missingGlyphData.glyph = 0;
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+        m_specialCharacter = 0;
+#endif
         return;
     }
 
@@ -180,6 +203,9 @@ void SimpleFontData::platformGlyphInit()
 
     m_missingGlyphData.fontData = this;
     m_missingGlyphData.glyph = 0;
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    m_specialCharacter = 0;
+#endif
 }
 #endif
 

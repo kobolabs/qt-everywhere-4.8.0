@@ -103,10 +103,15 @@ SimpleFontData* SimpleFontData::emphasisMarkFontData(const FontDescription& font
     return m_derivedFontData->emphasisMark.get();
 }
 
-FloatRect SimpleFontData::platformBoundsForGlyph(Glyph) const
+FloatRect SimpleFontData::platformBoundsForGlyph(Glyph glyph) const
 {
-    notImplemented();
-    return FloatRect();
+    if (!platformData().size())
+        return FloatRect();
+
+    QRectF rect = platformData().rawFont().boundsForGlyph(glyph);
+    ASSERT(!rect.isEmpty());
+
+    return FloatRect(rect.x(), rect.y(), rect.width(), rect.height());
 }
 #else
 bool SimpleFontData::containsCharacters(const UChar*, int) const

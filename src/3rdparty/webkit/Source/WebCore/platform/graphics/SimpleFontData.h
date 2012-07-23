@@ -75,9 +75,17 @@ public:
 #if ENABLE(SVG_FONTS)
     SimpleFontData(PassOwnPtr<SVGFontData>, int size, bool syntheticBold, bool syntheticItalic);
 #endif
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    SimpleFontData();
+#endif
     virtual ~SimpleFontData();
 
     const FontPlatformData& platformData() const { return m_platformData; }
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    void setPlatformData(const FontPlatformData& platformData) { m_platformData = platformData; }
+    const UChar specialCharacter() const { return m_specialCharacter; }
+    void setSpecialCharacter(const UChar schar) { m_specialCharacter = schar; }
+#endif
 
     SimpleFontData* smallCapsFontData(const FontDescription&) const;
     SimpleFontData* emphasisMarkFontData(const FontDescription&) const;
@@ -232,6 +240,9 @@ private:
 
     GlyphData m_missingGlyphData;
 
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    UChar m_specialCharacter;
+#endif
     struct DerivedFontData {
         static PassOwnPtr<DerivedFontData> create(bool forCustomFont);
         ~DerivedFontData();

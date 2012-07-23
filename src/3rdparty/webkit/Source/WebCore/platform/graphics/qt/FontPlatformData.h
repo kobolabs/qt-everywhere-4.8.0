@@ -107,6 +107,7 @@ public:
     {
         m_data->orientation = orientation;
     }
+    FontPlatformData() { }
 #endif
     FontPlatformData(WTF::HashTableDeletedValueType)
         : m_data(adoptRef(new FontPlatformDataPrivate()))
