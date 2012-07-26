@@ -2182,16 +2182,26 @@ QString WriteInitialization::pixCall(const QString &t, const QString &text) cons
         return rc;
     }
 
+    /*
     QString pixFunc = m_uic->pixmapFunction();
     if (pixFunc.isEmpty())
-        pixFunc = QLatin1String("QString::fromUtf8");
+	pixFunc = QLatin1String("QString::fromUtf8");
 
     type += QLatin1Char('(');
     type += pixFunc;
     type += QLatin1Char('(');
     type += fixString(text, m_dindent);
     type += QLatin1String("))");
+
+    fprintf(stderr, "Type: %s", qPrintable(type));
     return type;
+    */
+
+    QString pixFunc = QLatin1String("QString::fromUtf8(");
+    pixFunc += fixString(text, m_dindent);
+    pixFunc += QLatin1String(")");
+
+    return pixFunc;
 }
 
 void WriteInitialization::initializeComboBox3(DomWidget *w)

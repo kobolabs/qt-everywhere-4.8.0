@@ -120,7 +120,8 @@ public:
 
 public Q_SLOTS:
     void setText(const QString &);
-    void setPixmap(const QPixmap &);
+    virtual void setPixmap(const QPixmap &);
+    virtual void setPixmap(const QString &);
 #ifndef QT_NO_PICTURE
     void setPicture(const QPicture &);
 #endif

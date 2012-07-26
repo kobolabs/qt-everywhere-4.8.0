@@ -432,6 +432,11 @@ void QLabel::setPixmap(const QPixmap &pixmap)
     d->updateLabel();
 }
 
+void QLabel::setPixmap(const QString &pixmap)
+{
+	setPixmap(QPixmap(pixmap));
+}
+
 const QPixmap *QLabel::pixmap() const
 {
     Q_D(const QLabel);
