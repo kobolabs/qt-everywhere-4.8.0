@@ -296,11 +296,16 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
                 newFreetype->fontData = qt_fontdata_from_index(idx.toInt(&ok));
                 if (!ok)
                     newFreetype->fontData = QByteArray();
-            } else if (!(file.fileEngine()->fileFlags(QAbstractFileEngine::FlagsMask) & QAbstractFileEngine::LocalDiskFlag)) {
+            } else if ((file.fileEngine()->fileFlags(QAbstractFileEngine::FlagsMask) & QAbstractFileEngine::LocalDiskFlag)) {
                 if (!file.open(QIODevice::ReadOnly)) {
                     return 0;
                 }
-                newFreetype->fontData = file.readAll();
+                QByteArray data = file.readAll();
+                if (QFontDatabase::decryptFontData != NULL) {
+                    newFreetype->fontData = QFontDatabase::decryptFontData(data);
+                } else {
+                    newFreetype->fontData = data;
+                }
             }
         } else {
             newFreetype->fontData = fontData;

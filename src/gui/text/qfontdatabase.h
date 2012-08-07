@@ -151,6 +151,9 @@ public:
 
     static bool supportsThreadedFontRendering();
 
+    typedef QByteArray (*decryptor)(const QByteArray &fontData);
+    static decryptor decryptFontData;
+
 private:
     static void createDatabase();
     static void parseFontName(const QString &name, QString &foundry, QString &family);
