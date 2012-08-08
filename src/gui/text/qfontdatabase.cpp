@@ -848,10 +848,17 @@ QStringList QFontDatabasePrivate::addTTFile(const QByteArray &file, const QByteA
     int index = 0;
     int numFaces = 0;
     do {
+        QByteArray data(fontData);
         FT_Face face;
         FT_Error error;
-        if (!fontData.isEmpty()) {
-            error = FT_New_Memory_Face(library, (const FT_Byte *)fontData.constData(), fontData.size(), index, &face);
+        if (QFontDatabase::decryptFontData != NULL) {
+            QFile f(QString::fromUtf8(file));
+            f.open(QIODevice::ReadOnly);
+            data = QFontDatabase::decryptFontData(f);
+            f.close();
+        }
+        if (!data.isEmpty()) {
+            error = FT_New_Memory_Face(library, (const FT_Byte *)data.constData(), data.size(), index, &face);
         } else {
             error = FT_New_Face(library, file, index, &face);
         }

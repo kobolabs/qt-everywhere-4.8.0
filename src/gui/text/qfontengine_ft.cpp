@@ -300,11 +300,10 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
                 if (!file.open(QIODevice::ReadOnly)) {
                     return 0;
                 }
-                QByteArray data = file.readAll();
                 if (QFontDatabase::decryptFontData != NULL) {
-                    newFreetype->fontData = QFontDatabase::decryptFontData(data);
+                    newFreetype->fontData = QFontDatabase::decryptFontData(file);
                 } else {
-                    newFreetype->fontData = data;
+                    newFreetype->fontData = file.readAll();
                 }
             }
         } else {

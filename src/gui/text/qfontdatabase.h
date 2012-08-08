@@ -44,6 +44,7 @@
 
 #include <QtGui/qwindowdefs.h>
 #include <QtCore/qstring.h>
+#include <QtCore/qfile.h>
 #include <QtGui/qfont.h>
 #ifdef QT3_SUPPORT
 #include <QtCore/qstringlist.h>
@@ -151,7 +152,7 @@ public:
 
     static bool supportsThreadedFontRendering();
 
-    typedef QByteArray (*decryptor)(const QByteArray &fontData);
+    typedef QByteArray (*decryptor)(QFile &font);
     static decryptor decryptFontData;
 
 private:
