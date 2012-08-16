@@ -136,15 +136,61 @@ static uint * QT_FASTCALL destFetchRGB16(uint *buffer, QRasterBuffer *rasterBuff
 
 #define FAST_DIV3(x, ret) { unsigned short temp1 = ((x) >> 2) + ((x) >> 4); unsigned short temp2 = (x) - temp1 * 3; ret = temp1 + (11 * temp2 >> 5); }
 
-static int QT_FASTCALL toGrayscale(uint *buffer)
+template <class T>
+Q_STATIC_TEMPLATE_FUNCTION
+int toGrayscale(T* buffer)
 {
-    uchar r = buffer[0] & 0x000000FF;
-    uchar g = (buffer[0] & 0x0000FF00) >> 8;
-    uchar b = (buffer[0] & 0x00FF0000) >> 16;
+    return buffer[0];
+}
+
+template <>
+Q_STATIC_TEMPLATE_SPECIALIZATION
+int toGrayscale(uint *buffer)
+{
+    int r = buffer[0] & 0x000000FF;
+    int g = (buffer[0] & 0x0000FF00) >> 8;
+    int b = (buffer[0] & 0x00FF0000) >> 16;
     return ((r * 77) + (g * 151) + (b * 28)) >> 8;
 }
 
-static void QT_FASTCALL ditherAndSharpenLine(uint *buffer, int row, int length)
+template <>
+Q_STATIC_TEMPLATE_SPECIALIZATION
+int toGrayscale(ushort *buffer)
+{
+    int r = ((buffer[0] & 0xf800) >> 8);
+    int g = ((buffer[0] & 0x07e0) >> 3); // only keep 5 bit
+    int b = ((buffer[0] & 0x001f)) << 3;
+    return ((r * 77) + (g * 151) + (b * 28)) >> 8;
+}
+
+template <class T>
+Q_STATIC_TEMPLATE_FUNCTION
+void ditherBuffer(T *buffer, int prevPix)
+{
+    Q_UNUSED(buffer);
+    Q_UNUSED(prevPix);
+}
+
+template <>
+Q_STATIC_TEMPLATE_SPECIALIZATION
+void ditherBuffer(uint *buffer, int prevPix)
+{
+    *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
+}
+
+#include <iostream>
+template <>
+Q_STATIC_TEMPLATE_SPECIALIZATION
+void ditherBuffer(ushort *buffer, int prevPix)
+{
+    int newRandB = prevPix >> 3;
+    int newG = prevPix >> 2;
+    *buffer = (newRandB << 11) | (newG << 5) | newRandB;
+}
+
+template <class T>
+Q_STATIC_TEMPLATE_FUNCTION
+void ditherAndSharpenLine(T *buffer, int row, int length)
 {
     int diffs[3];
     int pix;
@@ -152,7 +198,7 @@ static void QT_FASTCALL ditherAndSharpenLine(uint *buffer, int row, int length)
     int average;
 
     // initial setup for line.
-    pix = toGrayscale(buffer);
+    pix = toGrayscale<T>(buffer);
     buffer++;
 
     diffs[0] = diffs[1] = diffs[2] = pix;
@@ -162,7 +208,7 @@ static void QT_FASTCALL ditherAndSharpenLine(uint *buffer, int row, int length)
     for (int col = 1; col < length - 1; ++col) {
         int idxC = col % 0x3;
         uchar threshold = ORDERED_DITHER_MATRIX3x3[idxC + (0x3 * idxR)];
-        pix = toGrayscale(buffer);
+        pix = toGrayscale<T>(buffer);
 
         // update average of 3 pixels in col
         diffs[ idxC ] = pix;
@@ -181,7 +227,10 @@ static void QT_FASTCALL ditherAndSharpenLine(uint *buffer, int row, int length)
         t = t - l * 10;
         prevPix = (l + (t >= threshold)) << 4;
         prevPix = prevPix & 0x100 ? 0xff : prevPix;
-        *buffer++ = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
+
+        ditherBuffer<T>(buffer, prevPix);
+        buffer++;
+
         prevPix = pix;
     }
 }
@@ -1250,7 +1299,7 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
 
 #if defined(Q_WS_QWS)
     // Do ordered dithering 3x3,16
-    ditherAndSharpenLine(buffer, y, length);
+    ditherAndSharpenLine< uint >(buffer, y, length);
 #endif
     return buffer;
 }
@@ -3695,7 +3744,7 @@ Q_STATIC_TEMPLATE_FUNCTION void blend_untransformed_generic(int count, const QSp
                         op.func(dest, src, l, coverage);
 #if defined(Q_WS_QWS)
                         if (data->dither) {
-                            ditherAndSharpenLine(dest, sy, l);
+                            ditherAndSharpenLine< uint >(dest, sy, l);
                         }
 #endif
                         if (op.dest_store)
@@ -5001,6 +5050,11 @@ void QT_FASTCALL blendUntransformed(int count, const QSpan *spans, void *userDat
                 const SRC *src = (SRC*)data->texture.scanLine(sy) + sx;
                 if (modeSource && coverage == 255) {
                     qt_memconvert<DST, SRC>(dest, src, length);
+#if defined(Q_WS_QWS)
+                    if (data->dither && (sizeof(DST) == 2) && (length >= 3)) {
+                        ditherAndSharpenLine< ushort >(reinterpret_cast< ushort* > (dest), sy, length);
+                    }
+#endif
                 } else if (sizeof(DST) == 3 && sizeof(SRC) == 3 && length >= 3 &&
                            (quintptr(dest) & 3) == (quintptr(src) & 3))
                 {
