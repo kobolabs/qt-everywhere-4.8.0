@@ -5636,6 +5636,15 @@ void QWidgetPrivate::drawWidget(QPaintDevice *pdev, const QRegion &rgn, const QP
 #endif
                                 , sharedPainter, backingStore);
     }
+    
+    if(q->property("inverted").toBool())
+    {
+        QPainter p(pdev);
+        QBrush brush(Qt::white);
+        p.setBrush(brush);
+        p.setCompositionMode(QPainter::CompositionMode_Difference);
+        p.drawRect(offset.x(),offset.y(),q->width(),q->height());
+    }
 }
 
 void QWidgetPrivate::render(QPaintDevice *target, const QPoint &targetOffset,
