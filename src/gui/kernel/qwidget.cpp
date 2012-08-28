@@ -5641,6 +5641,8 @@ void QWidgetPrivate::drawWidget(QPaintDevice *pdev, const QRegion &rgn, const QP
     {
         QPainter p(pdev);
         QBrush brush(Qt::white);
+        toBePainted.translate(offset.x(),offset.y());
+        p.setClipRegion(toBePainted);
         p.setBrush(brush);
         p.setCompositionMode(QPainter::CompositionMode_Difference);
         p.drawRect(offset.x(),offset.y(),q->width(),q->height());
