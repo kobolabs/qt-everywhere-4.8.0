@@ -1299,7 +1299,9 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
 
 #if defined(Q_WS_QWS)
     // Do ordered dithering 3x3,16
-    ditherAndSharpenLine< uint >(buffer, y, length);
+    if (data->dither) {
+        ditherAndSharpenLine< uint >(buffer, y, length);
+    }
 #endif
     return buffer;
 }
