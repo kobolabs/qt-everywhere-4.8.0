@@ -299,6 +299,9 @@ bool CachedResourceLoader::canRequest(CachedResource::Type type, const KURL& url
 
 CachedResource* CachedResourceLoader::requestResource(CachedResource::Type type, const String& resourceURL, const String& charset, ResourceLoadPriority priority, bool forPreload)
 {
+    if (resourceURL == "") {
+        return 0;
+    }
     KURL url = m_document->completeURL(resourceURL);
     
     LOG(ResourceLoading, "CachedResourceLoader::requestResource '%s', charset '%s', priority=%d, forPreload=%u", url.string().latin1().data(), charset.latin1().data(), priority, forPreload);
