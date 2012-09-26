@@ -130,7 +130,7 @@ void WidthIterator::advance(int offset, GlyphBuffer* glyphBuffer)
                 // We need not deal with Hiragana and Katakana voiced and semi-voiced syllables for next character
                 nextCharacter = currentCharacter + clusterLength;
                 next = nextCharacter < offset ? *(cp + clusterLength) : 0;
-                if (!U16_IS_SURROGATE(next)){
+                if (U16_IS_SURROGATE(next)){
                     if (!U16_IS_SURROGATE_LEAD(next))
                         break;
 
