@@ -601,6 +601,10 @@ void InlineTextBox::paint(PaintInfo& paintInfo, int tx, int ty, int /*lineTop*/,
     float selectionStrokeWidth = textStrokeWidth;
     const ShadowData* selectionShadow = textShadow;
     if (haveSelection) {
+
+        QSettings settings;
+        paintInfo.forceBlackText = paintInfo.forceBlackText || settings.value("selectionForceBlackText",false).toBool();
+
         // Check foreground color first.
         Color foreground = paintInfo.forceBlackText ? Color::black : renderer()->selectionForegroundColor();
         if (foreground.isValid() && foreground != selectionFillColor) {
