@@ -2355,6 +2355,7 @@ void RenderObject::getTextDecorationColors(int decorations, Color& underline, Co
                                            Color& linethrough, bool quirksMode)
 {
     RenderObject* curr = this;
+    underline = overline = linethrough = Color::transparent;
     do {
         int currDecs = curr->style()->textDecoration();
         if (currDecs) {
@@ -2371,6 +2372,8 @@ void RenderObject::getTextDecorationColors(int decorations, Color& underline, Co
                 linethrough = decorationColor(curr);
             }
         }
+        if (curr->isFloating() || curr->isPositioned() || curr->isRubyText()) 
+            return;
         curr = curr->parent();
         if (curr && curr->isAnonymousBlock() && toRenderBlock(curr)->continuation())
             curr = toRenderBlock(curr)->continuation();
