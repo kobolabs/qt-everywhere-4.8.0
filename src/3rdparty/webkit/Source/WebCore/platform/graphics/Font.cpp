@@ -421,6 +421,14 @@ Font::CodePath Font::codePath(const TextRun& run) const
 
 bool Font::isUnbreakableCharactersPair(UChar32 current, UChar32 next)
 {
+    switch (next)
+    {
+    case 0x009B: // RIGHT SIGNLE ANGLE QUOTATION MARK
+    case 0x00BB: // RIGHT DOUBLE ANGLE QUOTATION MARK
+    case 0x2019: // RIGHT SINGLE QUOTATION MARK
+    case 0x201D: // RIGHT DOUBLE QUOTATION MARK
+        return true;
+    }
     switch (current) {
     // Requirements for Japanese Text Layout
     // 3.1.10 Unbreakable Character Sequences
@@ -432,6 +440,8 @@ bool Font::isUnbreakableCharactersPair(UChar32 current, UChar32 next)
     case 0x2014: // EM DASH
     case 0x2015: // HORIZONTAL BAR
         return current == next;
+    case 0x2019: // RIGHT SINGLE QUOTATION MARK
+        return !isInterIdeographExpansionTarget(next);
     // VERTICAL KANA REPEAT MARKS
     case 0x3033: // VERTICAL KANA REPEAT MARK UPPER HALF
     case 0x3034: // VERTICAL KANA REPEAT WITH VOICED SOUND MARK UPPER HALF
@@ -452,6 +462,11 @@ bool Font::isUnbreakableCharactersPair(UChar32 current, UChar32 next)
     case 0x301C: // WAVE DASH
     case 0x3030: // WAVY DASH
         return current == next;
+    case 0x008B: // LEFT SINGLE ANGLE QUOTATION MARK
+    case 0x00AB: // LEFT DOUBLE ANGLE QUOTATION MARK
+    case 0x2018: // LEFT SINGLE QUOTATION MARK
+    case 0x201C: // LEFT DOUBLE QUOTATION MARK
+        return true;
     default:
         return false;
     }
