@@ -2249,6 +2249,32 @@ void QWebPage::clearSelection() {
 	frame->selection()->clear();
 }
 
+static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, HitTestResult& hitResult)
+{
+	if (nodePtr == NULL || frame == NULL) {
+		return false;
+	}
+
+	QList<IntPoint> deltas;
+	foreach(int deltaY, QList<int>() << 0 << -20 << 20) {
+		foreach(int deltaX, QList<int>() << 0 << 5 << -5 << 10 << -10 << 20 << -20) {
+			deltas << IntPoint(deltaX, deltaY);
+		}
+	}
+
+	foreach(IntPoint delta, deltas) {
+		IntPoint testPoint(hitPoint.x() + delta.x(), hitPoint.y() + delta.y());
+		HitTestRequest onerequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
+		hitResult.setPoint(testPoint);
+		frame->document()->renderView()->layer()->hitTest(onerequest, hitResult);
+		*nodePtr = hitResult.innerNode();
+		if (*nodePtr && (*nodePtr)->renderer() && (*nodePtr)->isTextNode()) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries) {
 	if (one == two) {
 		return;
@@ -2256,39 +2282,30 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoun
 	d->createMainFrame();
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
 
-	IntPoint onepoint(one.x(),one.y());
-	HitTestRequest onerequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
-	HitTestResult oneResult(onepoint);
-	frame->document()->renderView()->layer()->hitTest(onerequest, oneResult);
-		
-	IntPoint twopoint(two.x(),two.y());
-	HitTestRequest tworequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
-	HitTestResult twoResult(twopoint);
-	frame->document()->renderView()->layer()->hitTest(tworequest, twoResult);
-
-	Node *oneNode = oneResult.innerNode();
-	Node *twoNode = twoResult.innerNode();
-	if (oneNode && twoNode && oneNode->renderer() && twoNode->renderer()) {
-		if (!oneNode->isTextNode() || !twoNode->isTextNode()) {
-			return;
-		}
-		VisiblePosition onepos(oneNode->renderer()->positionForPoint(oneResult.localPoint()));
-		VisiblePosition twopos(twoNode->renderer()->positionForPoint(twoResult.localPoint()));
-		VisibleSelection newSelection;
-		if (onepos.isNotNull() && twopos.isNotNull()) {
-			newSelection = VisibleSelection(onepos, twopos);
-		}
-		if (expandToWordBoundaries) {
-			newSelection.expandUsingGranularity(WordGranularity);
-		} else {
-			newSelection.expandUsingGranularity(CharacterGranularity);
-		}
-		// don't stomp on a good selection with a bogus one
-		QString oldText = selectedText();
-		VisibleSelection oldSelection = frame->selection()->selection();
-		frame->selection()->setSelection(newSelection);
-		if (selectedText() == "" && oldText != "") {
-			frame->selection()->setSelection(oldSelection);
+	Node *oneNode = NULL;
+	Node *twoNode = NULL;
+	HitTestResult oneResult;
+	HitTestResult twoResult;
+	if (getPageHit(frame, one, &oneNode, oneResult)) {
+		if (getPageHit(frame, two, &twoNode, twoResult)) {
+			VisiblePosition onepos(oneNode->renderer()->positionForPoint(oneResult.localPoint()));
+			VisiblePosition twopos(twoNode->renderer()->positionForPoint(twoResult.localPoint()));
+			VisibleSelection newSelection;
+			if (onepos.isNotNull() && twopos.isNotNull()) {
+				newSelection = VisibleSelection(onepos, twopos);
+			}
+			if (expandToWordBoundaries) {
+				newSelection.expandUsingGranularity(WordGranularity);
+			} else {
+				newSelection.expandUsingGranularity(CharacterGranularity);
+			}
+			// don't stomp on a good selection with a bogus one
+			QString oldText = selectedText();
+			VisibleSelection oldSelection = frame->selection()->selection();
+			frame->selection()->setSelection(newSelection);
+			if (selectedText() == "" && oldText != "") {
+				frame->selection()->setSelection(oldSelection);
+			}
 		}
 	}
 }
