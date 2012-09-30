@@ -439,8 +439,12 @@ QVariant QSystemLocale::query(QueryType type, QVariant in = QVariant()) const
                  kCFPreferencesAnyApplication,
                  kCFPreferencesCurrentUser,
                  kCFPreferencesAnyHost);
-        const int cnt = CFArrayGetCount(languages);
         QStringList result;
+        if (languages == NULL) {
+            result.append(QString::fromUtf8(getMacLocaleName().constData()));
+            return QVariant(result);
+        }
+        const int cnt = CFArrayGetCount(languages);
         result.reserve(cnt);
         for (int i = 0; i < cnt; ++i) {
             const QString lang = QCFString::toQString(
