@@ -80,7 +80,7 @@ SelectionController::SelectionController(Frame* frame, bool isDragCaretControlle
     , m_isDragCaretController(isDragCaretController)
     , m_isCaretBlinkingSuspended(false)
     , m_focused(frame && frame->page() && frame->page()->focusController()->focusedFrame() == frame)
-    , m_caretVisible(isDragCaretController)
+    , m_caretVisible(isDragCaretController || m_focused)
     , m_caretPaint(true)
 {
     setIsDirectional(false);
