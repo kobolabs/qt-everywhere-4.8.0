@@ -2249,14 +2249,14 @@ void QWebPage::clearSelection() {
 	frame->selection()->clear();
 }
 
-static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, HitTestResult& hitResult)
+static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, HitTestResult& hitResult, int pageEnd)
 {
 	if (nodePtr == NULL || frame == NULL) {
 		return false;
 	}
 
 	QList<IntPoint> deltas;
-	foreach(int deltaY, QList<int>() << 0 << -20 << 20) {
+	foreach(int deltaY, QList<int>() << 0 << -10 << 10 << -20 << 20) {
 		foreach(int deltaX, QList<int>() << 0 << 5 << -5 << 10 << -10 << 20 << -20) {
 			deltas << IntPoint(deltaX, deltaY);
 		}
@@ -2269,13 +2269,15 @@ static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, H
 		frame->document()->renderView()->layer()->hitTest(onerequest, hitResult);
 		*nodePtr = hitResult.innerNode();
 		if (*nodePtr && (*nodePtr)->renderer() && (*nodePtr)->isTextNode()) {
-			return true;
+			if (pageEnd < 0 || ((pageEnd > 0) && (testPoint.y() < pageEnd)) ) {
+				return true;
+			}
 		}
 	}
 	return false;
 }
 
-void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries) {
+void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries, int pageEnd) {
 	if (one == two) {
 		return;
 	}
@@ -2286,8 +2288,8 @@ void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoun
 	Node *twoNode = NULL;
 	HitTestResult oneResult;
 	HitTestResult twoResult;
-	if (getPageHit(frame, one, &oneNode, oneResult)) {
-		if (getPageHit(frame, two, &twoNode, twoResult)) {
+	if (getPageHit(frame, one, &oneNode, oneResult, pageEnd)) {
+		if (getPageHit(frame, two, &twoNode, twoResult, pageEnd)) {
 			VisiblePosition onepos(oneNode->renderer()->positionForPoint(oneResult.localPoint()));
 			VisiblePosition twopos(twoNode->renderer()->positionForPoint(twoResult.localPoint()));
 			VisibleSelection newSelection;
