@@ -56,6 +56,7 @@ static inline bool isEmptyValue(const float size, const bool bold, const bool ob
 
 FontPlatformData::FontPlatformData(float size, bool bold, bool oblique, FontOrientation orientation)
 {
+    m_data = NULL;
     if (!isEmptyValue(size, bold, oblique))
         m_data = adoptRef(new FontPlatformDataPrivate(size, bold, oblique, orientation));
 }
@@ -90,8 +91,12 @@ FontPlatformData::FontPlatformData(const FontDescription& description, const Ato
 
 #if HAVE(QRAWFONT)
 FontPlatformData::FontPlatformData(const FontPlatformData& src)
-    : m_data(adoptRef(new FontPlatformDataPrivate()))
 {
+    if (!src.m_data) {
+        return;
+    }
+
+    m_data = adoptRef(new FontPlatformDataPrivate());
     m_data->font = src.m_data->font;
     m_data->rawFont = QRawFont::fromFont(m_data->font, QFontDatabase::Any);
     m_data->size = src.m_data->size;
