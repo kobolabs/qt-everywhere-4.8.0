@@ -2256,8 +2256,8 @@ static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, H
 	}
 
 	QList<IntPoint> deltas;
-	foreach(int deltaY, QList<int>() << 0 << -10 << 10 << -20 << 20) {
-		foreach(int deltaX, QList<int>() << 0 << 5 << -5 << 10 << -10 << 20 << -20) {
+	foreach(int deltaY, QList<int>() << 0 << -5 << 5 << -10 << 10 << -20 << 20) {
+		foreach(int deltaX, QList<int>() << 0 << 5 << -5 << 10 << -10 << 15 << -15 << 20 << -20) {
 			deltas << IntPoint(deltaX, deltaY);
 		}
 	}
