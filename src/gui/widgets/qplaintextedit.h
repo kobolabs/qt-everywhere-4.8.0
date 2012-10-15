@@ -302,6 +302,7 @@ public:
     int cursorWidth() const;
 
     void requestUpdate();
+    virtual QSizeF getEllipsisPos() const {return QSizeF();}
 
 protected:
     void documentChanged(int from, int /*charsRemoved*/, int charsAdded);

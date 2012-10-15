@@ -828,6 +828,11 @@ QTextLine QTextLayout::createLine()
     return QTextLine(l, d);
 }
 
+void QTextLayout::removeLine()
+{
+    d->lines.pop_back();
+}
+
 /*!
     Returns the number of lines in this text layout.
 

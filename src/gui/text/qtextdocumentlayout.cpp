@@ -445,6 +445,8 @@ public:
     int lastPageCount;
     qreal idealWidth;
     bool contentHasAlignment;
+     QFixed _ellipsisWidth;
+     QSizeF _ellipsisPos;
 
     QFixed blockIndent(const QTextBlockFormat &blockFormat) const;
 
@@ -518,7 +520,8 @@ QTextDocumentLayoutPrivate::QTextDocumentLayoutPrivate()
       cursorWidth(1),
       currentLazyLayoutPosition(-1),
       lazyLayoutStepSize(1000),
-      lastPageCount(-1)
+      lastPageCount(-1),
+      _ellipsisWidth(0)
 {
     showLayoutProgress = true;
     insideDocumentChange = false;
@@ -2588,8 +2591,12 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
         const QFixed r = layoutStruct->x_right - totalRightMargin;
 
         tl->beginLayout();
-        bool firstLine = true;
+        int lastLine = 0;
+        QFixed lastY = cy;
         while (1) {
+	         if (lastLine) {
+                lastLine--;
+	         }
             QTextLine line = tl->createLine();
             if (!line.isValid())
                 break;
@@ -2600,20 +2607,19 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
             left = qMax(left, l);
             right = qMin(right, r);
             QFixed text_indent;
-            if (firstLine) {
+            if (!line.lineNumber()) {
                 text_indent = QFixed::fromReal(blockFormat.textIndent());
                 if (dir == Qt::LeftToRight)
                     left += text_indent;
                 else
                     right -= text_indent;
-                firstLine = false;
             }
 //         qDebug() << "layout line y=" << currentYPos << "left=" << left << "right=" <<right;
 
             if (fixedColumnWidth != -1)
                 line.setNumColumns(fixedColumnWidth, (right - left).toReal());
             else
-                line.setLineWidth((right - left).toReal());
+                line.setLineWidth((right - left - ((lastLine == 2) ? _ellipsisWidth : 0)).toReal());
 
 //        qDebug() << "layoutBlock; layouting line with width" << right - left << "->textWidth" << line.textWidth();
             floatMargins(layoutStruct->y, layoutStruct, &left, &right);
@@ -2659,8 +2665,11 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
             qreal scaling = (q->paintDevice() && q->paintDevice()->logicalDpiY() != qt_defaultDpi()) ?
                             qreal(q->paintDevice()->logicalDpiY()) / qreal(qt_defaultDpi()) : 1;
             getLineHeightParams(blockFormat, line, scaling, &lineAdjustment, &lineBreakHeight, &lineHeight);
+            if (!lastLine) {
+		         lastLine = ((layoutStruct->pageHeight > 0 && layoutStruct->absoluteY() + lineBreakHeight > layoutStruct->pageBottom) ? ((_ellipsisWidth > 0) ? 3 : 1) : 0);
+            }
+            if (lastLine == 1) {
 
-            if (layoutStruct->pageHeight > 0 && layoutStruct->absoluteY() + lineBreakHeight > layoutStruct->pageBottom) {
                 layoutStruct->newPage();
 
                 floatMargins(layoutStruct->y, layoutStruct, &left, &right);
@@ -2670,19 +2679,30 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
                     left += text_indent;
                 else
                     right -= text_indent;
-            }
+	    }
+       if (lastLine == 3) {
+           //remove the last two lines so that they can be redone
+       tl->removeLine();
+       tl->removeLine();
+           layoutStruct->y = lastY;
+       }
+       else {
+           line.setPosition(QPointF((left - layoutStruct->x_left).toReal(), (layoutStruct->y - cy - lineAdjustment).toReal()));
+           lastY = layoutStruct->y;
+           layoutStruct->y += lineHeight;
+           layoutStruct->contentsWidth
+               = qMax<QFixed>(layoutStruct->contentsWidth, QFixed::fromReal(line.x() + line.naturalTextWidth()) + totalRightMargin);
 
-            line.setPosition(QPointF((left - layoutStruct->x_left).toReal(), (layoutStruct->y - cy - lineAdjustment).toReal()));
-            layoutStruct->y += lineHeight;
-            layoutStruct->contentsWidth
-                = qMax<QFixed>(layoutStruct->contentsWidth, QFixed::fromReal(line.x() + line.naturalTextWidth()) + totalRightMargin);
-
-            // position floats
-            for (int i = 0; i < layoutStruct->pendingFloats.size(); ++i) {
-                QTextFrame *f = layoutStruct->pendingFloats.at(i);
-                positionFloat(f);
-            }
-            layoutStruct->pendingFloats.clear();
+           // position floats
+           for (int i = 0; i < layoutStruct->pendingFloats.size(); ++i) {
+               QTextFrame *f = layoutStruct->pendingFloats.at(i);
+               positionFloat(f);
+           }
+           if (lastLine == 2 && !layoutStruct->currentPage()) {
+               _ellipsisPos = QSizeF(line.horizontalAdvance(), line.rect().top());
+           }
+	    }
+	    layoutStruct->pendingFloats.clear();
         }
         tl->endLayout();
     } else {
@@ -2860,7 +2880,7 @@ static void markFrames(QTextFrame *current, int from, int oldLength, int length)
 void QTextDocumentLayout::documentChanged(int from, int oldLength, int length)
 {
     Q_D(QTextDocumentLayout);
-
+    d->_ellipsisWidth = QFixed::fromReal(document()->ellipsisWidth());
     QTextBlock blockIt = document()->findBlock(from);
     QTextBlock endIt = document()->findBlock(qMax(0, from + length - 1));
     if (endIt.isValid())
@@ -3265,6 +3285,12 @@ QFixed QTextDocumentLayoutPrivate::scaleToDevice(QFixed value) const
     if (!paintDevice)
         return value;
     return value * QFixed(paintDevice->logicalDpiY()) / QFixed(qt_defaultDpi());
+}
+
+QSizeF QTextDocumentLayout::getEllipsisPos() const
+{
+    Q_D(const QTextDocumentLayout);
+    return d->_ellipsisPos;
 }
 
 QT_END_NAMESPACE

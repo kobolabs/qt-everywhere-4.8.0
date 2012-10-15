@@ -145,6 +145,7 @@ public:
     void clearLayout();
 
     QTextLine createLine();
+    void removeLine();
 
     int lineCount() const;
     QTextLine lineAt(int i) const;
