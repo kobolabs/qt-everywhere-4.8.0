@@ -190,7 +190,7 @@ void ditherBuffer(ushort *buffer, int prevPix)
 
 template <class T>
 Q_STATIC_TEMPLATE_FUNCTION
-void ditherAndSharpenLine(T *buffer, int row, int length)
+void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
 {
     int diffs[3];
     int pix;
@@ -216,11 +216,13 @@ void ditherAndSharpenLine(T *buffer, int row, int length)
         average = diffs[0] + diffs[1] + diffs[2];
         FAST_DIV3( average, average);
 
-        // apply sharpness filter
-        int diff = prevPix - average;
+        if (sharpen) {
+            // apply sharpness filter
+            int diff = prevPix - average;
 
-        prevPix += (diff >> 1);
-        prevPix = qMax(prevPix, 0);
+            prevPix += (diff >> 1);
+            prevPix = qMax(prevPix, 0);
+        }
 
         uchar t = (( prevPix * 10 ) >> 4);
         uchar l = t / 10;
@@ -1300,7 +1302,7 @@ const uint * QT_FASTCALL fetchTransformedBilinear(uint *buffer, const Operator *
 #if defined(Q_WS_QWS)
     // Do ordered dithering 3x3,16
     if (data->dither) {
-        ditherAndSharpenLine< uint >(buffer, y, length);
+        ditherAndSharpenLine< uint >(buffer, y, length, true);
     }
 #endif
     return buffer;
@@ -3746,7 +3748,7 @@ Q_STATIC_TEMPLATE_FUNCTION void blend_untransformed_generic(int count, const QSp
                         op.func(dest, src, l, coverage);
 #if defined(Q_WS_QWS)
                         if (data->dither) {
-                            ditherAndSharpenLine< uint >(dest, sy, l);
+                            ditherAndSharpenLine< uint >(dest, sy, l, false);
                         }
 #endif
                         if (op.dest_store)
@@ -5054,7 +5056,7 @@ void QT_FASTCALL blendUntransformed(int count, const QSpan *spans, void *userDat
                     qt_memconvert<DST, SRC>(dest, src, length);
 #if defined(Q_WS_QWS)
                     if (data->dither && (sizeof(DST) == 2) && (length >= 3)) {
-                        ditherAndSharpenLine< ushort >(reinterpret_cast< ushort* > (dest), sy, length);
+                        ditherAndSharpenLine< ushort >(reinterpret_cast< ushort* > (dest), sy, length, false);
                     }
 #endif
                 } else if (sizeof(DST) == 3 && sizeof(SRC) == 3 && length >= 3 &&
