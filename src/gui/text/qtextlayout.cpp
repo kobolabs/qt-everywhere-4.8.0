@@ -830,7 +830,9 @@ QTextLine QTextLayout::createLine()
 
 void QTextLayout::removeLine()
 {
-    d->lines.pop_back();
+    if (!d->lines.isEmpty()) {
+        d->lines.pop_back();
+    }
 }
 
 /*!
