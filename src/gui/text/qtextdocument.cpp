@@ -1616,6 +1616,21 @@ qreal QTextDocument::ellipsisWidth() const
      return d->ellipsisWidth;
 }
 
+void QTextDocument::setSingleLinePages(bool single)
+{
+    Q_D(QTextDocument);
+    d->singleLinePages = single;
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+bool QTextDocument::singleLinePages() const
+{
+     Q_D(const QTextDocument);
+     return d->singleLinePages;
+}
+
 /*!
   returns the number of pages in this document.
 */

@@ -115,6 +115,7 @@ class Q_GUI_EXPORT QTextDocument : public QObject
     Q_PROPERTY(bool modified READ isModified WRITE setModified DESIGNABLE false)
     Q_PROPERTY(QSizeF pageSize READ pageSize WRITE setPageSize)
     Q_PROPERTY(qreal ellipsisWidth READ ellipsisWidth WRITE setEllipsisWidth)
+    Q_PROPERTY(bool singleLinePages READ singleLinePages WRITE setSingleLinePages)
     Q_PROPERTY(QFont defaultFont READ defaultFont WRITE setDefaultFont)
     Q_PROPERTY(bool useDesignMetrics READ useDesignMetrics WRITE setUseDesignMetrics)
     Q_PROPERTY(QSizeF size READ size)
@@ -202,6 +203,8 @@ public:
     QSizeF pageSize() const;
     void setEllipsisWidth(qreal width);
     qreal ellipsisWidth() const;
+    void setSingleLinePages(bool single);
+    bool singleLinePages() const;
 
     void setDefaultFont(const QFont &font);
     QFont defaultFont() const;
