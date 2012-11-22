@@ -851,7 +851,7 @@ QStringList QFontDatabasePrivate::addTTFile(const QByteArray &file, const QByteA
         QByteArray data(fontData);
         FT_Face face;
         FT_Error error;
-        if (QFontDatabase::decryptFontData != NULL) {
+        if (!file.startsWith(":qmemoryfonts") && QFontDatabase::decryptFontData != NULL) {
             QFile f(QString::fromUtf8(file));
             f.open(QIODevice::ReadOnly);
             data = QFontDatabase::decryptFontData(f);
