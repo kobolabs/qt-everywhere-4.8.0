@@ -448,6 +448,7 @@ public:
     QFixed ellipsisWidth;
     bool singleLinePages;
     QSizeF ellipsisPos;
+    bool elided;
     int lineCount;
 
     QFixed blockIndent(const QTextBlockFormat &blockFormat) const;
@@ -2534,6 +2535,7 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
 {
     Q_Q(QTextDocumentLayout);
     ellipsisPos = QSizeF();
+    elided = false;
     QTextLayout *tl = bl.layout();
     const int blockLength = bl.length();
 
@@ -2708,10 +2710,13 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
                QTextFrame *f = layoutStruct->pendingFloats.at(i);
                positionFloat(f);
            }
-           if (lastLine == 2 && !layoutStruct->currentPage()) {
+           if (!layoutStruct->currentPage()) {
                ellipsisPos = QSizeF(line.horizontalAdvance(), line.rect().top());
+               if (lastLine == 2) {
+                   elided = true;
+               }
            }
-	    }
+       }
 	    layoutStruct->pendingFloats.clear();
         }
         tl->endLayout();
@@ -3304,6 +3309,12 @@ QSizeF QTextDocumentLayout::getEllipsisPos() const
 {
     Q_D(const QTextDocumentLayout);
     return d->ellipsisPos;
+}
+
+bool QTextDocumentLayout::getElided() const
+{
+    Q_D(const QTextDocumentLayout);
+    return d->elided;
 }
 
 int QTextDocumentLayout::lineCount() const

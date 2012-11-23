@@ -95,6 +95,7 @@ public:
     virtual QRectF frameBoundingRect(QTextFrame *frame) const = 0;
     virtual QRectF blockBoundingRect(const QTextBlock &block) const = 0;
     virtual QSizeF getEllipsisPos() const = 0;
+    virtual bool getElided() const = 0;
     virtual int lineCount() const = 0;
 
     void setPaintDevice(QPaintDevice *device);

@@ -303,6 +303,7 @@ public:
 
     void requestUpdate();
     virtual QSizeF getEllipsisPos() const {return QSizeF();}
+    virtual bool getElided() const {return false;}
     virtual int lineCount() const {return 0;}
 
 protected:
