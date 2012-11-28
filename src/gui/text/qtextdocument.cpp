@@ -1619,7 +1619,7 @@ qreal QTextDocument::ellipsisWidth() const
 void QTextDocument::setSingleLinePages(bool single)
 {
     Q_D(QTextDocument);
-    d->singleLinePages = single;
+    d->maxLines = (single ? 1 : 0);
     if (d->lout) {
         d->lout->documentChanged(0, 0, d->length());
     }
@@ -1628,7 +1628,22 @@ void QTextDocument::setSingleLinePages(bool single)
 bool QTextDocument::singleLinePages() const
 {
      Q_D(const QTextDocument);
-     return d->singleLinePages;
+     return (d->maxLines > 0) ? true : false;
+}
+
+void QTextDocument::setMaxLines(int lines)
+{
+    Q_D(QTextDocument);
+    d->maxLines = lines;
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+int QTextDocument::maxLines() const
+{
+     Q_D(const QTextDocument);
+     return d->maxLines;
 }
 
 /*!

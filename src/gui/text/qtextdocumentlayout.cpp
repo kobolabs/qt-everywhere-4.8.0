@@ -446,7 +446,7 @@ public:
     qreal idealWidth;
     bool contentHasAlignment;
     QFixed ellipsisWidth;
-    bool singleLinePages;
+    int maxLines;
     QSizeF ellipsisPos;
     bool elided;
     int lineCount;
@@ -525,7 +525,7 @@ QTextDocumentLayoutPrivate::QTextDocumentLayoutPrivate()
       lazyLayoutStepSize(1000),
       lastPageCount(-1),
       ellipsisWidth(0),
-      singleLinePages(false),
+      maxLines(0),
       lineCount(0)
 {
     showLayoutProgress = true;
@@ -2598,7 +2598,7 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
 
         tl->beginLayout();
         int lastLine = 0;
-        bool newPage = true;
+        int linesOnPage = 1;
         QFixed lastY = cy;
         while (1) {
 	         if (lastLine) {
@@ -2607,7 +2607,7 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
             QTextLine line = tl->createLine();
             if (!line.isValid())
                 break;
-            line.setLeadingIncluded(!singleLinePages);
+            line.setLeadingIncluded(maxLines != 1);
 
             QFixed left, right;
             floatMargins(layoutStruct->y, layoutStruct, &left, &right);
@@ -2673,14 +2673,14 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
                             qreal(q->paintDevice()->logicalDpiY()) / qreal(qt_defaultDpi()) : 1;
             getLineHeightParams(blockFormat, line, scaling, &lineAdjustment, &lineBreakHeight, &lineHeight);
             if (!lastLine) {
-                lastLine = ((!newPage && layoutStruct->pageHeight > 0 && (singleLinePages || layoutStruct->absoluteY() + lineBreakHeight > layoutStruct->pageBottom)) ? ((ellipsisWidth > 0) ? 3 : 1) : 0);
+                lastLine = ((linesOnPage > 1 && layoutStruct->pageHeight > 0 && ((maxLines && linesOnPage > maxLines) || layoutStruct->absoluteY() + lineBreakHeight > layoutStruct->pageBottom)) ? ((ellipsisWidth > 0) ? 3 : 1) : 0);
             }
             if (lastLine == 1) {
                 if (!lineCount) {
                     lineCount = tl->lineCount() - 1;
                 }
                 layoutStruct->newPage();
-                newPage = true;
+                linesOnPage = 1;
                 floatMargins(layoutStruct->y, layoutStruct, &left, &right);
                 left = qMax(left, l);
                 right = qMin(right, r);
@@ -2690,7 +2690,7 @@ void QTextDocumentLayoutPrivate::layoutBlock(const QTextBlock &bl, int blockPosi
                     right -= text_indent;
 	    }
             else {
-                newPage = false;
+                linesOnPage++;
             }
        if (lastLine == 3) {
            //remove the last two lines so that they can be redone
@@ -2898,7 +2898,7 @@ void QTextDocumentLayout::documentChanged(int from, int oldLength, int length)
 {
     Q_D(QTextDocumentLayout);
     d->ellipsisWidth = QFixed::fromReal(document()->ellipsisWidth());
-    d->singleLinePages = document()->singleLinePages();
+    d->maxLines = document()->maxLines();
     QTextBlock blockIt = document()->findBlock(from);
     QTextBlock endIt = document()->findBlock(qMax(0, from + length - 1));
     if (endIt.isValid())
