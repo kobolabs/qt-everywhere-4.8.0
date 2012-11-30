@@ -198,6 +198,12 @@
 #include "MathMLNames.h"
 #endif
 
+#if ENABLE(EPUB3)
+#include "epubElement.h"
+#include "epubElementFactory.h"
+#include "epubNames.h"
+#endif
+
 #if ENABLE(XHTMLMP)
 #include "HTMLNoScriptElement.h"
 #endif
@@ -956,6 +962,10 @@ PassRefPtr<Element> Document::createElement(const QualifiedName& qName, bool cre
 #if ENABLE(MATHML)
     else if (qName.namespaceURI() == MathMLNames::mathmlNamespaceURI)
         e = MathMLElementFactory::createMathMLElement(qName, this, createdByParser);
+#endif
+#if ENABLE(EPUB3)
+    else if (qName.namespaceURI() == epubNames::epubNamespaceURI)
+        e = epubElementFactory::createepubElement(qName, this, createdByParser);
 #endif
 
     if (e)

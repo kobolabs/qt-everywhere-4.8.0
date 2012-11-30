@@ -9,6 +9,7 @@ SET(WebCore_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/dom"
     "${WEBCORE_DIR}/dom/default"
     "${WEBCORE_DIR}/editing"
+    "${WEBCORE_DIR}/epub"
     "${WEBCORE_DIR}/fileapi"
     "${WEBCORE_DIR}/history"
     "${WEBCORE_DIR}/html"
@@ -1448,6 +1449,15 @@ IF (ENABLE_DATA_TRANSFER_ITEMS)
     )
 ENDIF ()
 
+IF (ENABLE_EPUB3)
+    LIST(APPEND WebCore_SOURCES
+        epub/epubElement.cpp
+        epub/EPubCaseElement.cpp
+        epub/EPubDefaultElement.cpp
+        epub/EPubSwitchElement.cpp
+    )
+ENDIF ()
+
 IF (ENABLE_LEVELDB)
     LIST(APPEND WebCore_SOURCES
         platform/leveldb/LevelDBDatabase.cpp
@@ -2082,6 +2092,11 @@ ADD_SOURCE_WEBCORE_DERIVED_DEPENDENCIES(${WEBCORE_DIR}/html/HTMLTreeBuilder.cpp 
 GENERATE_DOM_NAMES(HTML ${WEBCORE_DIR}/html/HTMLAttributeNames.in ${WEBCORE_DIR}/html/HTMLTagNames.in "${HTML_FEATURES}")
 LIST(APPEND WebCore_SOURCES ${DERIVED_SOURCES_WEBCORE_DIR}/HTMLNames.cpp ${DERIVED_SOURCES_WEBCORE_DIR}/HTMLElementFactory.cpp ${DERIVED_SOURCES_WEBCORE_DIR}/JSHTMLElementWrapperFactory.cpp)
 
+GENERATE_DOM_NAMES(MathML ${WEBCORE_DIR}/epub/epubattrs.in ${WEBCORE_DIR}/epub/epubtags.in "${EPUB_FEATURES}")
+LIST(APPEND WebCore_SOURCES ${DERIVED_SOURCES_WEBCORE_DIR}/epubNames.cpp)
+IF (ENABLE_EPUB3)
+    LIST(APPEND WebCore_SOURCES ${DERIVED_SOURCES_WEBCORE_DIR}/epubElementFactory.cpp)
+ENDIF ()
 
 GENERATE_DOM_NAMES(MathML ${WEBCORE_DIR}/mathml/mathattrs.in ${WEBCORE_DIR}/mathml/mathtags.in "${MATHML_FEATURES}")
 LIST(APPEND WebCore_SOURCES ${DERIVED_SOURCES_WEBCORE_DIR}/MathMLNames.cpp)

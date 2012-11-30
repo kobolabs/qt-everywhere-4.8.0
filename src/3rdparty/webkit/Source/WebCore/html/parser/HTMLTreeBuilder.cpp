@@ -31,6 +31,7 @@
 #include "DOMWindow.h"
 #include "DocumentFragment.h"
 #include "DocumentType.h"
+#include "epubNames.h"
 #include "Frame.h"
 #include "HTMLDocument.h"
 #include "HTMLDocumentParser.h"
@@ -1013,6 +1014,12 @@ void HTMLTreeBuilder::processStartTagForInBody(AtomicHTMLToken& token)
         m_tree.insertForeignElement(token, SVGNames::svgNamespaceURI);
         if (m_insertionMode != InForeignContentMode && !token.selfClosing())
             setInsertionMode(InForeignContentMode);
+        return;
+    }
+    // oh man, what a dumb hack...
+    if (token.name().startsWith("epub:")) {
+        m_tree.reconstructTheActiveFormattingElements();
+        m_tree.insertEPubElement(token);
         return;
     }
     if (isCaptionColOrColgroupTag(token.name())

@@ -1583,6 +1583,10 @@ HEADERS += \
     editing/VisibleSelection.h \
     editing/visible_units.h \
     editing/WrapContentsInDummySpanCommand.h \
+    epub/epubElement.h \
+    epub/EPubCaseElement.h \
+    epub/EPubDefaultElement.h \
+    epub/EPubSwitchElement.h \
     fileapi/Blob.h \
     fileapi/BlobURL.h \
     fileapi/File.h \
@@ -3071,6 +3075,15 @@ contains(DEFINES, ENABLE_FILTERS=1) {
         platform/graphics/filters/SourceGraphic.cpp \
         platform/graphics/filters/arm/FELightingNEON.cpp \
         platform/graphics/filters/arm/FEGaussianBlurNEON.cpp
+}
+
+
+contains(DEFINES, ENABLE_EPUB3=1) {
+    SOURCES += \
+        epub/epubElement.cpp \
+        epub/EPubCaseElement.cpp \
+        epub/EPubDefaultElement.cpp \
+        epub/EPubSwitchElement.cpp
 }
 
 contains(DEFINES, ENABLE_MATHML=1) {

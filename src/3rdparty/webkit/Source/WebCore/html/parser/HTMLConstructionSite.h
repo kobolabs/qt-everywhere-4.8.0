@@ -64,6 +64,11 @@ public:
     void insertTextNode(const String&);
     void insertForeignElement(AtomicHTMLToken&, const AtomicString& namespaceURI);
 
+#if ENABLE(EPUB3)
+    void insertEPubElement(AtomicHTMLToken& token);
+    PassRefPtr<Element> createEPubElement(AtomicHTMLToken& token);
+#endif
+
     void insertHTMLHtmlStartTagBeforeHTML(AtomicHTMLToken&);
     void insertHTMLHtmlStartTagInBody(AtomicHTMLToken&);
     void insertHTMLBodyStartTagInBody(AtomicHTMLToken&);

@@ -99,6 +99,7 @@
 #endif
 
 #include "MathMLNames.h"
+#include "epubNames.h"
 #include "SVGNames.h"
 #include "XLinkNames.h"
 
@@ -176,6 +177,7 @@ inline Frame::Frame(Page* page, HTMLFrameOwnerElement* ownerElement, FrameLoader
     MediaFeatureNames::init();
     SVGNames::init();
     XLinkNames::init();
+	epubNames::init();
     MathMLNames::init();
     XMLNSNames::init();
     XMLNames::init();

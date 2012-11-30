@@ -10,6 +10,10 @@ webcore_built_sources += \
 	DerivedSources/WebCore/CSSValueKeywords.cpp \
 	DerivedSources/WebCore/ColorData.cpp \
 	DerivedSources/WebCore/DocTypeStrings.cpp \
+	DerivedSources/WebCore/epubElementFactory.cpp \
+	DerivedSources/WebCore/epubElementFactory.h \
+	DerivedSources/WebCore/epubNames.cpp \
+	DerivedSources/WebCore/epubNames.h \
 	DerivedSources/WebCore/HashTools.h \
 	DerivedSources/WebCore/HTMLElementFactory.cpp \
 	DerivedSources/WebCore/HTMLElementFactory.h \
@@ -1403,6 +1407,14 @@ webcore_sources += \
 	Source/WebCore/editing/WrapContentsInDummySpanCommand.cpp \
 	Source/WebCore/editing/WrapContentsInDummySpanCommand.h \
 	Source/WebCore/editing/WritingDirection.h \
+	Source/WebCore/epub/EPubCaseElement.cpp \
+	Source/WebCore/epub/EPubCaseElement.h \
+	Source/WebCore/epub/EPubDefaultElement.cpp \
+	Source/WebCore/epub/EPubDefaultElement.h \
+	Source/WebCore/epub/epubElement.cpp \
+	Source/WebCore/epub/epubElement.h \
+	Source/WebCore/epub/EPubSwitchElement.cpp \
+	Source/WebCore/epub/EPubSwitchElement.h \
 	Source/WebCore/fileapi/AsyncFileWriter.h \
 	Source/WebCore/fileapi/AsyncFileWriterClient.h \
 	Source/WebCore/fileapi/Blob.cpp \

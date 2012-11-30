@@ -48,6 +48,11 @@
 #if ENABLE(SVG)
 #include "SVGNames.h"
 #endif
+#if ENABLE(EPUB3)
+#include "epubElement.h"
+#include "epubNames.h"
+#include "epubElementFactory.h"
+#endif
 #include "Settings.h"
 #include "Text.h"
 #include <wtf/UnusedParam.h>
@@ -288,6 +293,21 @@ void HTMLConstructionSite::insertHTMLElement(AtomicHTMLToken& token)
 {
     m_openElements.push(attachToCurrent(createHTMLElement(token)));
 }
+
+#if ENABLE(EPUB3)
+void HTMLConstructionSite::insertEPubElement(AtomicHTMLToken& token)
+{
+    m_openElements.push(attachToCurrent(createEPubElement(token)));
+}
+
+PassRefPtr<Element> HTMLConstructionSite::createEPubElement(AtomicHTMLToken& token)
+{
+    QualifiedName tagName(nullAtom, token.name(), epubNames::epubNamespaceURI);
+    RefPtr<Element> element = epubElementFactory::createepubElement(tagName, currentNode()->document(), true);
+    element->setAttributeMap(token.takeAtributes(), m_fragmentScriptingPermission);
+    return element.release();
+}
+#endif
 
 void HTMLConstructionSite::insertSelfClosingHTMLElement(AtomicHTMLToken& token)
 {

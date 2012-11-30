@@ -70,6 +70,7 @@ WEBCORE_INCLUDEPATH = \
     $$SOURCE_DIR/WebCore/dom \
     $$SOURCE_DIR/WebCore/dom/default \
     $$SOURCE_DIR/WebCore/editing \
+    $$SOURCE_DIR/WebCore/epub \
     $$SOURCE_DIR/WebCore/fileapi \
     $$SOURCE_DIR/WebCore/history \
     $$SOURCE_DIR/WebCore/html \

@@ -163,6 +163,7 @@ sub tagsHandler
     my ($tag, $property, $value) = @_;
 
     $tag =~ s/-/_/g;
+    $tag =~ s/:/__/g;
 
     # Initialize default property values.
     $parsedTags{$tag} = { defaultTagPropertyHash($tag) } if !defined($parsedTags{$tag});

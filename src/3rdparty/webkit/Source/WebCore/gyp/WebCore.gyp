@@ -113,6 +113,7 @@
         # FIXME: Check whether we need to build these derived source files.
         ['exclude', 'JSAbstractView\\.(cpp|h)'],
         ['exclude', 'JSElementTimeControl\\.(cpp|h)'],
+        ['exclude', 'JSepubElementWrapperFactory\\.(cpp|h)'],
         ['exclude', 'JSMathMLElementWrapperFactory\\.(cpp|h)'],
         ['exclude', 'JSSVGExternalResourcesRequired\\.(cpp|h)'],
         ['exclude', 'JSSVGFilterPrimitiveStandardAttributes\\.(cpp|h)'],

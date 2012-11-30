@@ -10,6 +10,8 @@ CONFIG(standalone_package) {
 }
 
 ## Derived source generators
+EPUB_NAMES = $$PWD/epub/epubtags.in
+
 MATHML_NAMES = $$PWD/mathml/mathtags.in
 
 SVG_NAMES = $$PWD/svg/svgtags.in
@@ -553,6 +555,14 @@ IDL_BINDINGS += \
 
 v8: wrapperFactoryArg = --wrapperFactoryV8
 else: wrapperFactoryArg = --wrapperFactory
+
+epubnames.output = $${WC_GENERATED_SOURCES_DIR}/EPubNames.cpp
+epubnames.input = EPUB_NAMES
+epubnames.wkScript = $$PWD/dom/make_names.pl
+epubnames.wkAddOutputToSources = true
+epubnames.commands = perl -I$$PWD/bindings/scripts $$epubnames.wkScript --tags $$PWD/epub/epubtags.in --attrs $$PWD/epub/epubattrs.in --extraDefines \"$${DEFINES}\" --preprocessor \"$${QMAKE_MOC} -E\" --factory $$wrapperFactoryArg --outputDir $$WC_GENERATED_SOURCES_DIR
+epubnames.wkExtraSources = $${WC_GENERATED_SOURCES_DIR}/EPubElementFactory.cpp 
+addExtraCompiler(epubnames)
 
 mathmlnames.output = $${WC_GENERATED_SOURCES_DIR}/MathMLNames.cpp
 mathmlnames.input = MATHML_NAMES

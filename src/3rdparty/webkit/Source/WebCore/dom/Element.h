@@ -303,6 +303,12 @@ public:
     static bool isMathMLElement() { return false; }
 #endif
 
+#if ENABLE(EPUB3)
+    virtual bool isEPubSwitchElement() const { return false; }
+    virtual void setEPubSwitchHandled(bool) { }
+    virtual bool isEPubSwitchHandled() const { return false; }
+#endif
+
 #if ENABLE(VIDEO)
     virtual bool isMediaElement() const { return false; }
 #endif
