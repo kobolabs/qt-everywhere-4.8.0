@@ -352,6 +352,7 @@ public:
     uint blockCursorAdjustment : 1;
     QSizeF pageSize;
     qreal ellipsisWidth;
+    qreal suffixWidth;
     int maxLines;
     QString title;
     QString url;

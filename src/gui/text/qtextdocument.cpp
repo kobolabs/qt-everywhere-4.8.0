@@ -1616,6 +1616,21 @@ qreal QTextDocument::ellipsisWidth() const
      return d->ellipsisWidth;
 }
 
+void QTextDocument::setSuffixWidth(qreal width)
+{
+    Q_D(QTextDocument);
+    d->suffixWidth = width;
+    if (d->lout) {
+        d->lout->documentChanged(0, 0, d->length());
+    }
+}
+
+qreal QTextDocument::suffixWidth() const
+{
+     Q_D(const QTextDocument);
+     return d->suffixWidth;
+}
+
 void QTextDocument::setSingleLinePages(bool single)
 {
     Q_D(QTextDocument);
