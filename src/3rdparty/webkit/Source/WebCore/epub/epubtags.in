@@ -2,6 +2,6 @@ namespace="epub"
 namespaceURI="http://www.idpf.org/2007/ops"
 guardFactoryWith="ENABLE(EPUB3)"
 
-epub:switch interfaceName=EPubSwitchElement
-epub:case interfaceName=EPubCaseElement
-epub:default interfaceName=EPubDefaultElement
+switch interfaceName=EPubSwitchElement
+case interfaceName=EPubCaseElement
+default interfaceName=EPubDefaultElement

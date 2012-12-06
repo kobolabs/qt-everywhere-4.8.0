@@ -45,9 +45,9 @@ using namespace WebCore;
 
 DEFINE_GLOBAL(AtomicString, epubNamespaceURI, "http://www.idpf.org/2007/ops")
 // Tags
-DEFINE_GLOBAL(QualifiedName, epub_caseTag, nullAtom, "epub:case", epubNamespaceURI);
-DEFINE_GLOBAL(QualifiedName, epub_defaultTag, nullAtom, "epub:default", epubNamespaceURI);
-DEFINE_GLOBAL(QualifiedName, epub_switchTag, nullAtom, "epub:switch", epubNamespaceURI);
+DEFINE_GLOBAL(QualifiedName, epub_caseTag, nullAtom, "case", epubNamespaceURI);
+DEFINE_GLOBAL(QualifiedName, epub_defaultTag, nullAtom, "default", epubNamespaceURI);
+DEFINE_GLOBAL(QualifiedName, epub_switchTag, nullAtom, "switch", epubNamespaceURI);
 
 
 WebCore::QualifiedName** getepubTags(size_t* size)
@@ -90,9 +90,9 @@ void init()
     new ((void*)&epubNamespaceURI) AtomicString(epubNS);
 
     // Tags
-    new ((void*)&epub_caseTag) QualifiedName(nullAtom, "epub:case", epubNS);
-    new ((void*)&epub_defaultTag) QualifiedName(nullAtom, "epub:default", epubNS);
-    new ((void*)&epub_switchTag) QualifiedName(nullAtom, "epub:switch", epubNS);
+    new ((void*)&epub_caseTag) QualifiedName(nullAtom, "case", epubNS);
+    new ((void*)&epub_defaultTag) QualifiedName(nullAtom, "default", epubNS);
+    new ((void*)&epub_switchTag) QualifiedName(nullAtom, "switch", epubNS);
     // Attributes
     new ((void*)&required_namespaceAttr) QualifiedName(nullAtom, "required-namespace", nullAtom);
 }
