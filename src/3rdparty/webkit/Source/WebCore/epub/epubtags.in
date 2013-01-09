@@ -1,0 +1,7 @@
+namespace="epub"
+namespaceURI="http://www.idpf.org/2007/ops"
+guardFactoryWith="ENABLE(EPUB3)"
+
+switch interfaceName=EPubSwitchElement
+case interfaceName=EPubCaseElement
+default interfaceName=EPubDefaultElement

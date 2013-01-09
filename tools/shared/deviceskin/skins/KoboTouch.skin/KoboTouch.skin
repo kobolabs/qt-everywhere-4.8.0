@@ -1,0 +1,9 @@
+[SkinFile]
+Up=KoboTouch.png
+Down=KoboTouchDown.png
+Screen=78 93 600 800
+Areas=2
+HasMouseHover=false
+
+"Home"       0x1000010   322 998 431 1013
+"Power"      0x1000000	 594 0 700 32
