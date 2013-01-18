@@ -3105,10 +3105,14 @@ void QRasterPaintEngine::drawTextItem(const QPointF &p, const QTextItem &textIte
     const QTextItemInt &ti = static_cast<const QTextItemInt &>(textItem);
     QRasterPaintEngineState *s = state();
 
+    if (!ti.fontEngine) {
+        return;
+    }
+
 #ifdef QT_DEBUG_DRAW
     Q_D(QRasterPaintEngine);
     fprintf(stderr," - QRasterPaintEngine::drawTextItem(), (%.2f,%.2f), string=%s ct=%d\n",
-           p.x(), p.y(), QString::fromRawData(ti.chars, ti.num_chars).toLatin1().data(),
+           p.x(), p.y(), QString::fromRawData(ti.chars, ti.num_chars).toUtf8().data(),
            d->glyphCacheType);
 #endif
 
