@@ -370,7 +370,6 @@ void QNetworkAccessHttpBackend::postRequest()
         // We use the manager-global thread.
         // At some point we could switch to having multiple threads if it makes sense.
         manager->httpThread = new QThread();
-        QObject::connect(manager->httpThread, SIGNAL(finished()), manager->httpThread, SLOT(deleteLater()));
         manager->httpThread->start();
 #ifndef QT_NO_NETWORKPROXY
         qRegisterMetaType<QNetworkProxy>("QNetworkProxy");
