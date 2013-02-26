@@ -429,6 +429,7 @@ protected:
     virtual void javaScriptConsoleMessage(const QString& message, int lineNumber, const QString& sourceID);
 
     virtual QString userAgentForUrl(const QUrl& url) const;
+    static QString staticUserAgentForUrl(const QUrl& url);
 
 private:
     Q_PRIVATE_SLOT(d, void _q_onLoadProgressChanged(int))

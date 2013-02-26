@@ -3931,7 +3931,12 @@ QWebPluginFactory *QWebPage::pluginFactory() const
     \o %AppVersion% expands to QCoreApplication::applicationName()/QCoreApplication::applicationVersion() if they're set; otherwise defaulting to Qt and the current Qt version.
     \endlist
 */
-QString QWebPage::userAgentForUrl(const QUrl&) const
+QString QWebPage::userAgentForUrl(const QUrl &url) const
+{
+    return staticUserAgentForUrl(url);
+}
+
+QString QWebPage::staticUserAgentForUrl(const QUrl&)
 {
     // splitting the string in three and user QStringBuilder is better than using QString::arg()
     static QString firstPart;
