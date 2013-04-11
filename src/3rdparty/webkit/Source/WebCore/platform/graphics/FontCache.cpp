@@ -201,7 +201,9 @@ FontPlatformData* FontCache::getCachedFontPlatformData(const FontDescription& fo
     FontPlatformDataCache::iterator it = gFontPlatformDataCache->find(key);
     if (it == gFontPlatformDataCache->end()) {
         result = createFontPlatformData(fontDescription, familyName);
-        gFontPlatformDataCache->set(key, result);
+        if (result) {
+            gFontPlatformDataCache->set(key, result);
+        }
         foundResult = result;
     } else {
         result = it->second;

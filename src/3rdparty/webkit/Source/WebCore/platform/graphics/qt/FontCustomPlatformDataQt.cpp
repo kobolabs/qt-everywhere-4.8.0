@@ -44,10 +44,10 @@ FontPlatformData FontCustomPlatformData::fontPlatformData(int size, bool synthet
 
     QFont font;
     QFontDatabase db;
-    QString family = QFontDatabase::applicationFontFamilies(m_handle)[0];
+    QString family = QString("%1 [%2]").arg(QFontDatabase::applicationFontFamilies(m_handle)[0]).arg(m_handle);
     font.setFamily(family);
     font.setPixelSize(size);
-    if (m_bold ||syntheticBold)
+    if (m_bold || syntheticBold)
         font.setWeight(QFont::Bold);
     font.setItalic(m_italic || syntheticItalic);
 

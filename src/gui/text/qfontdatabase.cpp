@@ -902,7 +902,11 @@ QStringList QFontDatabasePrivate::addTTFile(const QByteArray &file, const QByteA
 
         QString family = QString::fromAscii(face->family_name);
         families.append(family);
-        addFont(family, /*foundry*/ "", weight, italic,
+        QByteArray foundry;
+        if (file.startsWith(":qmemoryfonts/")) {
+            foundry = QByteArray(file).remove(0, 14);
+        }
+        addFont(family, foundry.constData(), weight, italic,
                 /*pixelsize*/ 0, file, index, /*antialias*/ true, writingSystems);
 
         FT_Done_Face(face);
