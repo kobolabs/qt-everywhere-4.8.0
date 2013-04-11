@@ -2594,26 +2594,17 @@ int QFontDatabasePrivate::addAppFont(const QByteArray &fontData, const QString &
     font.data = fontData;
     font.fileName = fileName;
 
-    int i;
-    for (i = 0; i < applicationFonts.count(); ++i)
-        if (applicationFonts.at(i).families.isEmpty())
-            break;
-    if (i >= applicationFonts.count()) {
-        applicationFonts.append(ApplicationFont());
-        i = applicationFonts.count() - 1;
-    }
-
     if (font.fileName.isEmpty() && !fontData.isEmpty())
-        font.fileName = QString::fromLatin1(":qmemoryfonts/") + QString::number(i);
+        font.fileName = QString::fromLatin1(":qmemoryfonts/") + QString::number(applicationFonts.count());
 
     registerFont(&font);
     if (font.families.isEmpty())
         return -1;
 
-    applicationFonts[i] = font;
+    applicationFonts.push_back(font);
 
     invalidate();
-    return i;
+    return applicationFonts.count() - 1;
 }
 
 bool QFontDatabasePrivate::isApplicationFont(const QString &fileName)
