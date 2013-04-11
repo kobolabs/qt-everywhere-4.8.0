@@ -147,9 +147,12 @@ template <>
 Q_STATIC_TEMPLATE_SPECIALIZATION
 int toGrayscale(uint *buffer)
 {
-    int r = buffer[0] & 0x000000FF;
-    int g = (buffer[0] & 0x0000FF00) >> 8;
-    int b = (buffer[0] & 0x00FF0000) >> 16;
+    uint p = *buffer;
+    int r = p & 0x000000FF;
+    int g = (p & 0x0000FF00) >> 8;
+    int b = (p & 0x00FF0000) >> 16;
+    if (r == g && r == b)
+        return r;
     return ((r * 77) + (g * 151) + (b * 28)) >> 8;
 }
 
