@@ -3072,9 +3072,20 @@ contains(DEFINES, ENABLE_FILTERS=1) {
         platform/graphics/filters/PointLightSource.cpp \
         platform/graphics/filters/SpotLightSource.cpp \
         platform/graphics/filters/SourceAlpha.cpp \
-        platform/graphics/filters/SourceGraphic.cpp \
-        platform/graphics/filters/arm/FELightingNEON.cpp \
-        platform/graphics/filters/arm/FEGaussianBlurNEON.cpp
+        platform/graphics/filters/SourceGraphic.cpp
+
+     contains(QT_ARCH, arm) {
+         SOURCES_NOTHUMB = platform/graphics/filters/arm/FELightingNEON.cpp \
+                           platform/graphics/filters/arm/FEGaussianBlurNEON.cpp
+         CXXFLAGS_NOTHUMB = $$replace(QMAKE_CXXFLAGS_RELEASE, -mthumb, -marm -fPIC)
+         nothumb.name = nothumb
+         nothumb.input = SOURCES_NOTHUMB
+         nothumb.dependency_type = TYPE_C
+         nothumb.output = ${QMAKE_VAR_OBJECTS_DIR}${QMAKE_FILE_IN_BASE}$${first(QMAKE_EXT_OBJ)}
+         nothumb.variable_out = OBJECTS
+         nothumb.commands = $${QMAKE_CXX} $${CXXFLAGS_NOTHUMB} $${QMAKE_CXXFLAGS} -marm -fPIC $(DEFINES) $(INCPATH) -c ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT}
+         QMAKE_EXTRA_COMPILERS += nothumb
+     }
 }
 
 
