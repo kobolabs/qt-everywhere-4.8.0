@@ -7778,8 +7778,8 @@ typedef void (*qt_memfill16_func)(quint16 *dest, quint16 value, int count);
 static void qt_memfill32_setup(quint32 *dest, quint32 value, int count);
 static void qt_memfill16_setup(quint16 *dest, quint16 value, int count);
 
-qt_memfill32_func qt_memfill32 = qt_memfill32_setup;
-qt_memfill16_func qt_memfill16 = qt_memfill16_setup;
+Q_GUI_EXPORT qt_memfill32_func qt_memfill32 = qt_memfill32_setup;
+Q_GUI_EXPORT qt_memfill16_func qt_memfill16 = qt_memfill16_setup;
 
 void qInitDrawhelperAsm()
 {
