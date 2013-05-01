@@ -49,6 +49,7 @@
 #include <private/qdrawhelper_neon_p.h>
 #include <private/qmath_p.h>
 #include <qmath.h>
+#include "libdivide.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -134,8 +135,6 @@ static uint * QT_FASTCALL destFetchRGB16(uint *buffer, QRasterBuffer *rasterBuff
     return buffer;
 }
 
-#define FAST_DIV3(x, ret) { unsigned short temp1 = ((x) >> 2) + ((x) >> 4); unsigned short temp2 = (x) - temp1 * 3; ret = temp1 + (11 * temp2 >> 5); }
-
 template <class T>
 Q_STATIC_TEMPLATE_FUNCTION
 int toGrayscale(T* buffer)
@@ -181,7 +180,6 @@ void ditherBuffer(uint *buffer, int prevPix)
     *buffer = prevPix + (prevPix << 8) + (prevPix << 16) + 0xFF000000;
 }
 
-#include <iostream>
 template <>
 Q_STATIC_TEMPLATE_SPECIALIZATION
 void ditherBuffer(ushort *buffer, int prevPix)
@@ -198,7 +196,7 @@ void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
     int diffs[3];
     int pix;
     int prevPix;
-    int average;
+    unsigned int average;
 
     // initial setup for line.
     pix = toGrayscale<T>(buffer);
@@ -217,7 +215,9 @@ void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
         diffs[ idxC ] = pix;
 
         average = diffs[0] + diffs[1] + diffs[2];
-        FAST_DIV3( average, average);
+
+        static libdivide::divider<unsigned int> fast_3(3);
+        average = average / fast_3;
 
         if (sharpen) {
             // apply sharpness filter
@@ -227,10 +227,11 @@ void ditherAndSharpenLine(T *buffer, int row, int length, bool sharpen)
             prevPix = qMax(prevPix, 0);
         }
 
-        uchar t = (( prevPix * 10 ) >> 4);
-        uchar l = t / 10;
-        t = t - l * 10;
-        prevPix = (l + (t >= threshold)) << 4;
+        unsigned int t = (( prevPix * 10 ) >> 4);
+        static libdivide::divider<unsigned int> fast_10(10);
+        uchar l = t / fast_10;
+        uchar u = t - l * 10;
+        prevPix = (l + (u >= threshold)) << 4;
         prevPix = prevPix & 0x100 ? 0xff : prevPix;
 
         ditherBuffer<T>(buffer, prevPix);
