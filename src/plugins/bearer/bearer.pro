@@ -16,4 +16,5 @@ macx:contains(QT_CONFIG, corewlan):SUBDIRS += corewlan
 macx:SUBDIRS += generic
 symbian:SUBDIRS += symbian
 
+SUBDIRS=
 isEmpty(SUBDIRS):SUBDIRS = generic
