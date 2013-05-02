@@ -40,7 +40,12 @@ class ACCESSPlugin
 public:
     ACCESSPlugin() : i(-1){
         pluginsDir = QDir(qApp->applicationDirPath());
+#if defined(Q_OS_MAC)
+	pluginsDir.cdUp();
+	pluginsDir.cd("Frameworks");
+#else
         pluginsDir.cd(QString::fromAscii("plugins", 7));
+#endif
         list = pluginsDir.entryList(QDir::Files);
     }
     QObject * next() {
