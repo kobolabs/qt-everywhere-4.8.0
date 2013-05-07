@@ -303,6 +303,11 @@ static void initializeDb()
     if (loaded)
         return;
 
+    QStringList args = QApplication::arguments();
+    if (args.indexOf("-skipFontLoad") >= 0) {
+        return;
+    }
+
     QString dbFileName = qws_fontCacheDir() + QLatin1String("/fontdb");
 
     QFile binaryDb(dbFileName + QLatin1String(".tmp"));
