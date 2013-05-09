@@ -256,7 +256,12 @@ bool QLibraryPrivate::unload_sys()
 #  if defined(QT_HPUX_LD)
     if (shl_unload((shl_t)pHnd)) {
 #  else
-    if (dlclose(pHnd)) {
+#     if defined(Q_OS_MAC)
+    if (QSysInfo::MacintoshVersion > QSysInfo::MV_10_5 &&
+#     else
+    if (
+#     endif
+        dlclose(pHnd)) {
 #  endif
         errorString = QLibrary::tr("Cannot unload library %1: %2").arg(fileName).arg(qdlerror());
         return false;
