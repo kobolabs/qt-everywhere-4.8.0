@@ -303,11 +303,6 @@ static void initializeDb()
     if (loaded)
         return;
 
-    QStringList args = QApplication::arguments();
-    if (args.indexOf("-skipFontLoad") >= 0) {
-        return;
-    }
-
     QString dbFileName = qws_fontCacheDir() + QLatin1String("/fontdb");
 
     QFile binaryDb(dbFileName + QLatin1String(".tmp"));
@@ -315,6 +310,17 @@ static void initializeDb()
     db->stream = new QDataStream(&binaryDb);
     *db->stream << DatabaseVersion << quint8(db->stream->version()) << fontpath;
 //    qDebug() << "creating binary database at" << binaryDb.fileName();
+
+    QStringList args = QApplication::arguments();
+    if (args.indexOf("-skipFontLoad") >= 0) {
+#ifndef QT_FONTS_ARE_RESOURCES
+        delete db->stream;
+        db->stream = 0;
+        QFile::remove(dbFileName);
+        binaryDb.rename(dbFileName);
+#endif
+        return;
+    }
 
     // Load in font definition file
     FILE* fontdef=fopen(fontDirFile.toLocal8Bit().constData(),"r");
