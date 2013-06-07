@@ -40,12 +40,6 @@ using namespace Unicode;
 
 namespace WebCore {
 
-#if PLATFORM(QT) && HAVE(QRAWFONT)
-// This is ugly workaround for emphasis mark of combined text.
-// Do not use this variable for other purpose.
-static SimpleFontData fallbackFontData;
-#endif
-
 #if ENABLE(EPUB)
 GlyphData Font::glyphDataForTextOrientation(GlyphPage* page, GlyphData data, UChar32 c, unsigned pageNumber, TextOrientation textOrientation) const
 {
@@ -161,6 +155,12 @@ GlyphData Font::glyphDataForTextOrientation(GlyphPage* page, GlyphData data, UCh
 GlyphData Font::glyphDataForCharacter(UChar32 c, bool mirror, FontDataVariant variant) const
 {
     ASSERT(isMainThread());
+
+#if PLATFORM(QT) && HAVE(QRAWFONT)
+    // This is ugly workaround for emphasis mark of combined text.
+    // Do not use this variable for other purpose.
+    static SimpleFontData fallbackFontData;
+#endif
 
     if (variant == AutoVariant) {
         if (m_fontDescription.smallCaps()) {
