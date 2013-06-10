@@ -31,4 +31,4 @@ SOURCES += \
     SOURCES += $$PWD/formscriptrunner.cpp
 }
 
-INCLUDEPATH += ../../../../src/3rdparty/harfbuzz/src ../../../../src/3rdparty/accessplugin
+INCLUDEPATH += ../../../../src/3rdparty/harfbuzz/src ../../../../src/3rdparty/accessplugin ../../../../src/corelib/tools

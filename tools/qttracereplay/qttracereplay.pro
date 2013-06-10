@@ -4,7 +4,8 @@ DESTDIR     = ../../bin
 
 DEPENDPATH += .
 INCLUDEPATH += . ../../src/3rdparty/harfbuzz/src \
-                 ../../src/3rdparty/accessplugin
+                 ../../src/3rdparty/accessplugin \
+		 ../../src/corelib/tools
 TARGET = qttracereplay
 
 # Input
