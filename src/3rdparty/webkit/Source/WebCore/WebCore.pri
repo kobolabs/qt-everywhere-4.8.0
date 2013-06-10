@@ -173,6 +173,9 @@ contains(DEFINES, ENABLE_XSLT=1) {
 
 # This additional dependency possibly breaks the build on Windows.
 # Detail is described at Comment#3 in http://bugs.webkit.org/show_bug.cgi?id=70952 
+win32-* {
+	INCLUDEPATH += ../../../zlib
+}
 LIBS += -lz
 contains(DEFINES, ENABLE_SQLITE=1) {
     !system-sqlite:exists( $${SQLITE3SRCDIR}/sqlite3.c ) {
