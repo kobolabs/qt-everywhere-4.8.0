@@ -171,12 +171,7 @@ contains(DEFINES, ENABLE_XSLT=1) {
     QT *= xmlpatterns
 }
 
-# This additional dependency possibly breaks the build on Windows.
-# Detail is described at Comment#3 in http://bugs.webkit.org/show_bug.cgi?id=70952 
-win32-* {
-	INCLUDEPATH += ../../../zlib
-}
-LIBS += -lz
+include($$PWD/../../../zlib_dependency.pri)
 contains(DEFINES, ENABLE_SQLITE=1) {
     !system-sqlite:exists( $${SQLITE3SRCDIR}/sqlite3.c ) {
             INCLUDEPATH += $${SQLITE3SRCDIR}
