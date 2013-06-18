@@ -171,12 +171,10 @@ bool QFontDatabasePrivate::loadFromCache(const QString &fontPath)
 
 static QString qwsFontPath()
 {
-	// TODO
     QString fontpath = QString::fromLocal8Bit(qgetenv("QT_QWS_FONTDIR"));
     if (fontpath.isEmpty()) {
-        fontpath = QLatin1String("fonts");
+        fontpath = QString("%1/fonts").arg(QCoreApplication::dirPath());
     }
-
     return fontpath;
 }
 
