@@ -173,7 +173,7 @@ static QString qwsFontPath()
 {
     QString fontpath = QString::fromLocal8Bit(qgetenv("QT_QWS_FONTDIR"));
     if (fontpath.isEmpty()) {
-        fontpath = QString("%1/fonts").arg(QCoreApplication::dirPath());
+        fontpath = QString("%1/fonts").arg(QCoreApplication::applicationDirPath());
     }
     return fontpath;
 }
