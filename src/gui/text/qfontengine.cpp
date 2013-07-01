@@ -466,7 +466,7 @@ void QFontEngine::addOutlineToPath(qreal x, qreal y, const QGlyphLayout &glyphs,
 
 int QFontEngine::substituteWithVerticalVariants(quint32* glyphs, const unsigned length)
 {
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_UNIX)
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MAC)
     if (pluginInterface != NULL)
         return pluginInterface->substituteWithVerticalVariants(harfbuzzFace(), glyphs, length);
 #endif
@@ -475,7 +475,7 @@ int QFontEngine::substituteWithVerticalVariants(quint32* glyphs, const unsigned 
 
 bool QFontEngine::hasVerticalGlyphs() const
 {
-#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_UNIX)
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MAC)
     if (pluginInterface != NULL)
         return pluginInterface->hasVerticalGlyphs(harfbuzzFace());
 #endif
