@@ -1553,10 +1553,25 @@ void WriteInitialization::writeProperties(const QString &varName,
 
             if (defineC)
                 openIfndef(o, QLatin1String(defineC));
-            o << m_indent << varNewName << setFunction << propertyValue;
-            if (!stdset)
-                o << ')';
-            o << ");\n";
+
+            if (propertyName == QLatin1String("styleSheet")) {
+                QString realValue(p->elementString()->text());
+                QByteArray data = qCompress(realValue.toUtf8());
+                o << m_indent << "{\n";
+                o << m_indent << m_indent << QString::fromUtf8("static unsigned char c[%1] = { ").arg(data.size());
+                for (int i = 0; i < data.size(); i++) {
+                    o << QString::number((unsigned char) data[i]) << ",";
+                }
+                o << " };\n";
+                o << m_indent << m_indent << varNewName << setFunction << QString::fromUtf8("QString::fromUtf8(qUncompress(c, %1)));\n").arg(data.size());
+                o << m_indent << "}\n";
+            } else {
+                o << m_indent << varNewName << setFunction << propertyValue;
+                if (!stdset)
+                    o << ')';
+                o << ");\n";
+            }
+
             if (defineC)
                 closeIfndef(o, QLatin1String(defineC));
 
