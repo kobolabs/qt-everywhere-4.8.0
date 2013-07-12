@@ -729,6 +729,7 @@ QFontEngineFT::QFontEngineFT(const QFontDef &fd)
     defaultFormat = Format_None;
     canUploadGlyphsToServer = false;
     embeddedbitmap = false;
+    force_leading = -1;
 }
 
 QFontEngineFT::~QFontEngineFT()
@@ -1386,7 +1387,17 @@ QFixed QFontEngineFT::descent() const
 
 QFixed QFontEngineFT::leading() const
 {
-    return QFixed::fromFixed(metrics.height - metrics.ascender + metrics.descender);
+    if (force_leading >= 0) {
+        return force_leading;
+    } else {
+        return QFixed::fromFixed(metrics.height - metrics.ascender + metrics.descender);
+    }
+}
+
+// just set leading as -1 when want to use default(recommended) leading setted in Font file
+void QFontEngineFT::setLeading(int leading)
+{
+    force_leading = leading;
 }
 
 QFixed QFontEngineFT::xHeight() const

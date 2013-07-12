@@ -238,6 +238,7 @@ private:
     virtual QFixed ascent() const;
     virtual QFixed descent() const;
     virtual QFixed leading() const;
+    virtual void setLeading(int leading);
     virtual QFixed xHeight() const;
     virtual QFixed averageCharWidth() const;
 
@@ -386,6 +387,7 @@ private:
 
     FT_Size_Metrics metrics;
     mutable bool kerning_pairs_loaded;
+    int force_leading;
 };
 
 #ifdef QT_ENABLE_FREETYPE_FOR_WIN

@@ -184,6 +184,7 @@ public:
     QFixed ascent() const;
     QFixed descent() const;
     QFixed leading() const;
+    void setLeading(int);
     qreal maxCharWidth() const;
     qreal minLeftBearing() const;
     qreal minRightBearing() const;

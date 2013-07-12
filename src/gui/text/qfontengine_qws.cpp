@@ -617,6 +617,11 @@ QFixed QFontEngineQPF1::leading() const
     return d->fm.leading;
 }
 
+void QFontEngineQPF1::setLeading(int leading)
+{
+	Q_UNUSED(leading);
+}
+
 qreal QFontEngineQPF1::maxCharWidth() const
 {
     return d->fm.maxwidth;

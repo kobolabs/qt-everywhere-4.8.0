@@ -920,6 +920,11 @@ void QFontEngine::doKerning(QGlyphLayout *, QTextEngine::ShaperFlags) const
 }
 #endif
 
+void QFontEngine::setLeading(int leading)
+{
+    Q_UNUSED(leading);
+}
+
 int QFontEngine::glyphCount() const
 {
     QByteArray maxpTable = getSfntTable(MAKE_TAG('m', 'a', 'x', 'p'));
@@ -1311,6 +1316,11 @@ QFixed QFontEngineBox::leading() const
     return l.ceil();
 }
 
+void QFontEngineBox::setLeading(int leading)
+{
+    Q_UNUSED(leading);
+}
+
 qreal QFontEngineBox::maxCharWidth() const
 {
     return _size;
@@ -1679,6 +1689,11 @@ QFixed QFontEngineMulti::descent() const
 QFixed QFontEngineMulti::leading() const
 {
     return engine(0)->leading();
+}
+
+void QFontEngineMulti::setLeading(int leading)
+{
+    engine(0)->setLeading(leading);
 }
 
 QFixed QFontEngineMulti::xHeight() const

@@ -757,6 +757,11 @@ QFixed QFontEngineQPF::leading() const
     return QFixed::fromReal(extractHeaderField(fontData, Tag_Leading).value<qreal>());
 }
 
+void QFontEngineQPF::setLeading(int leading)
+{
+    Q_UNUSED(leading);
+}
+
 qreal QFontEngineQPF::maxCharWidth() const
 {
     return extractHeaderField(fontData, Tag_MaxCharWidth).value<qreal>();

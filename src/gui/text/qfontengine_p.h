@@ -227,6 +227,7 @@ public:
     virtual QFixed ascent() const = 0;
     virtual QFixed descent() const = 0;
     virtual QFixed leading() const = 0;
+    virtual void setLeading(int);
     virtual QFixed xHeight() const;
     virtual QFixed averageCharWidth() const;
 
@@ -340,6 +341,7 @@ public:
     virtual QFixed ascent() const;
     virtual QFixed descent() const;
     virtual QFixed leading() const;
+    virtual void setLeading(int);
     virtual qreal maxCharWidth() const;
     virtual qreal minLeftBearing() const;
     virtual qreal minRightBearing() const;
@@ -380,6 +382,7 @@ public:
     virtual QFixed ascent() const;
     virtual QFixed descent() const;
     virtual QFixed leading() const;
+    virtual void setLeading(int);
     virtual qreal maxCharWidth() const;
     virtual qreal minLeftBearing() const { return 0; }
     virtual qreal minRightBearing() const { return 0; }
@@ -422,6 +425,7 @@ public:
     virtual QFixed ascent() const;
     virtual QFixed descent() const;
     virtual QFixed leading() const;
+    virtual void setLeading(int);
     virtual QFixed xHeight() const;
     virtual QFixed averageCharWidth() const;
     virtual QImage alphaMapForGlyph(glyph_t);

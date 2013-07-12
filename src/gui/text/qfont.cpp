@@ -1747,6 +1747,13 @@ bool QFont::exactMatch() const
             : d->request.exactMatch(engine->fontDef));
 }
 
+void QFont::setLeading(int leading)
+{
+    QFontEngine *engine = d->engineForScript(QUnicodeTables::Common);
+    Q_ASSERT(engine != 0);
+    engine->setLeading(leading);
+}
+
 /*!
     Returns true if this font is equal to \a f; otherwise returns
     false.
