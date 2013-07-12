@@ -2006,4 +2006,11 @@ QList<QRect> QWebFrame::renderTreeRunRects(bool imgRun)
     return WebCore::getRunRects(o, imgRun, documentElement().styleProperty("-epub-writing-mode", QWebElement::ComputedStyle).startsWith("vertical"));
 }
 
+bool QWebFrame::hasPendingStyleSheets()
+{
+    if (!d || !d->frame || !d->frame->document())
+        return false;
+    return d->frame->document()->didLayoutWithPendingStylesheets();
+}
+
 #include "moc_qwebframe.cpp"
