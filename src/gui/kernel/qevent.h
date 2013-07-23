@@ -818,18 +818,21 @@ public:
     inline QTouchEvent::DeviceType deviceType() const { return _deviceType; }
     inline Qt::TouchPointStates touchPointStates() const { return _touchPointStates; }
     inline const QList<QTouchEvent::TouchPoint> &touchPoints() const { return _touchPoints; }
+    inline int globalTouchPointCount() const { return _globalTouchPointCount; }
 
     // internal
     inline void setWidget(QWidget *awidget) { _widget = awidget; }
     inline void setDeviceType(DeviceType adeviceType) { _deviceType = adeviceType; }
     inline void setTouchPointStates(Qt::TouchPointStates aTouchPointStates) { _touchPointStates = aTouchPointStates; }
     inline void setTouchPoints(const QList<QTouchEvent::TouchPoint> &atouchPoints) { _touchPoints = atouchPoints; }
+    inline void setGlobalTouchPointCount(int globalTouchPointCount) { _globalTouchPointCount = globalTouchPointCount; }
 
 protected:
     QWidget *_widget;
     QTouchEvent::DeviceType _deviceType;
     Qt::TouchPointStates _touchPointStates;
     QList<QTouchEvent::TouchPoint> _touchPoints;
+    int _globalTouchPointCount;
 
     friend class QApplication;
     friend class QApplicationPrivate;
