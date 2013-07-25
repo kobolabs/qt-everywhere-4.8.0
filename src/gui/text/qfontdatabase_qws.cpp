@@ -718,6 +718,9 @@ QFontEngine *loadEngine(int script, const QFontPrivate *fp,
             fallbacks = family->fallbackFamilies;
 
         QFontEngine *fe = new QFontEngineMultiQWS(engine.data(), script, fallbacks);
+        if (request.forceLeading >= 0) {
+            fe->setLeading(request.forceLeading);
+        }
         engine.take();
         engine.reset(fe);
     }

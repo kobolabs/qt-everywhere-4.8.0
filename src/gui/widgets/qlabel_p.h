@@ -84,6 +84,7 @@ public:
     mutable bool valid_hints;
     mutable QSizePolicy sizePolicy;
     int margin;
+    int leading;
     QString text;
     QPixmap  *pixmap;
     QPixmap *scaledpixmap;

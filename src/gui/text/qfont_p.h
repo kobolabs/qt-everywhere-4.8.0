@@ -74,7 +74,8 @@ struct QFontDef
           weight(50), fixedPitch(false), style(QFont::StyleNormal), stretch(100),
           ignorePitch(true), hintingPreference(QFont::PreferDefaultHinting),
           csmThicknessOffset(0), csmThicknessSlope(0),
-          csmSharpnessOffset(0), csmSharpnessSlope(0)
+          csmSharpnessOffset(0), csmSharpnessSlope(0),
+          forceLeading(-1)
 #ifdef Q_WS_MAC
           ,fixedPitchComputed(false)
 #endif
@@ -102,6 +103,7 @@ struct QFontDef
     uint hintingPreference : 2;
     uint fixedPitchComputed : 1; // for Mac OS X only
     int reserved   : 14; // for future extensions
+    int forceLeading;
 
     qreal csmThicknessOffset;
     qreal csmThicknessSlope;
@@ -125,6 +127,7 @@ struct QFontDef
                     && csmThicknessSlope == other.csmThicknessSlope
                     && csmSharpnessOffset == other.csmSharpnessOffset
                     && csmSharpnessSlope == other.csmSharpnessSlope
+                    && forceLeading == other.forceLeading
 
 #ifdef Q_WS_X11
                     && addStyle == other.addStyle
@@ -153,6 +156,7 @@ struct QFontDef
 
         if (ignorePitch != other.ignorePitch) return ignorePitch < other.ignorePitch;
         if (fixedPitch != other.fixedPitch) return fixedPitch < other.fixedPitch;
+        if (forceLeading != other.forceLeading) return forceLeading < other.forceLeading;
         return false;
     }
 };
@@ -186,6 +190,7 @@ public:
     ~QFontPrivate();
 
     QFontEngine *engineForScript(int script) const;
+    QFontEngine *engineForScript(int script, bool forceLoad) const;
     void alterCharForCapitalization(QChar &c) const;
 
     QAtomicInt ref;

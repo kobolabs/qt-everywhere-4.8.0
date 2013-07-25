@@ -158,6 +158,7 @@ bool QFontDef::exactMatch(const QFontDef &other) const
             && weight        == other.weight
             && style        == other.style
             && this_family   == other_family
+            && forceLeading == other.forceLeading
             && (this_foundry.isEmpty()
                 || other_foundry.isEmpty()
                 || this_foundry == other_foundry)
@@ -316,6 +317,19 @@ QFontEngine *QFontPrivate::engineForScript(int script) const
     return QT_FONT_ENGINE_FROM_DATA(engineData, script);
 }
 
+QFontEngine *QFontPrivate::engineForScript(int script, bool forceLoad) const
+{
+    QMutexLocker locker(qt_fontdatabase_mutex());
+    if (script >= QUnicodeTables::Inherited)
+        script = QUnicodeTables::Common;
+    if (engineData) {
+        engineData->ref.deref();
+        engineData = 0;
+    }
+    QFontDatabase::load(this, script);
+    return QT_FONT_ENGINE_FROM_DATA(engineData, script);
+}
+
 void QFontPrivate::alterCharForCapitalization(QChar &c) const {
     switch (capital) {
     case QFont::AllUppercase:
@@ -389,6 +403,8 @@ void QFontPrivate::resolve(uint mask, const QFontPrivate *other)
 
     if (! (mask & QFont::HintingPreferenceResolved))
         request.hintingPreference = other->request.hintingPreference;
+
+    request.forceLeading = other->request.forceLeading;
 
     if (! (mask & QFont::UnderlineResolved))
         underline = other->underline;
@@ -1749,7 +1765,8 @@ bool QFont::exactMatch() const
 
 void QFont::setLeading(int leading)
 {
-    QFontEngine *engine = d->engineForScript(QUnicodeTables::Common);
+    d->request.forceLeading = leading;
+    QFontEngine *engine = d->engineForScript(QUnicodeTables::Common, true);
     Q_ASSERT(engine != 0);
     engine->setLeading(leading);
 }
@@ -1782,6 +1799,7 @@ bool QFont::operator==(const QFont &f) const
                 && f.d->request.csmThicknessSlope == d->request.csmThicknessSlope
                 && f.d->request.csmSharpnessOffset == d->request.csmSharpnessOffset
                 && f.d->request.csmSharpnessSlope == d->request.csmSharpnessSlope
+                && f.d->request.forceLeading == d->request.forceLeading
             ));
 }
 

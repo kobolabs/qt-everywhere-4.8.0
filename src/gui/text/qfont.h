@@ -247,6 +247,7 @@ public:
     // dupicated from QFontInfo
     bool exactMatch() const;
 
+    int leading() const;
     void setLeading(int);
 
     QFont &operator=(const QFont &);

@@ -283,6 +283,7 @@ void QLabelPrivate::init()
 
     valid_hints = false;
     margin = 0;
+    leading = -1;
 #ifndef QT_NO_MOVIE
     movie = 0;
 #endif
@@ -373,6 +374,14 @@ void QLabel::setText(const QString &text)
         d->control = 0;
     }
 
+    if (d->control) {
+        QFont current_font = font();
+        if (d->leading >= 0) {
+            current_font.setLeading(d->leading);
+        }
+        d->control->document()->setDefaultFont(current_font);
+    }
+
     if (d->isRichText) {
         setMouseTracking(true);
     } else {
@@ -434,7 +443,7 @@ void QLabel::setPixmap(const QPixmap &pixmap)
 
 void QLabel::setPixmap(const QString &pixmap)
 {
-	setPixmap(QPixmap(pixmap));
+    setPixmap(QPixmap(pixmap));
 }
 
 const QPixmap *QLabel::pixmap() const
@@ -629,6 +638,21 @@ void QLabel::setMargin(int margin)
     if (d->margin == margin)
         return;
     d->margin = margin;
+    d->updateLabel();
+}
+
+int QLabel::leading() const
+{
+    Q_D(const QLabel);
+    return d->leading;
+}
+
+void QLabel::setLeading(int leading)
+{
+    Q_D(QLabel);
+    if (d->leading == leading)
+        return;
+    d->leading = leading;
     d->updateLabel();
 }
 
@@ -1479,8 +1503,13 @@ void QLabel::changeEvent(QEvent *ev)
     Q_D(QLabel);
     if(ev->type() == QEvent::FontChange || ev->type() == QEvent::ApplicationFontChange) {
         if (d->isTextLabel) {
-            if (d->control)
-                d->control->document()->setDefaultFont(font());
+            if (d->control) {
+                QFont current_font = font();
+                if (d->leading >= 0) {
+                    current_font.setLeading(d->leading);
+                }
+                d->control->document()->setDefaultFont(current_font);
+            }
             d->updateLabel();
         }
     } else if (ev->type() == QEvent::PaletteChange && d->control) {
