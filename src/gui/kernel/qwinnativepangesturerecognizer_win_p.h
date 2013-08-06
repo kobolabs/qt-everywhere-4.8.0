@@ -69,6 +69,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *state, QObject *watched, QEvent *event);
     void reset(QGesture *state);
+    int maxGlobalTouchPoints();
 };
 
 #endif // QT_NO_NATIVE_GESTURES

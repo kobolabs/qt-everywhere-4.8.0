@@ -126,6 +126,11 @@ void QWinNativePanGestureRecognizer::reset(QGesture *state)
     QGestureRecognizer::reset(state);
 }
 
+int QWinNativePanGestureRecognier::maxGlobalTouchPoints()
+{
+    return 1;
+}
+
 #endif // QT_NO_NATIVE_GESTURES
 
 QT_END_NAMESPACE
