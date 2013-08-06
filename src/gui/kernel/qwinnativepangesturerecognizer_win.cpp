@@ -126,7 +126,7 @@ void QWinNativePanGestureRecognizer::reset(QGesture *state)
     QGestureRecognizer::reset(state);
 }
 
-int QWinNativePanGestureRecognier::maxGlobalTouchPoints()
+int QWinNativePanGestureRecognizer::maxGlobalTouchPoints()
 {
     return 1;
 }
