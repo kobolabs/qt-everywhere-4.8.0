@@ -69,6 +69,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *gesture, QObject *watched, QEvent *event);
     void reset(QGesture *gesture);
+    int maxGlobalTouchPoints();
 };
 
 class QMacPinchGestureRecognizer : public QGestureRecognizer
@@ -79,6 +80,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *gesture, QObject *watched, QEvent *event);
     void reset(QGesture *gesture);
+    int maxGlobalTouchPoints();
 };
 
 #if defined(QT_MAC_USE_COCOA)
@@ -91,6 +93,7 @@ public:
     QGesture *create(QObject *target);
     QGestureRecognizer::Result recognize(QGesture *gesture, QObject *watched, QEvent *event);
     void reset(QGesture *gesture);
+    int maxGlobalTouchPoints();
 private:
     QPointF _startPos;
     QBasicTimer _panTimer;
