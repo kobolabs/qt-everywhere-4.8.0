@@ -264,6 +264,7 @@ bool QGestureManager::filterEventThroughContexts(const QMultiMap<QObject *,
             if (event->type() >= QEvent::TouchBegin && event->type() <= QEvent::TouchEnd &&
                 static_cast<QTouchEvent *>(event)->globalTouchPointCount() > recognizer->maxGlobalTouchPoints()) {
                 recognizerResult = QGestureRecognizer::CancelGesture;
+                state->setProperty("state", Qt::GestureCanceled);
             }
             else {
                 recognizerResult = recognizer->recognize(state, target, event);
