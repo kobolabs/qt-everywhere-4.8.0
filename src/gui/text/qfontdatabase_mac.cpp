@@ -359,6 +359,14 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
     ATSFontContainerRef handle;
     OSStatus e  = noErr;
 
+    QString fileNameForQuery = fnt->fileName;
+    if (QFontDatabase::decryptFontData != NULL) {
+        QFile f(fileNameForQuery);
+        f.open(QIODevice::ReadOnly);
+        fnt->data = QFontDatabase::decryptFontData(f);
+        f.close();
+    }
+
     if(fnt->data.isEmpty()) {
 #if (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)
         if (QSysInfo::MacintoshVersion >= QSysInfo::MV_10_5) {

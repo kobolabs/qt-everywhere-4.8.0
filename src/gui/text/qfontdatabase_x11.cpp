@@ -2017,6 +2017,13 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
     }
 
     QString fileNameForQuery = fnt->fileName;
+    if (QFontDatabase::decryptFontData != NULL) {
+        QFile f(fileNameForQuery);
+        f.open(QIODevice::ReadOnly);
+        fnt->data = QFontDatabase::decryptFontData(f);
+        f.close();
+    }
+
 #if FC_VERSION < 20402
     QTemporaryFile tmp;
 
