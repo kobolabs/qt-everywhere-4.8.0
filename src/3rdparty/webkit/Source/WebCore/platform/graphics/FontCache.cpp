@@ -108,8 +108,8 @@ inline unsigned computeHash(const FontPlatformDataCacheKey& fontKey)
         fontKey.m_weight,
         fontKey.m_widthVariant,
         static_cast<unsigned>(fontKey.m_textOrientation) << 4 | static_cast<unsigned>(fontKey.m_orientation) << 3 | static_cast<unsigned>(fontKey.m_italic) << 2 | static_cast<unsigned>(fontKey.m_printerFont) << 1 | static_cast<unsigned>(fontKey.m_renderingMode),
-        fontKey.m_thickness,
-        fontKey.m_sharpness
+        FloatHash<double>::hash(fontKey.m_thickness),
+        FloatHash<double>::hash(fontKey.m_sharpness)
     };
     return StringHasher::hashMemory<sizeof(hashCodes)>(hashCodes);
 }
