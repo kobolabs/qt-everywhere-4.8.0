@@ -43,6 +43,7 @@
 #include "option.h"
 #include "driver.h"
 #include "../../corelib/global/qconfig.cpp"
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QDir>
 #include <QtCore/QTextStream>
@@ -76,7 +77,7 @@ int runUic(int argc, char *argv[])
     Driver driver;
 
     const char *fileName = 0;
-
+    qsrand(QDateTime::currentDateTimeUtc().toTime_t());
     int arg = 1;
     while (arg < argc) {
         QString opt = QString::fromLocal8Bit(argv[arg]);
