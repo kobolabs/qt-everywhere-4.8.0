@@ -91,12 +91,42 @@
 
 QT_BEGIN_NAMESPACE
 
+#ifdef Q_WS_WIN
+class QtHDC
+{
+    HDC _hdc;
+public:
+    QtHDC()
+    {
+        HDC displayDC = GetDC(0);
+        _hdc = CreateCompatibleDC(displayDC);
+        ReleaseDC(0, displayDC);
+    }
+    ~QtHDC()
+    {
+        if (_hdc)
+            DeleteDC(_hdc);
+    }
+    HDC hdc() const
+    {
+        return _hdc;
+    }
+};
+Q_GLOBAL_STATIC(QThreadStorage<QtHDC *>, local_shared_dc)
+#endif
+
 #ifdef QT_ENABLE_FREETYPE_FOR_WIN
 #ifndef QT_NO_THREAD
 HDC shared_dc()
 {
-    // ACSTODO: Is it ok? Please refer to qfontengine_win.cpp
-    return 0;
+#ifdef Q_WS_WIN
+    QtHDC *&hdc = local_shared_dc()->localData();
+    if (!hdc)
+        hdc = new QtHDC;
+    return hdc->hdc();
+# else
+    return 0; 
+#endif
 }
 #else
 HDC shared_dc()
