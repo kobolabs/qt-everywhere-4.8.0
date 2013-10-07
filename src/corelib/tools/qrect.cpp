@@ -710,8 +710,8 @@ QRect QRect::normalized() const
 
 void QRect::moveCenter(const QPoint &p)
 {
-    int w = x2 - x1;
-    int h = y2 - y1;
+    int w = width();
+    int h = height();
     x1 = p.x() - w/2;
     y1 = p.y() - h/2;
     x2 = x1 + w;
