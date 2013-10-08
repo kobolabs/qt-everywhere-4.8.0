@@ -66,7 +66,9 @@
 #include FT_GLYPH_H
 #include FT_BITMAP_H
 #include FT_MODULE_H
+#if (FREETYPE_MAJOR*10000 + FREETYPE_MINOR*100 + FREETYPE_PATCH) >= 20412
 #include FT_CFF_DRIVER_H
+#endif
 
 #if defined(FT_LCD_FILTER_H)
 #include FT_LCD_FILTER_H
@@ -232,9 +234,11 @@ FT_Library qt_getFreetype()
 {
     QtFreetypeData *freetypeData = qt_getFreetypeData();
     if (!freetypeData->library){
-        FT_UInt     hinting_engine = FT_CFF_HINTING_ADOBE;
         FT_Init_FreeType(&freetypeData->library);
+#if (FREETYPE_MAJOR*10000 + FREETYPE_MINOR*100 + FREETYPE_PATCH) >= 20412
+        FT_UInt     hinting_engine = FT_CFF_HINTING_ADOBE;
         FT_Property_Set(freetypeData->library, "cff", "hinting-engine", &hinting_engine);
+#endif
     }
     return freetypeData->library;
 }
@@ -284,9 +288,11 @@ QFreetypeFace *QFreetypeFace::getFace(const QFontEngine::FaceId &face_id,
 
     QtFreetypeData *freetypeData = qt_getFreetypeData();
     if (!freetypeData->library) {
-        FT_UInt     hinting_engine = FT_CFF_HINTING_ADOBE;
         FT_Init_FreeType(&freetypeData->library);
+#if (FREETYPE_MAJOR*10000 + FREETYPE_MINOR*100 + FREETYPE_PATCH) >= 20412
+        FT_UInt     hinting_engine = FT_CFF_HINTING_ADOBE;
         FT_Property_Set(freetypeData->library, "cff", "hinting-engine", &hinting_engine);
+#endif
     }
 
     QFreetypeFace *freetype = freetypeData->faces.value(face_id, 0);
