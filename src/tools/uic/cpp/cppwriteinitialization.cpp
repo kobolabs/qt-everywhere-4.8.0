@@ -1556,19 +1556,21 @@ void WriteInitialization::writeProperties(const QString &varName,
 
             if (propertyName == QLatin1String("styleSheet")) {
                 QString realValue(p->elementString()->text());
-                unsigned char key = static_cast<char>(qrand());
-                QByteArray data = realValue.toUtf8();
-                o << m_indent << "{\n";
-                o << m_indent << m_indent << "static bool initialized = false;\n";
-                o << m_indent << m_indent << QString::fromUtf8("static unsigned char c[%1] = { ").arg(data.size());
-                for (int i = 0; i < data.size(); i++) {
-                    o << QString::number(((unsigned char) data[i]) ^ key) << ",";
+                if (!realValue.isEmpty()) {
+                    unsigned char key = static_cast<char>(qrand());
+                    QByteArray data = realValue.toUtf8();
+                    o << m_indent << "{\n";
+                    o << m_indent << m_indent << "static bool initialized = false;\n";
+                    o << m_indent << m_indent << QString::fromUtf8("static unsigned char c[%1] = { ").arg(data.size());
+                    for (int i = 0; i < data.size(); i++) {
+                        o << QString::number(((unsigned char) data[i]) ^ key) << ",";
+                    }
+                    o << " };\n";
+                    o << m_indent << m_indent << QString::fromUtf8("for (int i = 0; !initialized && i < %1; i++) { c[i] ^= %2; }\n").arg(data.size()).arg((ushort) key);
+                    o << m_indent << m_indent << "initialized = true;\n";
+                    o << m_indent << m_indent << varNewName << setFunction << QString::fromUtf8("QString::fromUtf8(reinterpret_cast<char *>(c), %1));\n").arg(data.size());
+                    o << m_indent << "}\n";
                 }
-                o << " };\n";
-                o << m_indent << m_indent << QString::fromUtf8("for (int i = 0; !initialized && i < %1; i++) { c[i] ^= %2; }\n").arg(data.size()).arg((ushort) key);
-                o << m_indent << m_indent << "initialized = true;\n";
-                o << m_indent << m_indent << varNewName << setFunction << QString::fromUtf8("QString::fromUtf8(reinterpret_cast<char *>(c), %1));\n").arg(data.size());
-                o << m_indent << "}\n";
             } else {
                 o << m_indent << varNewName << setFunction << propertyValue;
                 if (!stdset)
