@@ -103,12 +103,13 @@ struct QFontDef
     uint hintingPreference : 2;
     uint fixedPitchComputed : 1; // for Mac OS X only
     int reserved   : 14; // for future extensions
-    int forceLeading;
 
     qreal csmThicknessOffset;
     qreal csmThicknessSlope;
     qreal csmSharpnessOffset;
     qreal csmSharpnessSlope;
+
+    int forceLeading;
 
     bool exactMatch(const QFontDef &other) const;
     bool operator==(const QFontDef &other) const
