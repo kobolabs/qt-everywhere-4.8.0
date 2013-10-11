@@ -1775,6 +1775,59 @@ QTextCodec *QTextCodec::codecForHtml(const QByteArray &ba)
     return codecForHtml(ba, QTextCodec::codecForMib(/*Latin 1*/ 4));
 }
 
+QTextCodec *QTextCodec::codecForXml(const QByteArray &ba, QTextCodec *defaultCodec)
+{
+    // determine charset
+    int pos;
+    QTextCodec *c = 0;
+
+    c = QTextCodec::codecForUtfText(ba, c);
+    if (!c) {
+        QByteArray header = ba.left(512).toLower();
+        if ((pos = header.indexOf("xml")) != -1) {
+            pos = header.indexOf("encoding=", pos) + int(strlen("encoding=\""));
+            if (pos != -1) {
+                int pos2 = header.indexOf('\"', pos+1);
+                int pos3 = header.indexOf('\'', pos+1);
+                pos2 = pos2 < pos3 ? pos2 : pos3;
+                QByteArray cs = header.mid(pos, pos2-pos);
+                //            qDebug("found charset: %s", cs.data());
+                c = QTextCodec::codecForName(cs);
+            }
+        }
+    }
+    if (!c)
+        c = defaultCodec;
+
+    return c;
+}
+
+QTextCodec *QTextCodec::codecForXml(const QByteArray &ba)
+{
+    return codecForXml(ba, QTextCodec::codecForMib(/*Latin 1*/ 4));
+}
+
+QTextCodec *QTextCodec::codecForMarkup(const QByteArray &ba, QTextCodec *defaultCodec)
+{
+    // determine charset
+    QTextCodec *c = 0;
+
+    c = QTextCodec::codecForHtml(ba, c);
+
+    if (!c)
+        c = QTextCodec::codecForXml(ba, c);
+
+    if (!c)
+        c = defaultCodec;
+
+    return c;
+}
+
+QTextCodec *QTextCodec::codecForMarkup(const QByteArray &ba)
+{
+    return codecForMarkup(ba, QTextCodec::codecForMib(/*Latin 1*/ 4));
+}
+
 /*!
     \since 4.6
 
