@@ -163,7 +163,7 @@ public:
     void scroll(int, int);
     QPoint scrollPosition() const;
     void setScrollPosition(const QPoint &pos);
-
+    void setConstrainsScrollingToContentEdge(bool constrainsScrollingToContentEdge);
     void scrollToAnchor(const QString& anchor);
 
     enum RenderLayer {
