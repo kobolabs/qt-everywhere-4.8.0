@@ -1192,6 +1192,11 @@ void QWebFrame::setScrollPosition(const QPoint &pos)
     scroll(dx, dy);
 }
 
+void QWebFrame::setConstrainsScrollingToContentEdge(bool constrainsScrollingToContentEdge)
+{
+    d->frame->view()->setConstrainsScrollingToContentEdge(constrainsScrollingToContentEdge);
+}
+
 /*!
   \since 4.7
   Scrolls the frame to the given \a anchor name.

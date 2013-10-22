@@ -316,8 +316,11 @@ IntPoint ScrollView::minimumScrollPosition() const
 
 IntPoint ScrollView::adjustScrollPositionWithinRange(const IntPoint& scrollPoint) const
 {
-    IntPoint newScrollPosition = scrollPoint.shrunkTo(maximumScrollPosition());
-    newScrollPosition = newScrollPosition.expandedTo(minimumScrollPosition());
+    IntPoint newScrollPosition = scrollPoint;
+    if (constrainsScrollingToContentEdge()) {
+        newScrollPosition = scrollPoint.shrunkTo(maximumScrollPosition());
+        newScrollPosition = newScrollPosition.expandedTo(minimumScrollPosition());
+    }
     return newScrollPosition;
 }
 
