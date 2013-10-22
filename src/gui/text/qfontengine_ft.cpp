@@ -476,7 +476,7 @@ void QFreetypeFace::computeSize(const QFontDef &fontDef, int *xsize, int *ysize,
                 *xsize = *ysize = 0;
         }
     } else {
-        *outline_drawing = (*xsize > (64<<6) || *ysize > (64<<6));
+        *outline_drawing = (*xsize > (100<<6) || *ysize > (100<<6));
     }
 }
 
@@ -1552,7 +1552,7 @@ QFontEngineFT::QGlyphSet *QFontEngineFT::loadTransformedGlyphSet(const QTransfor
 
     if (!gs) {
         // don't try to load huge fonts
-        bool draw_as_outline = fontDef.pixelSize * qSqrt(qAbs(matrix.det())) >= 64;
+        bool draw_as_outline = fontDef.pixelSize * qSqrt(qAbs(matrix.det())) >= 100;
         if (draw_as_outline)
             return 0;
 
