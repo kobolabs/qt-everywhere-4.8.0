@@ -155,7 +155,7 @@ bool qt_dispatchKeyEvent(void * /*NSEvent * */ keyEvent, QWidget *widgetToGetEve
 void qt_dispatchModifiersChanged(void * /*NSEvent * */flagsChangedEvent, QWidget *widgetToGetEvent);
 bool qt_mac_handleTabletEvent(void * /*QCocoaView * */view, void * /*NSEvent * */event);
 inline QApplication *qAppInstance() { return static_cast<QApplication *>(QCoreApplication::instance()); }
-struct ::TabletProximityRec;
+struct TabletProximityRec;
 void qt_dispatchTabletProximityEvent(const ::TabletProximityRec &proxRec);
 Qt::KeyboardModifiers qt_cocoaModifiers2QtModifiers(ulong modifierFlags);
 Qt::KeyboardModifiers qt_cocoaDragOperation2QtModifiers(uint dragOperations);
@@ -215,7 +215,7 @@ inline QString qt_mac_NSStringToQString(const NSString *nsstr)
 { return QCFString::toQString(reinterpret_cast<const CFStringRef>(nsstr)); }
 
 inline NSString *qt_mac_QStringToNSString(const QString &qstr)
-{ return [reinterpret_cast<const NSString *>(QCFString::toCFStringRef(qstr)) autorelease]; }
+{ return [const_cast<NSString *>(reinterpret_cast<const NSString *>(QCFString::toCFStringRef(qstr))) autorelease]; }
 
 #ifdef QT_MAC_USE_COCOA
 class QCocoaPostMessageArgs {
