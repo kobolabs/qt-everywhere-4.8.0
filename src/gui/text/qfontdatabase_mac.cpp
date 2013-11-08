@@ -313,7 +313,10 @@ void QFontDatabase::load(const QFontPrivate *d, int script)
         initializeDb();
     for(int i = 0; i < family_list.size(); ++i) {
         for (int k = 0; k < db->count; ++k) {
-            if (db->families[k]->name.compare(family_list.at(i), Qt::CaseInsensitive) == 0) {
+            QString workFamilyName, workFoundryName;
+            parseFontName(family_list.at(i), workFoundryName, workFamilyName);
+            if (db->families[k]->name.compare(workFamilyName, Qt::CaseInsensitive) == 0) {
+
                 QByteArray family_name = db->families[k]->name.toUtf8();
 #if defined(QT_MAC_USE_COCOA)
                 QCFType<CTFontRef> ctFont = CTFontCreateWithName(QCFString(db->families[k]->name), 12, NULL);
@@ -360,7 +363,7 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
     OSStatus e  = noErr;
 
     QString fileNameForQuery = fnt->fileName;
-    if (QFontDatabase::decryptFontData != NULL) {
+    if (!fileNameForQuery.startsWith(":qmemoryfonts") && QFontDatabase::decryptFontData != NULL) {
         QFile f(fileNameForQuery);
         f.open(QIODevice::ReadOnly);
         fnt->data = QFontDatabase::decryptFontData(f);

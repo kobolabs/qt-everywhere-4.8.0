@@ -2017,7 +2017,7 @@ static void registerFont(QFontDatabasePrivate::ApplicationFont *fnt)
     }
 
     QString fileNameForQuery = fnt->fileName;
-    if (QFontDatabase::decryptFontData != NULL) {
+    if (!fileNameForQuery.startsWith(":qmemoryfonts") && QFontDatabase::decryptFontData != NULL) {
         QFile f(fileNameForQuery);
         f.open(QIODevice::ReadOnly);
         fnt->data = QFontDatabase::decryptFontData(f);
