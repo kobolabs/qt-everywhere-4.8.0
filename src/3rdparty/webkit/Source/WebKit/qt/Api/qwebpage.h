@@ -256,7 +256,7 @@ public:
     QWebSettings *settings() const;
     
     void selectCharacterAtPoint(QPoint point);
-    void selectWordAtPoint(QPoint point, QRect bounds, bool selectLettersOnly, bool expandToWordBoundaries = true);
+    void selectWordAtPoint(QPoint point, int pageEnd, bool selectLettersOnly, bool expandToWordBoundaries = true);
     void clearSelection();
 
     void expandSelectionRight(QRect bounds);

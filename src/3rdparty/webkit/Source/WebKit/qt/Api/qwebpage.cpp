@@ -254,6 +254,34 @@ static const char* editorCommandWebActions[] =
     0 // WebActionCount
 };
 
+static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, HitTestResult& hitResult, int pageEnd)
+{
+	if (nodePtr == NULL || frame == NULL) {
+		return false;
+	}
+
+	QList<IntPoint> deltas;
+	foreach(int deltaY, QList<int>() << 0 << -5 << 5 << -10 << 10 << -20 << 20) {
+		foreach(int deltaX, QList<int>() << 0 << 5 << -5 << 10 << -10 << 15 << -15 << 20 << -20) {
+			deltas << IntPoint(deltaX, deltaY);
+		}
+	}
+
+	foreach(IntPoint delta, deltas) {
+		IntPoint testPoint(hitPoint.x() + delta.x(), hitPoint.y() + delta.y());
+		HitTestRequest onerequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
+		hitResult.setPoint(testPoint);
+		frame->document()->renderView()->layer()->hitTest(onerequest, hitResult);
+		*nodePtr = hitResult.innerNode();
+		if (*nodePtr && (*nodePtr)->renderer() && (*nodePtr)->isTextNode()) {
+			if (pageEnd < 0 || ((pageEnd > 0) && (testPoint.y() < pageEnd)) ) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 // Lookup the appropriate editor command to use for WebAction \a action
 const char* QWebPagePrivate::editorCommandForWebActions(QWebPage::WebAction action)
 {
@@ -2219,15 +2247,13 @@ void QWebPage::selectCharacterAtPoint(QPoint docPoint) {
 
 //If selectOnlyLetters == true the selection will be modified to discard non letters.
 //This causes a performance hit though, so it should only be used for the final selecting
-void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds, bool selectOnlyLetters, bool expandToWordBoundaries) {
+void QWebPage::selectWordAtPoint(QPoint docPoint, int pageEnd, bool selectOnlyLetters, bool expandToWordBoundaries) {
 	d->createMainFrame();
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
-	IntPoint point(docPoint.x(),docPoint.y());
-	HitTestRequest request(HitTestRequest::ReadOnly | HitTestRequest::Active);
-	HitTestResult result(point);
-	frame->document()->renderView()->layer()->hitTest(request, result);
-	Node* innerNode = result.innerNode();
-	if (innerNode && innerNode->renderer()) {
+
+	Node *innerNode = NULL;
+	HitTestResult result;
+	if (getPageHit(frame, docPoint, &innerNode, result, pageEnd)) {
 		VisiblePosition pos(innerNode->renderer()->positionForPoint(result.localPoint()));
 		VisibleSelection newSelection(selectOnlyLetters);
 		if (pos.isNotNull()) {
@@ -2247,34 +2273,6 @@ void QWebPage::selectWordAtPoint(QPoint docPoint, QRect bounds, bool selectOnlyL
 void QWebPage::clearSelection() {
 	Frame *frame = d->page->focusController()->focusedOrMainFrame();
 	frame->selection()->clear();
-}
-
-static bool getPageHit(Frame *frame, QPoint hitPoint, WebCore::Node **nodePtr, HitTestResult& hitResult, int pageEnd)
-{
-	if (nodePtr == NULL || frame == NULL) {
-		return false;
-	}
-
-	QList<IntPoint> deltas;
-	foreach(int deltaY, QList<int>() << 0 << -5 << 5 << -10 << 10 << -20 << 20) {
-		foreach(int deltaX, QList<int>() << 0 << 5 << -5 << 10 << -10 << 15 << -15 << 20 << -20) {
-			deltas << IntPoint(deltaX, deltaY);
-		}
-	}
-
-	foreach(IntPoint delta, deltas) {
-		IntPoint testPoint(hitPoint.x() + delta.x(), hitPoint.y() + delta.y());
-		HitTestRequest onerequest(HitTestRequest::ReadOnly | HitTestRequest::Active);
-		hitResult.setPoint(testPoint);
-		frame->document()->renderView()->layer()->hitTest(onerequest, hitResult);
-		*nodePtr = hitResult.innerNode();
-		if (*nodePtr && (*nodePtr)->renderer() && (*nodePtr)->isTextNode()) {
-			if (pageEnd < 0 || ((pageEnd > 0) && (testPoint.y() < pageEnd)) ) {
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 void QWebPage::selectBetweenPoints(QPoint one, QPoint two, bool expandToWordBoundaries, int pageEnd) {
