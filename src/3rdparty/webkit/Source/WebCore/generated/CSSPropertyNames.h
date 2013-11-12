@@ -338,12 +338,13 @@ enum CSSPropertyID {
     CSSPropertyWebkitSvgShadow = 1327,
     CSSPropertyKoboFontSharpness = 1328,
     CSSPropertyKoboFontThickness = 1329,
+    CSSPropertyKoboFontHintstyle = 1330,
 };
 
 const int firstCSSProperty = 1001;
-const int numCSSProperties = 329;
+const int numCSSProperties = 330;
 const size_t maxCSSPropertyNameLength = 43;
-const char* const propertyNameStrings[329] = {
+const char* const propertyNameStrings[330] = {
 "color",
 "direction",
 "display",
@@ -673,6 +674,7 @@ const char* const propertyNameStrings[329] = {
 "-webkit-svg-shadow",
 "-kobo-font-sharpness",
 "-kobo-font-thickness",
+"-kobo-font-hintstyle",
 };
 
 const char* getPropertyName(CSSPropertyID);

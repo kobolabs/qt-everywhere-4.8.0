@@ -3956,6 +3956,23 @@ void CSSStyleSelector::applyProperty(int id, CSSValue *value)
         return;
     }
 
+    case CSSPropertyKoboFontHintstyle: {
+        FontDescription fontDescription = m_style->fontDescription();
+        if (isInherit) 
+            fontDescription.setHintStyle(m_parentStyle->fontDescription().hintStyle());
+        else if (isInitial)
+            fontDescription.setHintStyle(0);
+        else {
+            if (!primitiveValue)
+                return;
+            int hintStyle = primitiveValue->getIntValue();
+            fontDescription.setHintStyle(hintStyle);
+        }
+        if (m_style->setFontDescription(fontDescription))
+            m_fontDirty = true;
+        return;
+    }
+
     case CSSPropertyLetterSpacing:
     case CSSPropertyWordSpacing:
     {

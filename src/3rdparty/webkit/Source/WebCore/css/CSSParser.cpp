@@ -1802,6 +1802,10 @@ bool CSSParser::parseValue(int propId, bool important)
         if (validUnit(value, FNumber, true))
             validPrimitive = true;
         break;
+    case CSSPropertyKoboFontHintstyle:
+        if (validUnit(value, FInteger, true))
+            validPrimitive = true;
+        break;
 
 #if ENABLE(DASHBOARD_SUPPORT)
     case CSSPropertyWebkitDashboardRegion: // <dashboard-region> | <dashboard-region>

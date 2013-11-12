@@ -77,6 +77,25 @@ FontPlatformData::FontPlatformData(const FontDescription& description, const Ato
     font.setStyleStrategy(QFont::ForceIntegerMetrics);
     font.setCSMThicknessOffset(description.thickness());
     font.setCSMSharpnessOffset(description.sharpness());
+    switch (description.hintStyle()) {
+        case 0:
+            qWarning("Can not handle Default Hinting Style now, set to FullHinting");
+            font.setHintingPreference(QFont::PreferFullHinting);
+            break;
+        case 1:
+            font.setHintingPreference(QFont::PreferNoHinting);
+            break;
+        case 2:
+            qWarning("Can not handle Vertical Hinting Style now, set to FullHinting");
+            font.setHintingPreference(QFont::PreferFullHinting);
+            break;
+        case 3:
+            font.setHintingPreference(QFont::PreferFullHinting);
+            break;
+        default:
+            font.setHintingPreference(QFont::PreferFullHinting);
+            break;
+    }
 
     m_data->bold = font.bold();
     // WebKit allows font size zero but QFont does not. We will return

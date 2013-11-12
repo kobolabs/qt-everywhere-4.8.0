@@ -651,6 +651,25 @@ QFontEngine *loadSingleEngine(int script, const QFontPrivate *fp,
 #ifndef QT_NO_FREETYPE
 
             QScopedPointer<QFontEngineFT> fte(new QFontEngineFT(def));
+            if (fp) {
+                switch (fp->request.hintingPreference) {
+                    case QFont::PreferDefaultHinting:
+                        qWarning("Can not handle Default Hinting now");
+                        break;
+                    case QFont::PreferNoHinting:
+                        fte->setDefaultHintStyle(QFontEngineFT::HintNone);
+                        break;
+                    case QFont::PreferVerticalHinting:
+                        qWarning("Can not handle Vertical Hinting now");
+                        break;
+                    case QFont::PreferFullHinting:
+                        fte->setDefaultHintStyle(QFontEngineFT::HintFull);
+                        break;
+                    default:
+                        fte->setDefaultHintStyle(QFontEngineFT::HintFull);
+                        break;
+                }
+            }
             bool antialias = style->antialiased && !(request.styleStrategy & QFont::NoAntialias);
             if (fte->init(faceId, antialias,
                           antialias ? QFontEngineFT::Format_A8 : QFontEngineFT::Format_Mono)) {

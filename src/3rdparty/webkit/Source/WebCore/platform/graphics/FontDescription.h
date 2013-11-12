@@ -84,6 +84,7 @@ public:
         , m_isSpecifiedFont(false)
         , m_thickness(.0)
         , m_sharpness(.0)
+        , m_hintStyle(0)
     {
     }
 
@@ -142,8 +143,10 @@ public:
 
     void setThickness(double s) { m_thickness = s; }
     void setSharpness(double s) { m_sharpness = s; }
+    void setHintStyle(unsigned s) { m_hintStyle = s; }
     double thickness() const { return m_thickness; }
     double sharpness() const { return m_sharpness; }
+    unsigned hintStyle() const { return m_hintStyle; };
 
 private:
     FontFamily m_familyList; // The list of font families to be used.
@@ -177,6 +180,7 @@ private:
 
     double m_thickness;
     double m_sharpness;
+    unsigned m_hintStyle;
 };
 
 inline bool FontDescription::operator==(const FontDescription& other) const
@@ -199,7 +203,8 @@ inline bool FontDescription::operator==(const FontDescription& other) const
         && m_textOrientation == other.m_textOrientation
         && m_widthVariant == other.m_widthVariant
         && m_thickness == other.m_thickness
-        && m_sharpness == other.m_sharpness;
+        && m_sharpness == other.m_sharpness
+        && m_hintStyle == other.m_hintStyle;
 }
 
 }
