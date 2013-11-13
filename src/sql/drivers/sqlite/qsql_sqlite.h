@@ -93,6 +93,7 @@ public:
     explicit QSQLiteDriver(QObject *parent = 0);
     explicit QSQLiteDriver(sqlite3 *connection, QObject *parent = 0);
     ~QSQLiteDriver();
+    int busyHandler(int(*handler)(void*, int), void* pArg);
     bool hasFeature(DriverFeature f) const;
     bool open(const QString & db,
                    const QString & user,

@@ -680,6 +680,16 @@ QVariant QSqlDriver::handle() const
 }
 
 /*!
+    Registers a sqlite busy handler callback function
+*/
+int QSqlDriver::busyHandler(int(*handler)(void*, int), void* pArg)
+{
+    Q_UNUSED(handler);
+    Q_UNUSED(pArg);
+    return 0;
+}
+
+/*!
     \fn QSqlRecord QSqlDriver::record(const QSqlQuery& query) const
 
     Use query.record() instead.
