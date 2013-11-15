@@ -79,7 +79,6 @@ FontPlatformData::FontPlatformData(const FontDescription& description, const Ato
     font.setCSMSharpnessOffset(description.sharpness());
     switch (description.hintStyle()) {
         case 0:
-            qWarning("Can not handle Default Hinting Style now, set to FullHinting");
             font.setHintingPreference(QFont::PreferFullHinting);
             break;
         case 1:

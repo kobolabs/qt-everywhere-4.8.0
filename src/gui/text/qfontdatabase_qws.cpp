@@ -654,7 +654,7 @@ QFontEngine *loadSingleEngine(int script, const QFontPrivate *fp,
             if (fp) {
                 switch (fp->request.hintingPreference) {
                     case QFont::PreferDefaultHinting:
-                        qWarning("Can not handle Default Hinting now");
+                        /* do nothing */
                         break;
                     case QFont::PreferNoHinting:
                         fte->setDefaultHintStyle(QFontEngineFT::HintNone);
