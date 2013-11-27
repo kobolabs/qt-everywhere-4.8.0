@@ -1745,11 +1745,12 @@ QTextCodec *QTextCodec::codecForHtml(const QByteArray &ba, QTextCodec *defaultCo
         QByteArray header = ba.left(512).toLower();
         if ((pos = header.indexOf("http-equiv=")) != -1) {
             if ((pos = header.lastIndexOf("meta ", pos)) != -1) {
-                pos = header.indexOf("charset=", pos) + int(strlen("charset="));
+                pos = header.indexOf("charset=", pos);
                 if (pos != -1) {
+                    pos += strlen("charset=");
                     int pos2 = header.indexOf('\"', pos+1);
                     QByteArray cs = header.mid(pos, pos2-pos);
-                    //            qDebug("found charset: %s", cs.data());
+//                                qDebug("found charset: %s", cs.data());
                     c = QTextCodec::codecForName(cs);
                 }
             }
@@ -1785,14 +1786,21 @@ QTextCodec *QTextCodec::codecForXml(const QByteArray &ba, QTextCodec *defaultCod
     if (!c) {
         QByteArray header = ba.left(512).toLower();
         if ((pos = header.indexOf("xml")) != -1) {
-            pos = header.indexOf("encoding=", pos) + int(strlen("encoding=\""));
+            pos = header.indexOf("encoding=", pos);
             if (pos != -1) {
-                int pos2 = header.indexOf('\"', pos+1);
-                int pos3 = header.indexOf('\'', pos+1);
-                pos2 = pos2 < pos3 ? pos2 : pos3;
-                QByteArray cs = header.mid(pos, pos2-pos);
-                //            qDebug("found charset: %s", cs.data());
-                c = QTextCodec::codecForName(cs);
+                pos += strlen("encoding=") + 1;
+                int pos2 = header.indexOf('\"', pos);
+                int pos3 = header.indexOf('\'', pos);
+                if (pos2 == -1) {
+                    pos2 = pos3;
+                } else if (pos3 != -1) {
+                    pos2 = qMin(pos2, pos3);
+                }
+                if (pos2 != -1) {
+                    QByteArray cs = header.mid(pos, pos2-pos);
+//                            qDebug("found charset: %s", cs.data());
+                    c = QTextCodec::codecForName(cs);
+                }
             }
         }
     }
